@@ -27,6 +27,7 @@ from fabrid.evaluation.record_level import (
     worst_client_recall,
 )
 from fabrid.frontier.builder import build_federation_frontier
+from fabrid.frontier.conservative import build_conservative_utility_curve
 from fabrid.optimization.milp import SolverInvalidError
 from fabrid.schemas.allocation import Allocation, AllocationPolicy
 from fabrid.schemas.result import ResultRow, SolverStatus, WeightMode
@@ -226,3 +227,47 @@ def run_seed_at_budget(
             ) = _evaluate_allocation(allocation, artifacts)
 
     return result
+
+
+def run_conservative_minimax_at_budget(
+    artifacts: Mapping[ClientId, ScoreArtifact],
+    alpha_grid: tuple[float, ...],
+    guardrails: UtilityEligibilityGuardrails,
+    budget: float,
+    solver_settings: SolverSettings,
+    confidence: float = 0.95,
+) -> tuple[float, float] | None:
+    """D005 (roadmap section 63): resolve FABRID_MINIMAX using the one-sided LCB utility curve
+    instead of raw validation utility. Returns (MacroRecall, WorstClientRecall) evaluated on the
+    same real ATTACK_TEST data as `run_seed_at_budget`, or None if solver-invalid or no client is
+    eligible — same exclusion discipline as the raw-utility path.
+    """
+    client_inputs = {
+        client_id: build_client_frontier_inputs(artifact, alpha_grid)
+        for client_id, artifact in artifacts.items()
+    }
+    federation = build_federation_frontier(client_inputs, alpha_grid, guardrails)
+    eligible_ids = federation.eligible_client_ids()
+    if not eligible_ids:
+        return None
+
+    weight = dict.fromkeys(artifacts, 1.0 / len(artifacts))
+    eligible_weight = {c: weight[c] for c in eligible_ids}
+    conservative_curves = {
+        client_id: build_conservative_utility_curve(
+            client_id,
+            alpha_grid,
+            client_inputs[client_id].subtype_confusion_by_candidate,
+            confidence,
+        )
+        for client_id in eligible_ids
+    }
+
+    try:
+        allocation = allocate_fabrid_minimax(
+            conservative_curves, eligible_weight, budget, solver_settings
+        )
+    except SolverInvalidError:
+        return None
+
+    return _evaluate_allocation(allocation, artifacts)
