@@ -60,6 +60,12 @@ extremeness matches both the all-positive AND all-negative sign assignment when 
 unique extremum, not just one — fixed 1/1024 -> 2/1024). Result: 159/159 tests, 0 ruff findings, 0
 pyright errors.
 
+## Cycle 8 (final calibration, heterogeneity diagnostic)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `calibration/
+final_calibration.py` and `evaluation/heterogeneity.py`. Result: 168/168 tests, 0 ruff findings, 0
+pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
