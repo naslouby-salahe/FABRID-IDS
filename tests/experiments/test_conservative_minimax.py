@@ -71,9 +71,12 @@ def test_conservative_minimax_returns_valid_recalls() -> None:
         artifacts, _GRID, _GUARDRAILS, budget=0.01, solver_settings=_SETTINGS
     )
     assert result is not None
-    macro_recall, worst_recall = result
+    macro_recall, worst_recall, fpr, bur = result
     assert 0.0 <= macro_recall <= 1.0
     assert 0.0 <= worst_recall <= 1.0
+    assert 0.0 <= fpr <= 1.0
+    assert bur is not None
+    assert bur >= 0.0
 
 
 def test_conservative_minimax_none_when_no_eligible_clients() -> None:

@@ -21,8 +21,12 @@ from fabrid.config.protocol import SolverSettings, UtilityEligibilityGuardrails
 from fabrid.evaluation.record_level import (
     AttackSubtype,
     ClientId,
+    ClientWeight,
+    FalsePositiveRate,
     TruePositiveRate,
+    budget_usage_ratio,
     client_macro_recall,
+    federation_fpr,
     federation_macro_recall,
     worst_client_recall,
 )
@@ -51,6 +55,12 @@ class SeedBudgetResult:
     worst_client_recall_by_policy: dict[AllocationPolicy, float] = field(
         default_factory=dict[AllocationPolicy, float]
     )
+    fpr_by_policy: dict[AllocationPolicy, float] = field(
+        default_factory=dict[AllocationPolicy, float]
+    )
+    bur_by_policy: dict[AllocationPolicy, float | None] = field(
+        default_factory=dict[AllocationPolicy, float | None]
+    )
     excluded_policies: dict[AllocationPolicy, str] = field(
         default_factory=dict[AllocationPolicy, str]
     )
@@ -67,21 +77,40 @@ def _client_recall(
 
 
 def _evaluate_allocation(
-    allocation: Allocation, artifacts: Mapping[ClientId, ScoreArtifact]
-) -> tuple[float, float]:
+    allocation: Allocation, artifacts: Mapping[ClientId, ScoreArtifact], budget: float
+) -> tuple[float, float, float, float | None]:
+    """Returns (MacroRecall, WorstClientRecall, federation FPR, BUR) for `allocation`, evaluated
+    on real ATTACK_TEST/BENIGN_TEST scores. FPR/BUR are computed over every client in the
+    allocation (not just those with attack-test rows), using equal client weighting, matching
+    `federation_fpr`'s primary-weighting convention (roadmap section 51). BUR is mathematically
+    undefined at `budget=0` (division by zero) and is reported as `None` (not 0 or infinity) in
+    that case, matching the zero-budget protocol test case (T13).
+    """
     final_cal_scores = {c: benign_final_cal_scores(artifacts[c]) for c in allocation.decisions}
     thresholds = calibrate_final_thresholds(allocation, final_cal_scores)
 
     client_recall: dict[ClientId, float] = {}
+    client_fpr: dict[ClientId, FalsePositiveRate] = {}
     for client_id, result in thresholds.items():
+        threshold_value = result.threshold.value
+        benign_scores = benign_test_scores(artifacts[client_id])
+        false_positive = int(np.sum(benign_scores > threshold_value))
+        client_fpr[client_id] = FalsePositiveRate(
+            false_positive / benign_scores.shape[0] if benign_scores.shape[0] else 0.0
+        )
+
         subtype_scores = attack_test_scores_by_subtype(artifacts[client_id])
         if not subtype_scores:
             continue
-        client_recall[client_id] = _client_recall(result.threshold.value, subtype_scores)
+        client_recall[client_id] = _client_recall(threshold_value, subtype_scores)
 
     if not client_recall:
         raise ValueError("no client in this allocation has any attack-test rows")
-    return federation_macro_recall(client_recall), worst_client_recall(client_recall)
+
+    weight = {c: ClientWeight(1.0 / len(client_fpr)) for c in client_fpr}
+    fed_fpr = federation_fpr(client_fpr, weight)
+    bur = budget_usage_ratio(fed_fpr, budget) if budget > 0 else None
+    return federation_macro_recall(client_recall), worst_client_recall(client_recall), fed_fpr, bur
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,14 +232,18 @@ def run_seed_at_budget(
     (
         result.macro_recall_by_policy[AllocationPolicy.EQ_FPR],
         result.worst_client_recall_by_policy[AllocationPolicy.EQ_FPR],
-    ) = _evaluate_allocation(eq_fpr, artifacts)
+        result.fpr_by_policy[AllocationPolicy.EQ_FPR],
+        result.bur_by_policy[AllocationPolicy.EQ_FPR],
+    ) = _evaluate_allocation(eq_fpr, artifacts, budget)
 
     if eligible_ids:
         greedy = allocate_greedy(utility_curves, eligible_weight, budget, alpha_max)
         (
             result.macro_recall_by_policy[AllocationPolicy.GREEDY],
             result.worst_client_recall_by_policy[AllocationPolicy.GREEDY],
-        ) = _evaluate_allocation(greedy, artifacts)
+            result.fpr_by_policy[AllocationPolicy.GREEDY],
+            result.bur_by_policy[AllocationPolicy.GREEDY],
+        ) = _evaluate_allocation(greedy, artifacts, budget)
 
         for policy, allocate in (
             (AllocationPolicy.FABRID_MACRO, allocate_fabrid_macro),
@@ -224,7 +257,9 @@ def run_seed_at_budget(
             (
                 result.macro_recall_by_policy[policy],
                 result.worst_client_recall_by_policy[policy],
-            ) = _evaluate_allocation(allocation, artifacts)
+                result.fpr_by_policy[policy],
+                result.bur_by_policy[policy],
+            ) = _evaluate_allocation(allocation, artifacts, budget)
 
     return result
 
@@ -236,11 +271,11 @@ def run_conservative_minimax_at_budget(
     budget: float,
     solver_settings: SolverSettings,
     confidence: float = 0.95,
-) -> tuple[float, float] | None:
+) -> tuple[float, float, float, float | None] | None:
     """D005 (roadmap section 63): resolve FABRID_MINIMAX using the one-sided LCB utility curve
-    instead of raw validation utility. Returns (MacroRecall, WorstClientRecall) evaluated on the
-    same real ATTACK_TEST data as `run_seed_at_budget`, or None if solver-invalid or no client is
-    eligible — same exclusion discipline as the raw-utility path.
+    instead of raw validation utility. Returns (MacroRecall, WorstClientRecall, federation FPR,
+    BUR) evaluated on the same real ATTACK_TEST data as `run_seed_at_budget`, or None if
+    solver-invalid or no client is eligible — same exclusion discipline as the raw-utility path.
     """
     client_inputs = {
         client_id: build_client_frontier_inputs(artifact, alpha_grid)
@@ -270,4 +305,4 @@ def run_conservative_minimax_at_budget(
     except SolverInvalidError:
         return None
 
-    return _evaluate_allocation(allocation, artifacts)
+    return _evaluate_allocation(allocation, artifacts, budget)
