@@ -2,11 +2,11 @@
 
 canonical roadmap path: `docs/FABRID-IDS Roadmap.md` (v2.0, protocol date 2026-08-12; section 18 rewritten
 under decision D003 to make FABRID detector-agnostic/standalone — no other section changed)
-current git commit (as of last update): 449a0ef, plus uncommitted work on top (MILP optimizer,
-FABRID_MACRO/MINIMAX, standalone-decoupling doc correction)
-current roadmap phase: Phase 7 (baselines) and Phase 8-9 (FABRID_MACRO/FABRID_MINIMAX) implemented and
-tested; Phase 2 (dataset provenance/ingestion) still not wired to real raw data; Phase 3 (detector
-training) now explicitly standalone per D003, not started
+current git commit (as of last update): 9053bac (12 commits this session)
+current roadmap phase: Phase 7 (baselines), Phase 8-9 (FABRID_MACRO/FABRID_MINIMAX), and the
+POOLED_SHARED/TEST_ORACLE/EQ_ALERT policies are implemented and tested; Phase 2 (dataset
+provenance/ingestion) still not wired to real raw data; Phase 3 (detector training) now explicitly
+standalone per D003, not started
 current requirement/group: OPTIMIZATION-*, FABRID-MACRO-*, FABRID-MINIMAX-* DONE (brute-force parity +
 100x determinism verified); MODEL-003/SCORE-003/ARCH-004/ARCH-005 (standalone decoupling) added and
 largely satisfied by construction; NEXT is either (a) finish pyright cleanup on the optimizer chunk, or
@@ -61,7 +61,12 @@ substrate (now explicitly standalone, D003), score persistence/hashing, POOLED_S
 EQ_ALERT, frontier/utility curve construction from real scores, T01-T18 mandatory tests, statistics
 module (sign-flip/bootstrap/Holm), external/event branches.
 
-Additionally landed since the D003 correction (all tested, ruff+pyright clean, 109/109 total):
+Additionally landed since the D003 correction (all tested, ruff+pyright clean, 120/120 total):
+- `src/fabrid/allocation/equal_alert.py`, `pooled_shared.py`, `test_oracle.py`: remaining primary
+  policies. All six deployable/diagnostic/oracle policies (EQ_FPR, GREEDY, FABRID_MACRO, FABRID_MINIMAX,
+  POOLED_SHARED, TEST_ORACLE) plus conditional EQ_ALERT are implemented and tested.
+- Audit matrix: 20 additional rows moved to VERIFIED (OPTIMIZATION-*, FABRID-MACRO-001,
+  FABRID-MINIMAX-001, BASELINE-002..005, SCORE-001/002, CALIBRATION-001/002, FRONTIER-001/002).
 - `src/fabrid/scoring/score_contract.py`: strict `>` decision, tie-aware rank AUROC, cross-policy AUROC
   invariance assertion.
 - `src/fabrid/schemas/score_artifact.py`: `ScoreRecord`/`ScoreArtifact` with label/attack_type
@@ -75,10 +80,7 @@ next implementation chunk (in priority order):
 1. `fabrid/frontier/builder.py`: wire `build_utility_curve` + eligibility + fallback into one frontier
    construction step that also computes provisional thresholds from `BENIGN_FRONTIER` via
    `fabrid/calibration/order_statistic.py`.
-2. `fabrid/allocation/{pooled_shared,test_oracle,equal_alert}.py`: remaining policies (POOLED_SHARED
-   must NOT be presented as deployable; TEST_ORACLE must live in an isolated module the default
-   execution path cannot reach; EQ_ALERT is conditional on justified unequal weights).
-3. Standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 training + Phase 4 score
+2. Standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 training + Phase 4 score
    persistence), implemented directly in `fabrid` per D003 — no external research-stack dependency.
    Raw N-BaIoT reading may reuse ordinary, generic, non-FABRID-specific libraries (e.g. polars/pandas
    CSV reading) but not another project's federated-training/detector code. This is the largest
