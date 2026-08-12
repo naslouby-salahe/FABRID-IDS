@@ -1,8 +1,8 @@
-# Dataset/client population contracts (roadmap sections 21-26, 74-79).
+# Dataset/client population contracts.
 
 nbaiot:
   dataset_id: n-baiot
-  weight_evidence_level: C # equal-client; see roadmap section 12.3
+  weight_evidence_level: C # equal-client weighting; common-duration operational rates are not established
   attack_subtypes:
     bashlite: [bashlite_scan, bashlite_junk, bashlite_udp, bashlite_tcp, bashlite_combo]
     mirai: [mirai_scan, mirai_ack, mirai_syn, mirai_udp, mirai_udpplain]

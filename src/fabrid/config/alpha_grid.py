@@ -1,4 +1,4 @@
-"""Candidate target-rate grid construction (roadmap section 29).
+"""Candidate target-rate grid construction.
 
 The grid is generated once, persisted to ``src/fabrid/config/alpha_grid.json``, and
 must never be regenerated implicitly at run time. ``load_alpha_grid`` reads the
@@ -49,7 +49,7 @@ class AlphaGrid:
 
 
 def build_alpha_grid() -> AlphaGrid:
-    """Construct the candidate grid from the exact roadmap formula (section 29)."""
+    """Construct the candidate grid: a log-spaced core plus explicit round-number points."""
     log_min_exp = np.log10(_LOG_MIN)
     log_max_exp = np.log10(_LOG_MAX)
     j = np.arange(_LOG_POINTS, dtype=np.float64)

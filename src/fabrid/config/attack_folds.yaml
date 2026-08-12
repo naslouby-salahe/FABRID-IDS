@@ -1,4 +1,4 @@
-# Attack-subtype-disjoint generalization folds (roadmap section 58).
+# Attack-subtype-disjoint generalization folds.
 # Fixed global mapping; do not assign via hash.
 
 folds:
@@ -11,8 +11,8 @@ rotations:
   1: { validation_fold: 1, test_folds: [0, 2] }
   2: { validation_fold: 2, test_folds: [0, 1] }
 
-# Botnet-family-disjoint transfer (section 59), for the seven clients that
-# have both Mirai and BASHLITE (excludes Ennio and Samsung, Mirai-absent).
+# Botnet-family-disjoint transfer, for the seven clients that have both
+# Mirai and BASHLITE (excludes Ennio and Samsung, Mirai-absent).
 botnet_family_disjoint:
   eligible_client_count: 7
   directions:

@@ -43,6 +43,12 @@ extraPaths = ["src"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
+# pytest.approx's own type stubs are only partially typed; this affects test
+# files exclusively and never the production `src/` code they exercise.
+[[tool.pyright.executionEnvironments]]
+root = "tests"
+reportUnknownMemberType = false
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

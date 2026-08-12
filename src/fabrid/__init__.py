@@ -1,6 +1,6 @@
 """FABRID-IDS: Federated Alert-Budget Reallocation for Heterogeneous IoT Intrusion Detection.
 
-Frozen research identity (roadmap Phase 0 / section 112).
+Frozen research identity constants.
 """
 
 from __future__ import annotations
