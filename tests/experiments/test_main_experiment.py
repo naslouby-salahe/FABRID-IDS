@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from fabrid.allocation.equal_fpr import allocate_equal_fpr
 from fabrid.config.protocol import (
     AttackSplitFraction,
     BenignSplitFractions,
@@ -18,8 +19,13 @@ from fabrid.data.partitioner import (
 from fabrid.data.preprocessing import fit_feature_scaler
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
-from fabrid.experiments.main_experiment import run_seed_at_budget
+from fabrid.experiments.main_experiment import (
+    ResultRowProvenance,
+    build_result_rows,
+    run_seed_at_budget,
+)
 from fabrid.schemas.allocation import AllocationPolicy
+from fabrid.schemas.result import SolverStatus, WeightMode
 from fabrid.schemas.score_artifact import DetectorSeed
 from fabrid.scoring.score_generation import generate_score_artifact
 
@@ -107,3 +113,36 @@ def test_zero_budget_still_evaluates_eq_fpr() -> None:
         artifacts, _GRID, _GUARDRAILS, budget=0.0, alpha_max=0.05, solver_settings=_SETTINGS, seed=0
     )
     assert result.macro_recall_by_policy[AllocationPolicy.EQ_FPR] == 0.0
+
+
+def test_build_result_rows_one_row_per_client_subtype() -> None:
+    artifacts = {
+        ClientId("1"): _client_artifact(0, ClientId("1")),
+        ClientId("2"): _client_artifact(1, ClientId("2")),
+    }
+    allocation = allocate_equal_fpr(list(artifacts.keys()), 0.01, alpha_max=0.05)
+    provenance = ResultRowProvenance(
+        experiment_id="exp-1",
+        dataset_id="n-baiot",
+        budget_id="B_0.01",
+        weight_mode=WeightMode.EQUAL_CLIENT,
+        model_sha256="",
+        split_sha256="",
+        feature_sha256="",
+        protocol_sha256="",
+        git_commit="deadbeef",
+        solver_status=SolverStatus.NOT_APPLICABLE,
+    )
+    weight = dict.fromkeys(artifacts, 0.5)
+
+    rows = build_result_rows(
+        allocation, artifacts, weight, seed=0, budget=0.01, provenance=provenance
+    )
+
+    # 2 clients x 2 attack subtypes (mirai_scan, bashlite_udp) each = 4 rows.
+    assert len(rows) == 4
+    assert all(row.policy is AllocationPolicy.EQ_FPR for row in rows)
+    assert all(row.seed == 0 for row in rows)
+    assert all(0.0 <= row.fpr <= 1.0 for row in rows)
+    assert all(0.0 <= row.tpr <= 1.0 for row in rows)
+    assert all(row.score_sha256 for row in rows)

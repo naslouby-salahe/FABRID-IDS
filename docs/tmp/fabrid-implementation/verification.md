@@ -238,6 +238,25 @@ validation scores to reach it at all. `pytest -q`, `ruff format`, `ruff check --
 each with a `manifest.json` of per-client sha256 hashes) — the real full-scale training run launched
 earlier completed successfully across all seeds.
 
+## Cycle 27 (build_result_rows; real 10-seed contrast run; F001/F002)
+
+Added `experiments/main_experiment.py:build_result_rows`/`ResultRowProvenance` — one `ResultRow` per
+(client, attack_subtype) from a real `Allocation`. `pytest -q`, `ruff format`, `ruff check --fix`,
+`pyright`: 255/255 tests, 0 ruff findings, 0 pyright errors.
+
+Ran `scripts/run_contrasts.py` across all 10 real trained seeds at budget=0.01. Real results:
+- `FABRID_MACRO` hit `SOLVER_INVALID` in 9/10 seeds (only seed 6 solved to gap<=1e-9) — F001 confirmed
+  systemic at scale, not a one-off. Contrast A has only n=1 usable seed.
+- `FABRID_MINIMAX` hit `SOLVER_INVALID` in 6/10 seeds; on the n=4 seeds where it solved, its
+  `WorstClientRecall` was *worse* than `EQ_FPR`'s (mean_diff=-0.4503). Root-caused (F002): not a bug —
+  the roadmap's exact stage-3 budget-minimization tie-break pushes a non-bottleneck client's alpha to
+  ~0 once the minimax objective and mean utility are already fixed, which can crater that client's real
+  test recall even though the *validation-time* minimax objective is satisfied. Verified against seed
+  6's real per-client data (`SimpleHome_XCS7_1003`: alpha 0.01→recall 1.0 under EQ_FPR,
+  alpha≈0.00026→recall 0.0 under FABRID_MINIMAX). No code changed — this is the specified formulation
+  behaving as specified; recorded in `failures.md` per the negative-result policy (section 99), not
+  patched.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading

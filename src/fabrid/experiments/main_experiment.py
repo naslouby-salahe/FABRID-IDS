@@ -29,10 +29,12 @@ from fabrid.evaluation.record_level import (
 from fabrid.frontier.builder import build_federation_frontier
 from fabrid.optimization.milp import SolverInvalidError
 from fabrid.schemas.allocation import Allocation, AllocationPolicy
+from fabrid.schemas.result import ResultRow, SolverStatus, WeightMode
 from fabrid.schemas.score_artifact import ScoreArtifact
 from fabrid.scoring.frontier_inputs import (
     attack_test_scores_by_subtype,
     benign_final_cal_scores,
+    benign_test_scores,
     build_client_frontier_inputs,
 )
 
@@ -78,6 +80,101 @@ def _evaluate_allocation(
     if not client_recall:
         raise ValueError("no client in this allocation has any attack-test rows")
     return federation_macro_recall(client_recall), worst_client_recall(client_recall)
+
+
+@dataclass(frozen=True, slots=True)
+class ResultRowProvenance:
+    """Identifiers that are constant across every row of one seed x budget x policy cell."""
+
+    experiment_id: str
+    dataset_id: str
+    budget_id: str
+    weight_mode: WeightMode
+    model_sha256: str
+    split_sha256: str
+    feature_sha256: str
+    protocol_sha256: str
+    git_commit: str
+    solver_status: SolverStatus
+    solver_objective: float | None = None
+    solver_gap: float | None = None
+    solver_runtime_ms: float | None = None
+
+
+def build_result_rows(
+    allocation: Allocation,
+    artifacts: Mapping[ClientId, ScoreArtifact],
+    weight: Mapping[ClientId, float],
+    seed: int,
+    budget: float,
+    provenance: ResultRowProvenance,
+) -> list[ResultRow]:
+    """One row per (client, attack_subtype) covered by `allocation`, per the roadmap's primary
+    result schema. `fp`/`tn`/`fpr` are the client's benign-test confusion counts, repeated across
+    that client's subtype rows (there is one benign evaluation per client, not per subtype).
+    """
+    final_cal_scores = {c: benign_final_cal_scores(artifacts[c]) for c in allocation.decisions}
+    thresholds = calibrate_final_thresholds(allocation, final_cal_scores)
+
+    rows: list[ResultRow] = []
+    for client_id, calibration in thresholds.items():
+        artifact = artifacts[client_id]
+        threshold_value = calibration.threshold.value
+
+        benign_scores = benign_test_scores(artifact)
+        false_positive = int(np.sum(benign_scores > threshold_value))
+        true_negative = benign_scores.shape[0] - false_positive
+        fpr = false_positive / benign_scores.shape[0] if benign_scores.shape[0] else 0.0
+
+        subtype_scores = attack_test_scores_by_subtype(artifact)
+        subtype_tprs = {
+            subtype: TruePositiveRate(float((scores > threshold_value).mean()))
+            for subtype, scores in subtype_scores.items()
+        }
+        macro_recall = client_macro_recall(subtype_tprs) if subtype_tprs else 0.0
+
+        for subtype, scores in subtype_scores.items():
+            true_positive = int(np.sum(scores > threshold_value))
+            false_negative = scores.shape[0] - true_positive
+            rows.append(
+                ResultRow(
+                    experiment_id=provenance.experiment_id,
+                    dataset_id=provenance.dataset_id,
+                    seed=seed,
+                    budget_id=provenance.budget_id,
+                    budget_value=budget,
+                    weight_mode=provenance.weight_mode,
+                    policy=allocation.policy,
+                    client_id=client_id,
+                    alpha_selected=calibration.alpha_selected,
+                    threshold=threshold_value,
+                    calibration_n=calibration.calibration_n,
+                    nominal_weight=weight[client_id],
+                    realized_weight=weight[client_id],
+                    n_benign_test=benign_scores.shape[0],
+                    n_attack_test=scores.shape[0],
+                    attack_subtype=subtype,
+                    true_positive=true_positive,
+                    false_negative=false_negative,
+                    false_positive=false_positive,
+                    true_negative=true_negative,
+                    fpr=fpr,
+                    tpr=subtype_tprs[subtype].value,
+                    macro_attack_recall=macro_recall,
+                    false_alert_count=false_positive,
+                    solver_status=provenance.solver_status,
+                    solver_objective=provenance.solver_objective,
+                    solver_gap=provenance.solver_gap,
+                    solver_runtime_ms=provenance.solver_runtime_ms,
+                    model_sha256=provenance.model_sha256,
+                    score_sha256=artifact.sha256(),
+                    split_sha256=provenance.split_sha256,
+                    feature_sha256=provenance.feature_sha256,
+                    protocol_sha256=provenance.protocol_sha256,
+                    git_commit=provenance.git_commit,
+                )
+            )
+    return rows
 
 
 def run_seed_at_budget(
