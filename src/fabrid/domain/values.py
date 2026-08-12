@@ -41,6 +41,15 @@ class RowCount:
 
 
 @dataclass(frozen=True, slots=True)
+class FeatureCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        if self.value <= 0:
+            raise ValueError(f"feature count must be positive, got {self.value}")
+
+
+@dataclass(frozen=True, slots=True)
 class SourceRowIndex:
     value: int
 
