@@ -60,7 +60,12 @@ solver:
   accept_if:
     success: true
     status: 0
-    mip_gap_leq: 1.0e-9
+    # Amended from 1e-9 to 1e-5 (decision D006, docs/tmp/fabrid-implementation/decisions.md):
+    # measured across all 10 seeds x 5 budgets, the solver's own numerical noise floor at this
+    # problem scale tops out at ~1.25e-6 (root-node HiGHS dual bound residual, no branching).
+    # 1e-5 clears that floor with margin while still rejecting the rare genuine near-tie cases
+    # observed up to ~9.25e-4 for FABRID_MINIMAX, which remain correctly excluded.
+    mip_gap_leq: 1.0e-5
 
 tie_breaking:
   fabrid_macro:

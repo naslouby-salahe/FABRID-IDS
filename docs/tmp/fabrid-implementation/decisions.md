@@ -93,6 +93,51 @@ required (section 98, ablation #9: "raw-utility vs conservative-utility FABRID")
 experiment invented to explain away F002, and turns F002 from a bare anomaly into a documented,
 literature-grounded, empirically-tested finding.
 
+## D006 — F001 root cause was not solve time; raise `accept_if.mip_gap_leq` from 1e-9 to 1e-5 (evidence-based)
+
+Follow-up to D004. Empirical test: re-ran `run_seed_at_budget` at budget=0.02 (10/10 `FABRID_MACRO`
+invalid before D004) with the new 300s time_limit — still invalid, but solved in 3-4s, nowhere near
+the time limit. Direct inspection of `scipy.optimize.milp`'s result showed `mip_node_count=1` on every
+sampled seed x budget combination. `mip_node_count=1` means HiGHS solved at the LP-relaxation root —
+no branch-and-bound exploration happened at all. So D004's premise (the solver needs more wall-clock
+time to branch further) was wrong; time_limit=300 is kept as a harmless increase but is not the fix.
+
+**First hypothesis tested and disproven.** Initially hypothesized (Multiple-Choice Knapsack Problem
+theory: MCKP LP relaxations have at most one fractional variable at optimum) that the LP relaxation
+of this problem is already integral, making the residual `mip_gap` pure floating-point noise, and
+implemented an alternate "LP-relaxation-integrality" optimality proof in `solve_milp`. Directly tested
+against real seed-0 data: the raw LP relaxation is **not** integral (up to 0.30 fractional deviation on
+2 variables). That theory is false for this problem instance and the code implementing it was reverted.
+
+**Real evidence, gathered directly** (`/tmp/gap_measure.py`, `/tmp/gap_measure_minimax.py`, ad-hoc
+diagnostics, not committed): measured the actual `mip_gap` HiGHS reports across all 10 seeds x 5
+budgets (0.001/0.0025/0.005/0.01/0.02), for both `FABRID_MACRO` and `FABRID_MINIMAX`, at
+`time_limit=30s` (well above the 3-4s observed solve time).
+
+- `FABRID_MACRO` (50 cells): every non-zero gap falls in `[9.4e-9, 1.25e-6]`. Max observed: `1.2476e-06`.
+  Distribution is a tight cluster consistent with LP dual-bound floating-point noise at this
+  1863-variable, double-precision scale — not evidence of a better integer solution existing.
+- `FABRID_MINIMAX` (50 cells): same noise cluster (`<= 2.5e-6`) for 48/50 cells, plus two genuine
+  outliers — seed 3/budget 0.001 (`9.25e-4`) and seed 7/budget 0.0025 (`2.14e-4`) — roughly 100-1000x
+  larger than the noise cluster. `FABRID_MINIMAX`'s two-stage epigraph formulation (maximize worst-case
+  utility, then minimize budget subject to fixing it) legitimately produces near-degenerate ties that
+  the noise-floor explanation does not cover for these two cells.
+
+**Decision.** Raise `solver.accept_if.mip_gap_leq` in `protocol.yaml` from `1e-9` to `1e-5`: three
+orders of magnitude above the measured noise ceiling (`1.25e-6`), enough to absorb solver numerical
+noise with margin, but still two orders of magnitude below the two genuine `FABRID_MINIMAX` near-tie
+outliers (`2.14e-4`, `9.25e-4`), which remain correctly `SOLVER_INVALID` and excluded per protocol —
+this is not a blanket loosening that would also swallow real optimization ambiguity. This is a
+disclosed, evidence-based protocol amendment (this decision + the measured gap distributions above),
+not a silent tolerance weakening; `mip_rel_gap=0` (the solver's own internal target) stays untouched,
+only the acceptance bar for treating a solve as certified-optimal moves to reflect where the actual
+double-precision noise floor sits for this problem scale. `src/fabrid/optimization/milp.py` is
+reverted to its original simple form (gap-only acceptance; no LP-relaxation branch).
+
+Re-measurement across the full 5-budget x 10-seed sweep against real trained data (via
+`run_seed_at_budget`, not the ad-hoc diagnostics above) is required to confirm the practical
+`SOLVER_INVALID` rate after this change; see `state.md` for the follow-up sweep.
+
 ## D002 — CIC IoT-DIAD 2024 not available; external replication provisionally BLOCKED_EXTERNAL
 
 `datp-shared-data/raw` contains `CIC_IOT_Dataset2023` (a different, earlier CIC dataset) but not
