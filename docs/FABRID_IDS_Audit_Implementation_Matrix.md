@@ -61,18 +61,18 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | SPLIT-002 | 25 | Exact per-client split counts match published table | table in section 25 | VERIFIED | VERIFIED | `tests/data/test_partitioner.py:test_benign_split_matches_roadmap_table` | reproduces all 9 rows exactly from raw benign_rows n |
 | SPLIT-003 | 26 | Attack split `j_a = floor(0.2 n_a)` -> ATTACK_VALIDATION/ATTACK_TEST per client×subtype | | VERIFIED | VERIFIED | `src/fabrid/data/partitioner.py:compute_attack_split_boundary`, `tests/data/test_partitioner.py` | boundary arithmetic verified; per-client×subtype application to real data pending Phase 2 ingestion wiring |
 | SPLIT-004 | 28 | `D_select ∩ D_final_cal = ∅` (allocation/calibration partition disjointness) | | PARTIAL | PARTIAL | `tests/data/test_partitioner.py:test_benign_split_exclusivity_and_coverage` | boundary-level exclusivity proven by construction (half-open intervals cover [0,n) exactly once); full T01 duplicate-sample_id test against real ingested data still pending |
-| PREPROCESS-001 | 18 | FABRID-IDS's own frozen preprocessing/training-rule/architecture/hyperparameters, implemented standalone (no inheritance from an external research stack) | | MISSING | NOT_AUDITED | | see decision D001 (superseded); implement directly in `fabrid`/detector substrate module, not via an external project dependency |
+| PREPROCESS-001 | 18 | FABRID-IDS's own frozen preprocessing/training-rule/architecture/hyperparameters, implemented standalone (no inheritance from an external research stack) | | VERIFIED | VERIFIED | `src/fabrid/data/preprocessing.py` (TRAIN-only z-score scaler), `src/fabrid/detector/model.py` + `training.py` (fixed autoencoder + FedAvg), `src/fabrid/config/detector.yaml` (frozen hyperparameters) | see decision D003; fully standalone, no external dependency |
 | ARCH-004 | 18 | No scientific or runtime dependency on any external federated-learning research codebase (e.g. DATP); FABRID-IDS is standalone | | VERIFIED | VERIFIED | `grep -rni datp src tests pyproject.toml` returns no matches | re-check at every future dependency addition and at final hostile audit |
 
 ## TRAIN-* / MODEL-003 (standalone detector substrate)
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| TRAIN-001 | 64,109 Phase 3 | Exactly 10 detector seeds {0..9} trained, no seed removal for poor performance | MISSING | NOT_AUDITED | | detector training implemented standalone within `fabrid` (no external stack dependency); not yet written |
-| TRAIN-002 | 19 | Persist model/scaler/config/hashes per seed | MISSING | NOT_AUDITED | | |
-| MODEL-003 | 18 | Detector trained exactly once per dataset x seed and frozen before any policy branching (no per-policy retraining or fine-tuning) | | MISSING | NOT_AUDITED | | enforced by `fabrid/scoring` reading persisted score artifacts only; `fabrid/allocation` must never import a trainer (ARCH-002) |
+| TRAIN-001 | 64,109 Phase 3 | Exactly 10 detector seeds {0..9} trained, no seed removal for poor performance | PARTIAL | PARTIAL | `src/fabrid/config/detector.py:load_detector_seeds` returns the frozen 10-seed list; `scripts/run_seed_training.py` trains one seed at a time | full 10-seed real run not yet executed/persisted |
+| TRAIN-002 | 19 | Persist model/scaler/config/hashes per seed | PARTIAL | PARTIAL | `scripts/run_seed_training.py` persists per-client `ScoreArtifact`s + a sha256 manifest | model/scaler state itself not yet separately persisted (only its scoring output); not yet run at full scale |
+| MODEL-003 | 18 | Detector trained exactly once per dataset x seed and frozen before any policy branching (no per-policy retraining or fine-tuning) | | VERIFIED | VERIFIED | `scripts/run_seed_training.py` trains once then calls `generate_score_artifact` per client; `fabrid/allocation/*` never import `detector.training` | verified by import-graph construction, not yet by a dedicated grep-based audit test |
 | SCORE-003 | 89 | Identical persisted anomaly scores consumed by every policy at a given dataset x seed x client x split coordinate (`score_sha256` equality) | | MISSING | NOT_AUDITED | | `fabrid/audit/score_identity.py` (T07); scores generated once, policies only read |
-| ARCH-005 | 88 | Policy branching (EQ_FPR/GREEDY/FABRID_MACRO/FABRID_MINIMAX/POOLED_SHARED/TEST_ORACLE) occurs only downstream of frozen score generation; no policy triggers rescoring | | PARTIAL | PARTIAL | `src/fabrid/allocation/*` take `ClientUtilityCurve`/scores as pure inputs, never a trainer or score-generation handle | consistent by construction in code written so far; re-verify once scoring pipeline lands |
+| ARCH-005 | 88 | Policy branching (EQ_FPR/GREEDY/FABRID_MACRO/FABRID_MINIMAX/POOLED_SHARED/TEST_ORACLE) occurs only downstream of frozen score generation; no policy triggers rescoring | | VERIFIED | VERIFIED | `src/fabrid/scoring/score_generation.py:generate_score_artifact` is the sole score-producing entry point; `src/fabrid/allocation/*` take `ClientUtilityCurve`/`Allocation` as pure inputs and never import `detector.training` or `scoring.score_generation` | scoring pipeline now exists (score_generation.py) and confirms the separation |
 
 ## CALIBRATION-*
 
@@ -197,8 +197,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| ARTIFACT-001 | 89 | Immutable score artifact per dataset×seed×client×split with exact minimum columns; persisted SHA-256 for artifact/model/preprocessing/split-manifest/feature-manifest/protocol; git commit recorded | MISSING | NOT_AUDITED | | `src/fabrid/schemas/score_artifact.py` |
-| ARTIFACT-002 | 93 | Primary result schema: exact column list (37 fields) per client-level result row | MISSING | NOT_AUDITED | | `src/fabrid/schemas/result.py` |
+| ARTIFACT-001 | 89 | Immutable score artifact per dataset×seed×client×split with exact minimum columns; persisted SHA-256 for artifact/model/preprocessing/split-manifest/feature-manifest/protocol; git commit recorded | PARTIAL | PARTIAL | `src/fabrid/schemas/score_artifact.py` (typed record + artifact sha256), `scripts/run_seed_training.py` (pickled persistence + manifest.json) | artifact-level sha256 done; model/preprocessing/split-manifest/feature-manifest/protocol sha256 and git-commit recording not yet wired into the persisted manifest |
+| ARTIFACT-002 | 93 | Primary result schema: exact column list per client-level result row | VERIFIED | VERIFIED | `src/fabrid/schemas/result.py:ResultRow`, `tests/schemas/test_result.py` | all roadmap-listed fields present as typed dataclass fields |
 | REPRO-001 | 94 | Reproducibility metadata: OS/Python/NumPy/SciPy/PyTorch/CUDA/GPU/CPU/RAM/solver version/git commit/dataset checksums/CLI/wall-clock/seeds | MISSING | NOT_AUDITED | | |
 | REPRO-002 | 109 Phase 24 | Clean-environment reproduction: install, acquire data, verify hashes, build manifests, reproduce >=1 seed end-to-end, reproduce all post-training allocation from frozen scores | MISSING | NOT_AUDITED | | final-stage requirement |
 
@@ -252,7 +252,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Requirement | Impl. | Verif. | Evidence |
 |---|---|---|---|---|---|
-| RESULT-001 | 93 | Every client-level result row has all 37 schema fields, no manually entered manuscript numbers | MISSING | NOT_AUDITED | |
+| RESULT-001 | 93 | Every client-level result row has all 37 schema fields, no manually entered manuscript numbers | PARTIAL | PARTIAL | `ResultRow` schema exists; nothing yet populates it from real experiment runs | population/generation from real allocation+evaluation runs not yet implemented |
 | TABLE-001..006 | 95 | Tables 1-6 generated programmatically from artifacts | MISSING | NOT_AUDITED | |
 | FIGURE-001..007 | 96 | Figures 1-7 generated programmatically | MISSING | NOT_AUDITED | |
 | CLAIM-001 | 101 | Only pre-registered process claims made before results exist | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | no manuscript text written yet | |
