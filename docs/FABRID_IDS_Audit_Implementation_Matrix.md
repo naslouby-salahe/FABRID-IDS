@@ -89,7 +89,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 |---|---|---|---|---|---|---|
 | FRONTIER-001 | 35 | Client utility `u_{k,j} = mean over eligible subtypes of TPR_{k,a,j}` (subtype-averaged, not row-weighted) | MISSING | NOT_AUDITED | | `src/fabrid/frontier/utility.py` |
 | FRONTIER-002 | 36 | Eligibility guardrails: `n_attack_val>=200`, `>=2` eligible subtypes each `>=50` rows | MISSING | NOT_AUDITED | | `src/fabrid/frontier/builder.py` |
-| FRONTIER-003 | 37 | Fallback: ineligible client gets `alpha_k=min(B_FP,0.05)`, budget reserved before optimizing eligible clients; report `FallbackRate` | MISSING | NOT_AUDITED | | |
+| FRONTIER-003 | 37 | Fallback: ineligible client gets `alpha_k=min(B_FP,0.05)`, budget reserved before optimizing eligible clients; report `FallbackRate` | PARTIAL | PARTIAL | `src/fabrid/data/eligibility.py:fallback_rate`; `src/fabrid/allocation/equal_fpr.py` provides the alpha_k=min(B,alpha_max) computation | rate metric + fallback alpha formula both exist; the orchestration step that partitions clients into eligible/fallback sets and reserves budget before solving MACRO/MINIMAX is not yet written (needs `frontier/builder.py`) |
 | FRONTIER-004 | 63 | Conservative utility curve via one-sided 95% binomial LCB per subtype recall | MISSING | NOT_AUDITED | | `src/fabrid/frontier/conservative.py` |
 | FRONTIER-005 | 62 | 500 allocation-sensitivity replicates resampling BENIGN_FRONTIER + ATTACK_VALIDATION (within-subtype), report modal/median/5th/95th pct alpha and Instability_k | MISSING | NOT_AUDITED | | `src/fabrid/frontier/stability.py` |
 
@@ -107,26 +107,26 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| FABRID-MACRO-001 | 38 | Exact MILP formulation: one-hot per client, cost `w_k*alpha_j`, maximize mean utility over eligible clients s.t. budget | | MISSING | NOT_AUDITED | | `src/fabrid/allocation/fabrid_macro.py` |
-| FABRID-MINIMAX-001 | 39 | Two-stage: maximize min utility (`z`), then fix `z>=z*-1e-9` and maximize macro utility | | MISSING | NOT_AUDITED | | `src/fabrid/allocation/fabrid_minimax.py` |
-| OPTIMIZATION-001 | 41 | Solver = `scipy.optimize.milp`, integrality=1, bounds=[0,1], mip_rel_gap=0, time_limit=60s; accept only if success & status==0 & gap<=1e-9, else `SOLVER_INVALID` | | MISSING | NOT_AUDITED | | `src/fabrid/optimization/milp.py` |
-| OPTIMIZATION-002 | 42 | Deterministic tie-breaking sequential-solve procedures for MACRO and MINIMAX exactly as specified | | MISSING | NOT_AUDITED | | `src/fabrid/optimization/lexicographic.py` |
-| OPTIMIZATION-003 | T11 | Brute-force parity: 3 clients x 4 candidates (64 allocations) MILP == brute force optimum | | MISSING | NOT_AUDITED | | `src/fabrid/optimization/verifier.py` + test |
-| OPTIMIZATION-004 | T12 | Determinism: 100/100 identical solves | | MISSING | NOT_AUDITED | | |
-| OPTIMIZATION-005 | T13 | `B=0` -> all `alpha_k=0` | | MISSING | NOT_AUDITED | | |
-| OPTIMIZATION-006 | T14 | `K=1` reduces to single feasible point selection | | MISSING | NOT_AUDITED | | |
-| OPTIMIZATION-007 | T15 | Identical utility curves + equal weights -> no unexplained FABRID advantage over equal allocation | | MISSING | NOT_AUDITED | | |
-| OPTIMIZATION-008 | T16 | Increasing B never makes previous optimum infeasible; optimal utility nondecreasing in B | | MISSING | NOT_AUDITED | | |
+| FABRID-MACRO-001 | 38 | Exact MILP formulation: one-hot per client, cost `w_k*alpha_j`, maximize mean utility over eligible clients s.t. budget | | VERIFIED | VERIFIED | `src/fabrid/allocation/fabrid_macro.py`, `tests/allocation/test_fabrid_macro.py` | brute-force parity + 100x determinism pass |
+| FABRID-MINIMAX-001 | 39 | Two-stage: maximize min utility (`z`), then fix `z>=z*-1e-9` and maximize macro utility | | VERIFIED | VERIFIED | `src/fabrid/allocation/fabrid_minimax.py`, `tests/allocation/test_fabrid_minimax.py` | brute-force parity + 100x determinism pass |
+| OPTIMIZATION-001 | 41 | Solver = `scipy.optimize.milp`, integrality=1, bounds=[0,1], mip_rel_gap=0, time_limit=60s; accept only if success & status==0 & gap<=1e-9, else `SOLVER_INVALID` | | VERIFIED | VERIFIED | `src/fabrid/optimization/milp.py` | exercised transitively by all FABRID_MACRO/MINIMAX tests |
+| OPTIMIZATION-002 | 42 | Deterministic tie-breaking sequential-solve procedures for MACRO and MINIMAX exactly as specified | | VERIFIED | VERIFIED | implemented inline in `fabrid_macro.py`/`fabrid_minimax.py` via `fabrid/allocation/formulation.py` helpers (no separate `optimization/lexicographic.py` file — the sequential-solve logic is policy-specific, not a generic reusable lexicographic solver) | 100x determinism tests pass for both policies |
+| OPTIMIZATION-003 | T11 | Brute-force parity: 3 clients x 4 candidates (64 allocations) MILP == brute force optimum | | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_brute_force_parity_three_clients_four_candidates`, `tests/allocation/test_fabrid_minimax.py::test_brute_force_parity_worst_client_objective` | no separate `optimization/verifier.py`; brute-force comparison lives in the test files directly |
+| OPTIMIZATION-004 | T12 | Determinism: 100/100 identical solves | | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_determinism_100_repeated_solves`, `tests/allocation/test_fabrid_minimax.py::test_determinism_100_repeated_solves` | |
+| OPTIMIZATION-005 | T13 | `B=0` -> all `alpha_k=0` | | VERIFIED | VERIFIED | `test_zero_budget_allocates_nothing` in both `test_fabrid_macro.py` and `test_fabrid_minimax.py` | |
+| OPTIMIZATION-006 | T14 | `K=1` reduces to single feasible point selection | | VERIFIED | VERIFIED | `test_single_client_reduces_to_best_affordable_point` in `test_fabrid_macro.py` | |
+| OPTIMIZATION-007 | T15 | Identical utility curves + equal weights -> no unexplained FABRID advantage over equal allocation | | VERIFIED | VERIFIED | `test_equal_utility_curves_no_unexplained_advantage` in `test_fabrid_macro.py` | |
+| OPTIMIZATION-008 | T16 | Increasing B never makes previous optimum infeasible; optimal utility nondecreasing in B | | VERIFIED | VERIFIED | `test_monotone_budget_feasibility` in `test_fabrid_macro.py` | |
 
 ## BASELINE-*
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
 | BASELINE-001 | 43 | `EQ_FPR`: alpha_k = B_FP for all k | MISSING | NOT_AUDITED | | `src/fabrid/allocation/equal_fpr.py` |
-| BASELINE-002 | 44 | `GREEDY`: marginal-efficiency incremental allocation with exact 4-level tie order | MISSING | NOT_AUDITED | | `src/fabrid/allocation/greedy.py` |
-| BASELINE-003 | 45 | `EQ_ALERT`: max constant budget share c s.t. sum min(c,0.05 w_k)<=B; conditional/only for unequal weights | MISSING | NOT_AUDITED | | `src/fabrid/allocation/equal_alert.py` |
-| BASELINE-004 | 46 | `POOLED_SHARED`: pool validation scores, one global absolute cutoff maximizing validation Macro Recall under budget; explicitly non-federated/non-deployable | MISSING | NOT_AUDITED | | `src/fabrid/allocation/pooled_shared.py` |
-| BASELINE-005 | 47 | `TEST_ORACLE`: same discrete problem using TEST attack utility; isolated module, never enters hypothesis tests/hyperparameter/budget/success decisions | MISSING | NOT_AUDITED | | `src/fabrid/allocation/test_oracle.py`; must be structurally isolated per GATE T02/T-blind |
+| BASELINE-002 | 44 | `GREEDY`: marginal-efficiency incremental allocation with exact 4-level tie order | VERIFIED | VERIFIED | `src/fabrid/allocation/greedy.py`, `tests/allocation/test_greedy.py` | |
+| BASELINE-003 | 45 | `EQ_ALERT`: max constant budget share c s.t. sum min(c,0.05 w_k)<=B; conditional/only for unequal weights | VERIFIED | VERIFIED | `src/fabrid/allocation/equal_alert.py`, `tests/allocation/test_equal_alert.py` | rejects equal-weight calls rather than silently degenerating to EQ_FPR |
+| BASELINE-004 | 46 | `POOLED_SHARED`: pool validation scores, one global absolute cutoff maximizing validation Macro Recall under budget; explicitly non-federated/non-deployable | VERIFIED | VERIFIED | `src/fabrid/allocation/pooled_shared.py`, `tests/allocation/test_pooled_shared.py` | |
+| BASELINE-005 | 47 | `TEST_ORACLE`: same discrete problem using TEST attack utility; isolated module, never enters hypothesis tests/hyperparameter/budget/success decisions | VERIFIED | VERIFIED | `src/fabrid/allocation/test_oracle.py`, `tests/allocation/test_test_oracle.py` | gated by explicit `OracleAccessToken`; not wired into any default execution path (none exists yet) |
 
 ## METRIC-* / GENERALIZATION-* / STABILITY-*
 
