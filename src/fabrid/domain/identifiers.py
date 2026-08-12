@@ -8,13 +8,17 @@ _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{7,40}$")
 
 
+def _require_text(name: str, value: str) -> None:
+    if not value.strip():
+        raise ValueError(f"{name} must not be empty")
+
+
 @dataclass(frozen=True, slots=True)
 class ClientId:
     value: str
 
     def __post_init__(self) -> None:
-        if not self.value.strip():
-            raise ValueError("client id must not be empty")
+        _require_text("client id", self.value)
 
     def __str__(self) -> str:
         return self.value
@@ -25,8 +29,7 @@ class AttackSubtypeId:
     value: str
 
     def __post_init__(self) -> None:
-        if not self.value.strip():
-            raise ValueError("attack subtype id must not be empty")
+        _require_text("attack subtype id", self.value)
 
     def __str__(self) -> str:
         return self.value
@@ -37,8 +40,18 @@ class SampleId:
     value: str
 
     def __post_init__(self) -> None:
-        if not self.value.strip():
-            raise ValueError("sample id must not be empty")
+        _require_text("sample id", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class SourceFileId:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_text("source file id", self.value)
 
     def __str__(self) -> str:
         return self.value
