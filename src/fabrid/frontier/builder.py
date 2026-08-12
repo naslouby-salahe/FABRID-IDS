@@ -56,6 +56,31 @@ class FederationFrontier:
         }
 
 
+def restrict_to_subtypes(
+    inputs: ClientFrontierInputs, subtypes: frozenset[AttackSubtype]
+) -> ClientFrontierInputs:
+    """A `ClientFrontierInputs` restricted to a subset of attack subtypes (e.g. one
+    attack-subtype-disjoint fold's validation subtypes), for generalization runs. Eligibility
+    guardrails then apply to only the restricted row counts.
+    """
+    return ClientFrontierInputs(
+        benign_frontier_scores=inputs.benign_frontier_scores,
+        subtype_validation_row_counts={
+            subtype: count
+            for subtype, count in inputs.subtype_validation_row_counts.items()
+            if subtype in subtypes
+        },
+        subtype_confusion_by_candidate=tuple(
+            {
+                subtype: counts
+                for subtype, counts in candidate_confusion.items()
+                if subtype in subtypes
+            }
+            for candidate_confusion in inputs.subtype_confusion_by_candidate
+        ),
+    )
+
+
 def _build_client_frontier(
     client_id: ClientId,
     inputs: ClientFrontierInputs,

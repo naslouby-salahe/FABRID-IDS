@@ -5,7 +5,11 @@ import pytest
 
 from fabrid.config.protocol import UtilityEligibilityGuardrails
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
-from fabrid.frontier.builder import ClientFrontierInputs, build_federation_frontier
+from fabrid.frontier.builder import (
+    ClientFrontierInputs,
+    build_federation_frontier,
+    restrict_to_subtypes,
+)
 from fabrid.frontier.utility import SubtypeConfusionCounts
 
 _GRID = (0.0, 0.01, 0.02)
@@ -96,3 +100,22 @@ def test_candidate_count_mismatch_rejected() -> None:
     )
     with pytest.raises(ValueError):
         build_federation_frontier({ClientId("1"): inputs}, _GRID, _GUARDRAILS)
+
+
+def test_restrict_to_subtypes_filters_row_counts_and_candidates() -> None:
+    inputs = _eligible_client_inputs()
+    restricted = restrict_to_subtypes(inputs, frozenset({AttackSubtype("scan")}))
+
+    assert set(restricted.subtype_validation_row_counts) == {AttackSubtype("scan")}
+    for candidate in restricted.subtype_confusion_by_candidate:
+        assert set(candidate) == {AttackSubtype("scan")}
+    assert restricted.benign_frontier_scores is inputs.benign_frontier_scores
+
+
+def test_restrict_to_subtypes_can_yield_no_subtypes() -> None:
+    inputs = _eligible_client_inputs()
+    restricted = restrict_to_subtypes(inputs, frozenset({AttackSubtype("nonexistent")}))
+
+    assert restricted.subtype_validation_row_counts == {}
+    for candidate in restricted.subtype_confusion_by_candidate:
+        assert candidate == {}
