@@ -107,3 +107,30 @@ measured and could be substantial if many coordinates need the full 60s per solv
    candidates bound simultaneously and could solve faster/more reliably — untested assumption.
 3. Evaluate the roadmap's practical success gates (section 72) honestly against whatever n survives.
 4. Tables/figures generation, reproduction audit, once (1)-(3) are settled.
+
+## Blocked external dataset acquisition — download info (2026-08-12)
+
+**CIC IoT-DIAD 2024** (EXTERNAL-001, §74-79): 105-device IoT topology, 33 attacks, 7 categories
+(DDoS/DoS/Recon/Web-based/Brute Force/Spoofing/Mirai), CSV format.
+- Official page: https://www.unb.ca/cic/datasets/iot-diad-2024.html
+- UNB CIC dataset index: https://www.unb.ca/cic/datasets/index.html
+- Associated paper: "Device Identification and Anomaly Detection in IoT Environments", IEEE Internet
+  of Things Journal, Dec 2024.
+- UNB CIC datasets typically require a request form (name/institution/email) before a download link
+  is issued — not a direct anonymous download.
+
+**Gotham Dataset 2025** (EVENT-001, §81): 78 emulated IoT devices, MQTT/CoAP/RTSP, PCAP format,
+Mirai full kill-chain (scan/brute-force/infect/flood) + DoS/Telnet brute force/CoAP amplification.
+- Zenodo (direct download): https://zenodo.org/records/14502760 (DOI 10.5281/zenodo.14502760)
+- Paper: arXiv:2502.03134 — https://arxiv.org/abs/2502.03134
+- Packet labeller tool: https://github.com/othmbela/gotham-network-packet-labeller
+
+**CICIoMT2024** (alternative/companion event-level candidate, healthcare IoMT, multi-protocol
+WiFi/MQTT): 
+- Official page: https://www.unb.ca/cic/datasets/iomt-dataset-2024.html
+- IEEE DataPort mirror: https://ieee-dataport.org/documents/ciciomt2024wifimqtt (DOI
+  10.21227/tq0p-ag21)
+- Paper (ScienceDirect): https://www.sciencedirect.com/science/article/pii/S2542660524002920
+
+Not yet verified: exact file sizes, whether IoT-DIAD/IoMT UNB downloads are gated behind a request
+form (likely, per CIC's usual process) vs. direct link. User will acquire manually.
