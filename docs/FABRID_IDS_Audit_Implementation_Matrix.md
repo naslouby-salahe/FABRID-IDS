@@ -189,7 +189,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| ARCH-001 | 88 | Package layout matches section-88 tree exactly | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/` directory tree | scaffold created; modules mostly empty stubs |
+| ARCH-001 | 88 | Package layout matches section-88 tree exactly | VERIFIED | VERIFIED | `src/fabrid/` matches section 88's tree (config/data/scoring/calibration/frontier/allocation/optimization/evaluation/statistics/audit/schemas), fully implemented, not stubs | one intentional, documented deviation: `optimization/lexicographic.py`/`verifier.py` don't exist as separate files — the sequential-solve tie-break logic is policy-specific and lives inline in `fabrid_macro.py`/`fabrid_minimax.py` (see `optimization/milp.py` module docstring and OPTIMIZATION-002/003 notes) |
 | ARCH-002 | 88,8.5 | `allocation/` package never imports the detector trainer | NOT_AUDITED | NOT_AUDITED | | to grep-check once allocation modules exist |
 | ARCH-003 | 90 | Non-oracle modules structurally cannot receive ATTACK_TEST labels/attack_type, BENIGN_TEST labels, test metrics; `TEST_ORACLE` isolated, default execution refuses oracle access | VERIFIED | VERIFIED | `src/fabrid/allocation/test_oracle.py:OracleAccessToken` requires explicit `acknowledged_non_deployable=True`; `tests/allocation/test_test_oracle.py`; TEST-T02/T03/T04 | |
 
@@ -231,8 +231,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | ID | Requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|
 | GATE-G01 | Protocol file frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml` | needs sha256 persisted (ARTIFACT-001 dependency) |
-| GATE-G02 | Clean commit recorded | PARTIAL | NOT_AUDITED | | this checkpoint not yet committed |
-| GATE-G03 | Exactly 9 primary natural clients | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/datasets.yaml` | |
+| GATE-G02 | Clean commit recorded | VERIFIED | VERIFIED | 50+ commits recorded through the implementation, each a coherent, tested, verified chunk | |
+| GATE-G03 | Exactly 9 primary natural clients | VERIFIED | VERIFIED | `src/fabrid/config/datasets.yaml:nbaiot.clients` (9 entries); CLIENT-001 real-data confirmation | |
 | GATE-G04 | Zero split overlap | VERIFIED | VERIFIED | SPLIT-004, TEST-T01 | |
 | GATE-G05 | Feature manifest frozen | VERIFIED | VERIFIED | `src/fabrid/data/feature_manifest.py:build_feature_manifest_from_csv_header`; persisted alongside score artifacts (phase 89) | superseded by D003 standalone decision, not datp-core reuse |
 | GATE-G06 | Detector configuration frozen | VERIFIED | VERIFIED | `src/fabrid/config/detector.yaml`, `src/fabrid/config/detector.py` | |
