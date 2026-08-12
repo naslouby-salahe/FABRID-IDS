@@ -39,6 +39,12 @@ test-attack utility curves). Result: 120/120 tests, 0 ruff findings, 0 pyright e
 policies (EQ_FPR, GREEDY, FABRID_MACRO, FABRID_MINIMAX, POOLED_SHARED, TEST_ORACLE) plus the conditional
 EQ_ALERT baseline are now implemented.
 
+## Cycle 5 (frontier builder orchestration)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `frontier/builder.py`
+(`ClientFrontierInputs`/`ClientFrontier`/`FederationFrontier`, eligible/fallback partitioning). Result:
+125/125 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
