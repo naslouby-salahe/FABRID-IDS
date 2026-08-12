@@ -10,8 +10,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from fabrid.evaluation.record_level import ClientId
+from fabrid.evaluation.record_level import ClientId, FprDispersion
 from fabrid.evaluation.workload import ClientUploadPayload, federation_upload_bytes
+from fabrid.experiments.generalization import RotationResult
+from fabrid.experiments.main_experiment import SeedBudgetResult
+from fabrid.schemas.allocation import AllocationPolicy
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,3 +144,115 @@ def dataset_population_row_from_score_artifacts(
         timestamp_provenance=timestamp_provenance,
         weight_evidence_level=weight_evidence_level,
     )
+
+
+@dataclass(frozen=True, slots=True)
+class MatchedBudgetRow:
+    """Table 3 — Matched-budget N-BaIoT."""
+
+    budget: float
+    policy: AllocationPolicy
+    macro_recall: float
+    worst_client_recall: float
+    mean_client_fpr: float
+    bur: float | None
+    max_client_fpr: float
+    cv_fpr: float | None
+
+
+def _mean(values: tuple[float, ...]) -> float:
+    return sum(values) / len(values)
+
+
+def build_table_3_matched_budget(
+    results_by_budget_and_policy: Mapping[
+        tuple[float, AllocationPolicy], tuple[SeedBudgetResult, ...]
+    ],
+    fpr_dispersion_by_budget_and_policy: Mapping[tuple[float, AllocationPolicy], FprDispersion],
+) -> tuple[MatchedBudgetRow, ...]:
+    """One row per (budget, policy), each metric averaged across every seed present in
+    `results_by_budget_and_policy` for that cell (seeds where the policy was `SOLVER_INVALID` at
+    that budget are simply absent from the corresponding `SeedBudgetResult`s' per-policy dicts —
+    the caller controls which seeds/results are passed in; this function does not itself know
+    about exclusion). `MeanClientFPR`/`MaxClientFPR`/`CV_FPR` come from a separately-supplied
+    `FprDispersion` per cell (built from real per-client FPR values via
+    `evaluation.record_level.fpr_dispersion`), since `SeedBudgetResult` only carries the
+    federation-aggregate FPR, not the full per-client distribution.
+    """
+    rows: list[MatchedBudgetRow] = []
+    for (budget, policy), results in results_by_budget_and_policy.items():
+        macro_recalls = tuple(
+            r.macro_recall_by_policy[policy] for r in results if policy in r.macro_recall_by_policy
+        )
+        worst_recalls = tuple(
+            r.worst_client_recall_by_policy[policy]
+            for r in results
+            if policy in r.worst_client_recall_by_policy
+        )
+        burs = tuple(
+            bur_value for r in results if (bur_value := r.bur_by_policy.get(policy)) is not None
+        )
+        if not macro_recalls or not worst_recalls:
+            raise ValueError(f"no non-excluded seed results for (budget={budget}, policy={policy})")
+
+        dispersion = fpr_dispersion_by_budget_and_policy[(budget, policy)]
+        rows.append(
+            MatchedBudgetRow(
+                budget=budget,
+                policy=policy,
+                macro_recall=_mean(macro_recalls),
+                worst_client_recall=_mean(worst_recalls),
+                mean_client_fpr=dispersion.median,
+                bur=_mean(burs) if burs else None,
+                max_client_fpr=dispersion.maximum,
+                cv_fpr=dispersion.coefficient_of_variation,
+            )
+        )
+    return tuple(rows)
+
+
+@dataclass(frozen=True, slots=True)
+class AttackSubtypeDisjointRow:
+    """Table 4 — Attack-subtype-disjoint."""
+
+    rotation_label: str
+    policy: AllocationPolicy
+    macro_recall: float
+    worst_client_recall: float
+    bur: float
+
+
+def build_table_4_attack_subtype_disjoint(
+    results_by_rotation_and_policy: Mapping[
+        tuple[str, AllocationPolicy], tuple[RotationResult, ...]
+    ],
+) -> tuple[AttackSubtypeDisjointRow, ...]:
+    """One row per (rotation, policy), each metric averaged across every seed's
+    `RotationResult` present for that cell (a policy `SOLVER_INVALID` at a given seed is simply
+    absent from that `RotationResult`'s per-policy dicts, same exclusion convention as Table 3).
+    """
+    rows: list[AttackSubtypeDisjointRow] = []
+    for (rotation_label, policy), results in results_by_rotation_and_policy.items():
+        macro_recalls = tuple(
+            r.macro_recall_by_policy[policy] for r in results if policy in r.macro_recall_by_policy
+        )
+        worst_recalls = tuple(
+            r.worst_client_recall_by_policy[policy]
+            for r in results
+            if policy in r.worst_client_recall_by_policy
+        )
+        burs = tuple(r.bur_by_policy[policy] for r in results if policy in r.bur_by_policy)
+        if not macro_recalls or not worst_recalls or not burs:
+            raise ValueError(
+                f"no non-excluded seed results for (rotation={rotation_label}, policy={policy})"
+            )
+        rows.append(
+            AttackSubtypeDisjointRow(
+                rotation_label=rotation_label,
+                policy=policy,
+                macro_recall=_mean(macro_recalls),
+                worst_client_recall=_mean(worst_recalls),
+                bur=_mean(burs),
+            )
+        )
+    return tuple(rows)

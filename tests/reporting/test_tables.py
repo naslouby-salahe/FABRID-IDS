@@ -2,14 +2,19 @@ from __future__ import annotations
 
 import pytest
 
-from fabrid.evaluation.record_level import ClientId
+from fabrid.evaluation.record_level import ClientId, FprDispersion
+from fabrid.experiments.generalization import RotationResult
+from fabrid.experiments.main_experiment import SeedBudgetResult
 from fabrid.reporting.tables import (
     DatasetPopulationRow,
     SystemOverheadRow,
     build_table_2_dataset_populations,
+    build_table_3_matched_budget,
+    build_table_4_attack_subtype_disjoint,
     build_table_6_system_overhead,
     dataset_population_row_from_score_artifacts,
 )
+from fabrid.schemas.allocation import AllocationPolicy
 
 _ALPHA_GRID_SIZE = 207
 
@@ -116,4 +121,91 @@ def test_build_table_6_missing_measurement_raises() -> None:
             measured_allocation_runtime_seconds={},
             measured_peak_memory_bytes={9: 1},
             measured_response_bytes={9: 1},
+        )
+
+
+def _seed_budget_result(
+    seed: int, macro: float, worst: float, bur: float | None
+) -> SeedBudgetResult:
+    return SeedBudgetResult(
+        seed=seed,
+        budget=0.01,
+        fallback_rate=0.0,
+        macro_recall_by_policy={AllocationPolicy.EQ_FPR: macro},
+        worst_client_recall_by_policy={AllocationPolicy.EQ_FPR: worst},
+        bur_by_policy={AllocationPolicy.EQ_FPR: bur},
+    )
+
+
+def test_build_table_3_averages_across_seeds() -> None:
+    results = (
+        _seed_budget_result(0, macro=0.8, worst=0.6, bur=1.0),
+        _seed_budget_result(1, macro=0.6, worst=0.4, bur=1.2),
+    )
+    dispersion = FprDispersion(
+        median=0.01, iqr=0.002, minimum=0.005, maximum=0.02, coefficient_of_variation=0.3
+    )
+    rows = build_table_3_matched_budget(
+        {(0.01, AllocationPolicy.EQ_FPR): results},
+        {(0.01, AllocationPolicy.EQ_FPR): dispersion},
+    )
+    assert len(rows) == 1
+    row = rows[0]
+    assert row.macro_recall == pytest.approx(0.7)
+    assert row.worst_client_recall == pytest.approx(0.5)
+    assert row.bur == pytest.approx(1.1)
+    assert row.max_client_fpr == pytest.approx(0.02)
+    assert row.cv_fpr == pytest.approx(0.3)
+
+
+def test_build_table_3_handles_none_bur_at_zero_budget() -> None:
+    results = (_seed_budget_result(0, macro=0.8, worst=0.6, bur=None),)
+    dispersion = FprDispersion(
+        median=0.0, iqr=0.0, minimum=0.0, maximum=0.0, coefficient_of_variation=None
+    )
+    rows = build_table_3_matched_budget(
+        {(0.0, AllocationPolicy.EQ_FPR): results},
+        {(0.0, AllocationPolicy.EQ_FPR): dispersion},
+    )
+    assert rows[0].bur is None
+
+
+def test_build_table_3_raises_when_all_seeds_excluded() -> None:
+    empty_result = SeedBudgetResult(seed=0, budget=0.01, fallback_rate=0.0)
+    dispersion = FprDispersion(
+        median=0.0, iqr=0.0, minimum=0.0, maximum=0.0, coefficient_of_variation=None
+    )
+    with pytest.raises(ValueError, match="no non-excluded"):
+        build_table_3_matched_budget(
+            {(0.01, AllocationPolicy.FABRID_MACRO): (empty_result,)},
+            {(0.01, AllocationPolicy.FABRID_MACRO): dispersion},
+        )
+
+
+def _rotation_result(macro: float, worst: float, bur: float) -> RotationResult:
+    return RotationResult(
+        macro_recall_by_policy={AllocationPolicy.EQ_FPR: macro},
+        worst_client_recall_by_policy={AllocationPolicy.EQ_FPR: worst},
+        bur_by_policy={AllocationPolicy.EQ_FPR: bur},
+    )
+
+
+def test_build_table_4_averages_across_seeds() -> None:
+    results = (
+        _rotation_result(macro=0.7, worst=0.5, bur=1.0),
+        _rotation_result(macro=0.5, worst=0.3, bur=1.4),
+    )
+    rows = build_table_4_attack_subtype_disjoint({("Rotation 0", AllocationPolicy.EQ_FPR): results})
+    assert len(rows) == 1
+    row = rows[0]
+    assert row.rotation_label == "Rotation 0"
+    assert row.macro_recall == pytest.approx(0.6)
+    assert row.bur == pytest.approx(1.2)
+
+
+def test_build_table_4_raises_when_all_seeds_excluded() -> None:
+    empty_result = RotationResult()
+    with pytest.raises(ValueError, match="no non-excluded"):
+        build_table_4_attack_subtype_disjoint(
+            {("Rotation 0", AllocationPolicy.FABRID_MACRO): (empty_result,)}
         )
