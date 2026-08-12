@@ -39,8 +39,10 @@ select = ["E", "F", "I", "UP", "B", "SIM", "N"]
 
 [tool.pyright]
 include = ["src", "tests"]
+extraPaths = ["src"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]

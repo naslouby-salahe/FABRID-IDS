@@ -2,10 +2,26 @@
 
 canonical roadmap path: `docs/FABRID-IDS Roadmap.md` (v2.0, protocol date 2026-08-12)
 current git commit (as of last update): 8eefad8 (pre-checkpoint; this chunk not yet committed)
-current roadmap phase: Phase 1 (Freeze protocol) complete; entering Phase 2 (dataset provenance)
-current requirement/group: DATASET-*, CLIENT-*, SPLIT-* (N-BaIoT partitioner + provenance)
+current roadmap phase: Phase 2 (dataset provenance) in progress — split-boundary arithmetic done,
+raw-data ingestion/provenance wiring not yet done
+current requirement/group: SPLIT-001..004 (boundary arithmetic) DONE; DATASET/CLIENT provenance wiring
+to `datp_core.data.nbaiot.NBaIoTReader` NEXT
 
-last completed major implementation chunk:
+last completed major implementation chunk (this entry):
+- `src/fabrid/data/partitioner.py`: pure index-arithmetic `compute_benign_split_boundaries` (i1/i2/i3
+  floor rule, section 24) and `compute_attack_split_boundary` (j_a floor rule, section 26), typed via
+  `BenignSplit`/`AttackSplit` StrEnums and frozen dataclasses with invariant validation in `__post_init__`.
+- `tests/data/test_partitioner.py`: 28 tests, including exact reproduction of all 9 published N-BaIoT
+  per-client split counts (roadmap section 25 table) — all pass. Also covers T01-style exclusivity/
+  coverage, zero-row and negative-n edge cases, out-of-range row rejection.
+- Confirmed `datp_core` is importable in this environment (`/home/naslouby/Projects/datp-core`, installed
+  as `datp-core` 0.1.0) and its `datp_core.data.nbaiot.NBaIoTReader` already preserves source row order
+  via `with_row_index` and attaches canonical device/attack-subtype columns from filename parsing — this
+  is the right reuse point for raw ingestion + provenance (decision D001 confirmed for the reader; still
+  need to check `datp_core.data.preprocessing` and `datp_core.detector` contracts before Phase 3).
+- ruff check/format clean on `src/` + `tests/`; pytest full run green (28/28).
+
+Previously completed (prior entry):
 - Phase 0 identity freeze (`src/fabrid/__init__.py`)
 - Phase 1 protocol freeze: `src/fabrid/config/protocol.yaml`, `src/fabrid/config/alpha_grid.json`
   (207 values, generated+verified via `src/fabrid/config/alpha_grid.py`), `src/fabrid/config/attack_folds.yaml`,
@@ -21,9 +37,11 @@ last verified major implementation chunk: none yet (no batched verification cycl
 generation script executed and count checked = 207)
 
 next implementation chunk:
-- Phase 2: N-BaIoT client inventory + canonical device/attack IDs + source-row provenance +
-  deterministic source-order benign/attack partitioner (`src/fabrid/data/partitioner.py`,
-  `src/fabrid/data/provenance.py`) with exclusivity tests (T01).
+- Phase 2 continued: wire `datp_core.data.nbaiot.NBaIoTReader` output (per-client LazyFrame with
+  `source_row_index`, canonical client/attack columns) through `compute_benign_split_boundaries`/
+  `compute_attack_split_boundary` to assign partition membership per row; persist a split manifest;
+  add `fabrid/data/provenance.py` for the score-artifact provenance columns (section 89) and
+  `fabrid/data/eligibility.py` for utility eligibility guardrails (section 36).
 - Reuse assessment: `/home/naslouby/Projects/datp-core` has a mature `datp_core.data.nbaiot` reader/
   materializer and `datp_core.detector` training/scoring/checkpoint stack, plus
   `datp_core.thresholds.calibration`. Per roadmap section 18 ("Where FABRID is implemented on the

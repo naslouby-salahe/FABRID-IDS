@@ -28,3 +28,21 @@
 
 Next: Phase 2 dataset provenance (partitioner + eligibility + exclusivity tests), after confirming
 exact reuse boundary with datp-core's N-BaIoT reader.
+
+## 2026-08-12 — Session 1 continued (Phase 2, split arithmetic)
+
+- Read `datp_core.data.nbaiot.reader.NBaIoTReader`: confirmed it preserves source row order
+  (`with_row_index`), attaches canonical `physical_client_id`, `attack_family`, `attack_subtype` columns
+  from filename parsing, and validates finite feature values. This is the correct reuse point for raw
+  N-BaIoT ingestion + provenance; `datp_core` package confirmed importable in this environment.
+- Implemented `src/fabrid/data/partitioner.py`: exact roadmap section 24/26 floor-boundary formulas as
+  typed, validated dataclasses (`BenignSplitBoundaries`, `AttackSplitBoundary`) with `BenignSplit`/
+  `AttackSplit` `StrEnum`s — no magic strings for split names.
+- Added `tests/data/test_partitioner.py` (28 tests): exact reproduction of all 9 roadmap-published
+  N-BaIoT per-client benign split counts (section 25), exclusivity/coverage sweeps across representative
+  n, zero/negative/out-of-range edge cases. All pass.
+- Ran batched verification: `ruff check`, `ruff format --check`, `pytest` — all clean/green.
+- Updated `pyproject.toml`: `tool.pytest.ini_options.pythonpath=["src"]`, `tool.pyright.extraPaths=["src"]`
+  so the src-layout package resolves for both tools without an editable install.
+
+Next: raw-data wiring (NBaIoTReader -> partitioner -> split manifest), provenance/eligibility modules.
