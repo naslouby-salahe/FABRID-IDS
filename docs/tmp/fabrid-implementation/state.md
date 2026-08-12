@@ -1,109 +1,86 @@
 # State
 
-canonical roadmap path: `docs/FABRID-IDS Roadmap.md` (v2.0, protocol date 2026-08-12; section 18 rewritten
-under decision D003 to make FABRID detector-agnostic/standalone — no other section changed)
-current git commit (as of last update): 9053bac (12 commits this session)
-current roadmap phase: Phase 7 (baselines), Phase 8-9 (FABRID_MACRO/FABRID_MINIMAX), and the
-POOLED_SHARED/TEST_ORACLE/EQ_ALERT policies are implemented and tested; Phase 2 (dataset
-provenance/ingestion) still not wired to real raw data; Phase 3 (detector training) now explicitly
-standalone per D003, not started
-current requirement/group: OPTIMIZATION-*, FABRID-MACRO-*, FABRID-MINIMAX-* DONE (brute-force parity +
-100x determinism verified); MODEL-003/SCORE-003/ARCH-004/ARCH-005 (standalone decoupling) added and
-largely satisfied by construction; NEXT is either (a) finish pyright cleanup on the optimizer chunk, or
-(b) start the standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 detector) since that is
-the next genuinely blocking gap before any real-data experiment can run
+canonical roadmap path: `docs/FABRID-IDS Roadmap.md` (v2.0, protocol date 2026-08-12; section 18
+rewritten under decision D003 to make FABRID detector-agnostic/standalone — no other section changed)
+current git commit: e87a91a (23 commits this session)
 
-## Course correction applied (decision D003)
+## Summary
 
-User explicitly required FABRID-IDS to be fully standalone with no scientific or runtime dependency on
-DATP. Applied:
-- `docs/FABRID-IDS Roadmap.md` section 18 rewritten: detector-agnostic pipeline diagram, explicit
-  "must not be presented as an extension/variant of any external codebase", detector substrate to be
-  implemented directly in FABRID-IDS.
-- Audit matrix: `PREPROCESS-001` reworded, `ARCH-004` (no external dependency, VERIFIED via grep),
-  `MODEL-003`, `SCORE-003`, `ARCH-005` added, `TRAIN-001/002` reworded, new "Standalone/decoupling audit"
-  cross-reference table added.
-- `decisions.md`: D001 marked superseded, `D003` records the correction and its rationale.
-- Verified via `grep -rni datp src tests pyproject.toml`: zero matches. No code changes were needed —
-  everything written so far (partitioner, calibration, evaluation metrics, allocation schemas, EQ_FPR,
-  GREEDY, MILP optimizer, FABRID_MACRO, FABRID_MINIMAX) was already dependency-free by construction.
-- This state.md file itself had drifted stale during the implementation sprint (kept accreting
-  "previously completed" blocks without consolidating); rewritten clean below.
+The entire FABRID decision layer plus a standalone detector substrate are implemented, unit-tested,
+and validated end-to-end against real N-BaIoT data. Fast suite: 193/193 tests (~5s). Integration suite
+(real data, marked `@pytest.mark.integration`, excluded by default): 18/18 tests (~60s). ruff and
+pyright both clean throughout. A smoke run of the complete pipeline (real ingestion -> partitioning ->
+per-client scaling -> FedAvg training -> scoring -> AUROC) on 3 real clients (subsampled to 400 rows)
+completed in 29.5s with plausible AUROC 0.91-1.00.
 
-## Consolidated implementation status (supersedes all prior entries in this file)
+## What is implemented (all with tests, all VERIFIED in the audit matrix where applicable)
 
-Implemented, tested, and passing as of this update (81/81 tests before the current optimizer chunk's
-final pyright cleanup; a few pyright-only findings remain open on the MILP/FABRID_MACRO/MINIMAX files,
-tests themselves all green):
+- Identity/protocol freeze, 207-point alpha grid (`config/`)
+- Typed canonical `Protocol` loader (`config/protocol.py`) — single source for all constants
+- Source-order split-boundary arithmetic, exact match to all 9 published N-BaIoT client counts
+  (`data/partitioner.py`)
+- Finite-sample order-statistic calibration + independent final calibration (`calibration/`)
+- Record-level metrics: MacroRecall, WorstClientRecall, FPR_fed, BUR/BVR, dispersion, Gini, H_U
+  heterogeneity (`evaluation/`)
+- Score contract (strict `>`, AUROC invariance) + immutable `ScoreArtifact` schema (`scoring/`,
+  `schemas/`)
+- Client utility curves, eligibility gate, fallback rate, frontier orchestration (`frontier/`,
+  `data/eligibility.py`)
+- All 6 primary policies + conditional EQ_ALERT: EQ_FPR, GREEDY, FABRID_MACRO, FABRID_MINIMAX,
+  POOLED_SHARED, TEST_ORACLE (`allocation/`) — MACRO/MINIMAX have brute-force parity + 100x-determinism
+  tests passing
+- Strict `scipy.optimize.milp` wrapper with `SOLVER_INVALID` rejection (`optimization/milp.py`)
+- Statistics: exact sign-flip test, paired bootstrap CI, Holm correction (`statistics/`)
+- Generic audit checks: T01 (partition exclusivity), T07/T08 (score+AUROC identity), T09/T10 (budget
+  invariants), T12 (determinism) (`audit/`)
+- **Standalone detector substrate** (new, per decision D003 — not inherited from any external stack):
+  - `data/nbaiot_reader.py`: real CSV ingestion, verified against all 9 real devices
+  - `data/feature_manifest.py`: frozen+hashed 115-feature manifest, verified identical across all 9
+    real devices
+  - `data/preprocessing.py`: TRAIN-only z-score `FeatureScaler`
+  - `detector/model.py`: fixed autoencoder, `reconstruction_error_scores`
+  - `detector/training.py`: FedAvg (local epochs + row-count-weighted averaging)
+  - `scoring/score_generation.py`: wires all of the above into `generate_score_artifact`
+  - `scripts/smoke_pipeline.py`: real-data end-to-end validation (not a confirmatory run)
 
-- Phase 0 identity freeze — `src/fabrid/__init__.py`
-- Phase 1 protocol freeze — `src/fabrid/config/{protocol.yaml,alpha_grid.json,attack_folds.yaml,
-  datasets.yaml}`, typed loader `src/fabrid/config/protocol.py` (`Protocol`/`BenignSplitFractions`/
-  `AttackSplitFraction`/`SolverSettings`, single canonical constants source)
-- Split-boundary arithmetic — `src/fabrid/data/partitioner.py` (`RowCount`/`RowIndex` NewTypes,
-  `BenignSplit`/`AttackSplit` StrEnums), verified against all 9 published N-BaIoT client counts
-- Finite-sample calibration — `src/fabrid/calibration/order_statistic.py`
-- Record-level evaluation metrics — `src/fabrid/evaluation/record_level.py` (MacroRecall,
-  WorstClientRecall, federation FPR, BUR/BVR, dispersion, Gini)
-- Allocation contracts — `src/fabrid/schemas/allocation.py` (`AllocationPolicy`, `ClientUtilityCurve`,
-  `AllocationDecision`, `Allocation`)
-- Baselines — `src/fabrid/allocation/{equal_fpr,greedy}.py`
-- MILP optimizer — `src/fabrid/optimization/milp.py` (strict accept/reject on success/status/mip_gap)
-- Shared MILP formulation helpers — `src/fabrid/allocation/formulation.py`
-- FABRID_MACRO / FABRID_MINIMAX — `src/fabrid/allocation/{fabrid_macro,fabrid_minimax}.py`, both with
-  brute-force parity tests (3 clients x 4 candidates) and 100x-repeated-solve determinism tests, both
-  passing
-- `scipy-stubs` installed (`pip install --break-system-packages scipy-stubs`) to get real typing for
-  `scipy.optimize`; `tool.pyright.reportMissingTypeStubs = false` added since scipy ships no inline stubs
+## What is NOT yet implemented
 
-Not yet implemented: dataset ingestion/provenance wiring to real raw N-BaIoT data, detector training
-substrate (now explicitly standalone, D003), score persistence/hashing, POOLED_SHARED, TEST_ORACLE,
-EQ_ALERT, frontier/utility curve construction from real scores, T01-T18 mandatory tests, statistics
-module (sign-flip/bootstrap/Holm), external/event branches.
+- Full-scale confirmatory run: all 10 seeds x 9 clients x full (non-subsampled) row counts, producing
+  real persisted `ScoreArtifact`s with hashes for every dataset x seed x client x split coordinate.
+  This is the next concrete blocking step and is a genuinely long-running compute task (the benign-only
+  read across all 9 clients alone took ~70-80s; full attack data is several times larger; FedAvg
+  training across 9 clients x 10 seeds at full scale has not been timed yet). Should be launched
+  deliberately (likely as a background task) rather than casually, and its results reviewed before
+  being treated as confirmatory.
+- Main N-BaIoT experiment execution (Phase 12): running all policies across 10 seeds x 5 budgets and
+  persisting the 37-field result schema (`schemas/result.py` not yet written).
+- Attack-subtype-disjoint / botnet-family-disjoint generalization runs (Phase 14-15).
+- Allocation-sensitivity (500 resamples) and conservative-utility (LCB) analyses (Phase 16-17).
+- Remaining T02-T06 (perturbation invariance — need the real pipeline to be meaningful), T13-T18
+  (some covered inline in FABRID_MACRO/MINIMAX tests already; not yet promoted to the generic `audit/`
+  module).
+- External replication (CIC IoT-DIAD 2024 — BLOCKED_EXTERNAL, dataset not present) and event-level
+  validation (Gotham/CICIoMT2024 — also not present).
+- Tables/figures generation (Phase 23), reproduction audit (Phase 24), final novelty search (Phase 25).
+- Manuscript-stage items (NOVELTY-*, CLAIM-*, forbidden-claims enforcement) — not applicable until a
+  manuscript exists.
 
-Additionally landed since the D003 correction (all tested, ruff+pyright clean, 120/120 total):
-- `src/fabrid/allocation/equal_alert.py`, `pooled_shared.py`, `test_oracle.py`: remaining primary
-  policies. All six deployable/diagnostic/oracle policies (EQ_FPR, GREEDY, FABRID_MACRO, FABRID_MINIMAX,
-  POOLED_SHARED, TEST_ORACLE) plus conditional EQ_ALERT are implemented and tested.
-- Audit matrix: 20 additional rows moved to VERIFIED (OPTIMIZATION-*, FABRID-MACRO-001,
-  FABRID-MINIMAX-001, BASELINE-002..005, SCORE-001/002, CALIBRATION-001/002, FRONTIER-001/002).
-- `src/fabrid/scoring/score_contract.py`: strict `>` decision, tie-aware rank AUROC, cross-policy AUROC
-  invariance assertion.
-- `src/fabrid/schemas/score_artifact.py`: `ScoreRecord`/`ScoreArtifact` with label/attack_type
-  consistency, duplicate-sample_id rejection, deterministic sha256.
-- `src/fabrid/frontier/utility.py`: `SubtypeConfusionCounts`, `client_utility` (subtype-averaged),
-  `build_utility_curve`.
-- `src/fabrid/data/eligibility.py`: `is_client_eligible`, `eligible_subtypes`, `fallback_rate`.
-- `src/fabrid/config/protocol.py`: added `UtilityEligibilityGuardrails` to the canonical `Protocol`.
+## Known blockers
 
-next implementation chunk (in priority order):
-1. `fabrid/frontier/builder.py`: wire `build_utility_curve` + eligibility + fallback into one frontier
-   construction step that also computes provisional thresholds from `BENIGN_FRONTIER` via
-   `fabrid/calibration/order_statistic.py`.
-2. Standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 training + Phase 4 score
-   persistence), implemented directly in `fabrid` per D003 — no external research-stack dependency.
-   Raw N-BaIoT reading may reuse ordinary, generic, non-FABRID-specific libraries (e.g. polars/pandas
-   CSV reading) but not another project's federated-training/detector code. This is the largest
-   remaining chunk and the real blocker on any real-data experiment.
-4. `fabrid/audit/*` (T01-T18 mandatory tests — several are only meaningful once the real pipeline
-   exists), `fabrid/statistics/*` (sign-flip/bootstrap/Holm).
+- CIC IoT-DIAD 2024 raw data not present under `datp-shared-data/raw`. External replication cannot
+  proceed until acquired. Does not block primary N-BaIoT work.
+- Gotham 2025 / CICIoMT2024 (event-level candidates) also not present. Event-level claims blocked
+  pending acquisition.
 
-known blockers:
-- CIC IoT-DIAD 2024 raw data not present under `datp-shared-data/raw`. External replication (Phase 19-20)
-  cannot proceed until acquired. Not blocking primary N-BaIoT work. Will mark EXTERNAL-*/GATE-G15
-  BLOCKED_EXTERNAL if acquisition remains impossible.
-- Gotham 2025 / CICIoMT2024 (event-level dataset candidates, Phase 21) also not present. EVENT-*/GATE-G16
-  likely BLOCKED_EXTERNAL pending data acquisition; record decision once Phase 21 is reached.
+## Next implementation chunk (priority order)
 
-known stale/incomplete areas: no code yet touches real N-BaIoT data; everything verified so far is
-synthetic/unit-level (correct and required, but Phase 2 real-data wiring is the next real gap).
-
-important pending test/audit runs:
-- alpha_grid uniqueness/count check: DONE (207).
-- Brute-force parity (T11-equivalent) and 100x determinism (T12-equivalent): DONE for FABRID_MACRO and
-  FABRID_MINIMAX via `tests/allocation/test_fabrid_{macro,minimax}.py`.
-- T01, T02-T06 (leakage/perturbation), T07-T08 (score/AUROC identity), T09-T10, T13-T18: NOT YET WRITTEN
-  (need real score/allocation pipeline first for most of these to be meaningful).
-- Full ruff/pyright/pytest batched cycle: last clean run was 81/81 tests, ruff clean; pyright had a small
-  number of open findings on the MILP/minimax files at the point the course correction arrived — resolve
-  next, then re-run the full cycle once more before moving on to Phase 2/3.
+1. Decide and freeze exact detector hyperparameters (architecture, learning rate, local epochs,
+   rounds, batch size) as a persisted config, analogous to `protocol.yaml` — currently only exercised
+   ad hoc in tests/smoke script. Roadmap does not prescribe exact values (architecture is explicitly
+   "not the contribution"), so this is an engineering decision to record, not derive from the roadmap.
+2. Build the full (non-subsampled) orchestration script/module that trains all 10 seeds and persists
+   `ScoreArtifact`s + hashes to a results directory, gated behind an explicit run command (not
+   auto-executed). Time a single full seed first before committing to all 10.
+3. `schemas/result.py` (37-field result row) and the evaluation/statistics glue that populates it from
+   persisted score artifacts + allocation runs.
+4. Main N-BaIoT experiment execution once (2) and (3) exist.
