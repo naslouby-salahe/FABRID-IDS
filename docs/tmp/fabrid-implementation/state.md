@@ -61,16 +61,30 @@ substrate (now explicitly standalone, D003), score persistence/hashing, POOLED_S
 EQ_ALERT, frontier/utility curve construction from real scores, T01-T18 mandatory tests, statistics
 module (sign-flip/bootstrap/Holm), external/event branches.
 
-next implementation chunk:
-1. Finish the open pyright findings on `src/fabrid/optimization/milp.py` /
-   `src/fabrid/allocation/fabrid_minimax.py` (scipy `OptimizeResult.fun`/`mip_gap` optionality per
-   scipy-stubs) — small, in progress when the course-correction interrupted it.
-2. Standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 training + Phase 4 score
+Additionally landed since the D003 correction (all tested, ruff+pyright clean, 109/109 total):
+- `src/fabrid/scoring/score_contract.py`: strict `>` decision, tie-aware rank AUROC, cross-policy AUROC
+  invariance assertion.
+- `src/fabrid/schemas/score_artifact.py`: `ScoreRecord`/`ScoreArtifact` with label/attack_type
+  consistency, duplicate-sample_id rejection, deterministic sha256.
+- `src/fabrid/frontier/utility.py`: `SubtypeConfusionCounts`, `client_utility` (subtype-averaged),
+  `build_utility_curve`.
+- `src/fabrid/data/eligibility.py`: `is_client_eligible`, `eligible_subtypes`, `fallback_rate`.
+- `src/fabrid/config/protocol.py`: added `UtilityEligibilityGuardrails` to the canonical `Protocol`.
+
+next implementation chunk (in priority order):
+1. `fabrid/frontier/builder.py`: wire `build_utility_curve` + eligibility + fallback into one frontier
+   construction step that also computes provisional thresholds from `BENIGN_FRONTIER` via
+   `fabrid/calibration/order_statistic.py`.
+2. `fabrid/allocation/{pooled_shared,test_oracle,equal_alert}.py`: remaining policies (POOLED_SHARED
+   must NOT be presented as deployable; TEST_ORACLE must live in an isolated module the default
+   execution path cannot reach; EQ_ALERT is conditional on justified unequal weights).
+3. Standalone detector/scoring substrate (Phase 2 ingestion + Phase 3 training + Phase 4 score
    persistence), implemented directly in `fabrid` per D003 — no external research-stack dependency.
-   Raw N-BaIoT reading may still reuse ordinary, generic, non-FABRID-specific libraries (e.g. polars/
-   pandas CSV reading) but not another project's federated-training/detector code.
-3. `fabrid/frontier/{utility,builder,conservative,stability}.py`, `fabrid/allocation/{pooled_shared,
-   test_oracle,equal_alert}.py`, `fabrid/audit/*` (T01-T18), `fabrid/statistics/*`.
+   Raw N-BaIoT reading may reuse ordinary, generic, non-FABRID-specific libraries (e.g. polars/pandas
+   CSV reading) but not another project's federated-training/detector code. This is the largest
+   remaining chunk and the real blocker on any real-data experiment.
+4. `fabrid/audit/*` (T01-T18 mandatory tests — several are only meaningful once the real pipeline
+   exists), `fabrid/statistics/*` (sign-flip/bootstrap/Holm).
 
 known blockers:
 - CIC IoT-DIAD 2024 raw data not present under `datp-shared-data/raw`. External replication (Phase 19-20)
