@@ -187,6 +187,16 @@ and LCB-adjusted recall sources reuse the same averaging function rather than du
 `run_allocation_sensitivity` — generic replicate-driven aggregator, caller supplies the
 resample-and-reallocate closure). Result: 220/220 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 22 (eventization: alarm merging, event-rate, duty-cycle)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `evaluation/eventization.py`
+(`eventize_alerts` — dilate/merge/min-length/cooldown pipeline; `events_per_hour`,
+`alarm_duty_fraction`). Documented as an explicit engineering interpretation of the merge mechanics
+since the roadmap fixes the four parameter values but not the exact algorithm. Fixed a wrong test
+expectation (chose alert timing that didn't actually land in the cooldown-only-merge regime; corrected
+to alerts whose dilated intervals are within cooldown but not within merge_gap). Result: 230/230 tests,
+0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
