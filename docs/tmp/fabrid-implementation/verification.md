@@ -30,6 +30,15 @@ tests both pass for `FABRID_MACRO` and `FABRID_MINIMAX`.
 `schemas/score_artifact.py`, `frontier/utility.py`, `data/eligibility.py` (+ `UtilityEligibilityGuardrails`
 added to the canonical `Protocol` loader). Result: 109/109 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 4 (EQ_ALERT, POOLED_SHARED, TEST_ORACLE)
+
+`pytest -q`, `ruff format`, `ruff check`, `pyright` after landing `allocation/equal_alert.py`
+(rejects equal-weight misuse), `allocation/pooled_shared.py` (centralized diagnostic, non-federated),
+`allocation/test_oracle.py` (isolated via `OracleAccessToken`, wraps `allocate_fabrid_macro` with
+test-attack utility curves). Result: 120/120 tests, 0 ruff findings, 0 pyright errors. All six primary
+policies (EQ_FPR, GREEDY, FABRID_MACRO, FABRID_MINIMAX, POOLED_SHARED, TEST_ORACLE) plus the conditional
+EQ_ALERT baseline are now implemented.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
