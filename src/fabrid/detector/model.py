@@ -50,10 +50,17 @@ class Autoencoder(nn.Module):
         return self.decoder(self.encoder(x))
 
 
+def resolve_device() -> torch.device:
+    """The accelerator to run all model compute on: CUDA whenever available, else CPU."""
+    return torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+
 def reconstruction_error_scores(model: Autoencoder, features: np.ndarray) -> np.ndarray:
+    device = resolve_device()
+    model = model.to(device)
     model.eval()
     with torch.no_grad():
-        inputs = torch.as_tensor(features, dtype=torch.float32)
+        inputs = torch.as_tensor(features, dtype=torch.float32, device=device)
         reconstructed = model(inputs)
         per_row_mse = torch.mean((inputs - reconstructed) ** 2, dim=1)
-    return per_row_mse.numpy().astype(np.float64)
+    return per_row_mse.cpu().numpy().astype(np.float64)

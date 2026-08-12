@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
+from fabrid.detector.model import Autoencoder, AutoencoderArchitecture, resolve_device
 from fabrid.evaluation.record_level import ClientId
 
 
@@ -45,14 +45,16 @@ class FederatedTrainingConfig:
 def _train_local_epochs(
     model: Autoencoder, features: np.ndarray, config: FederatedTrainingConfig
 ) -> None:
+    device = resolve_device()
+    model.to(device)
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     loss_fn = nn.MSELoss()
-    inputs = torch.as_tensor(features, dtype=torch.float32)
+    inputs = torch.as_tensor(features, dtype=torch.float32, device=device)
     n_rows = inputs.shape[0]
 
     for _ in range(config.local_epochs):
-        permutation = torch.randperm(n_rows)
+        permutation = torch.randperm(n_rows, device=device)
         for start in range(0, n_rows, config.batch_size):
             batch_indices = permutation[start : start + config.batch_size]
             batch = inputs[batch_indices]
@@ -61,6 +63,8 @@ def _train_local_epochs(
             loss = loss_fn(reconstructed, batch)
             loss.backward()
             optimizer.step()  # pyright: ignore[reportUnknownMemberType]  # torch stub gap
+
+    model.to("cpu")
 
 
 def _weighted_average_state_dicts(
@@ -90,6 +94,7 @@ def train_federated_autoencoder(
             )
 
     torch.manual_seed(config.seed)  # pyright: ignore[reportUnknownMemberType]  # torch stub gap
+    torch.cuda.manual_seed_all(config.seed)
     architecture = AutoencoderArchitecture(n_features=n_features, hidden_dims=config.hidden_dims)
     global_model = Autoencoder(architecture)
 
