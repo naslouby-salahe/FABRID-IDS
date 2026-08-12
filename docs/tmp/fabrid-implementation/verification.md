@@ -141,6 +141,14 @@ earlier in the MILP optimizer work). Result: 196/196 tests, 0 ruff findings, 0 p
 (`ResultRow`, `WeightMode`, `SolverStatus` — the primary per-client result schema). Result: 200/200
 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 17 (communication overhead accounting)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `evaluation/workload.py`
+(`ClientUploadPayload`, `federation_upload_bytes`, `candidate_index_bits/bytes`). Tests reproduce the
+roadmap's exact published byte counts (896 bytes/client, 8,064 for 9 clients, 94,080 for 105 clients,
+8-bit candidate index for 207 candidates) exactly. Result: 206/206 tests, 0 ruff findings, 0 pyright
+errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
