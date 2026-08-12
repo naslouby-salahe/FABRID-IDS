@@ -94,6 +94,21 @@ a real-data integration test confirming all 9 N-BaIoT devices share an identical
 manifest (same names, same order, same sha256). Result: fast suite 176/176 (3s), integration suite
 18/18 (~57s), ruff/pyright clean.
 
+## Cycle 12 (standalone detector substrate: preprocessing, autoencoder, FedAvg training)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `data/preprocessing.py`
+(z-score `FeatureScaler` fit on TRAIN only), `detector/model.py` (fixed autoencoder,
+`reconstruction_error_scores`), `detector/training.py` (FedAvg: local training + row-count-weighted
+parameter averaging). Fixed a `zip(seq, seq[1:], strict=True)` bug (always raises since the two
+sequences necessarily differ in length by one — same class of bug caught earlier in the calibration
+tests) in `Autoencoder.__init__`'s layer-pair construction. Narrow `pyright: ignore[
+reportUnknownMemberType]` on two lines where torch's own stubs are incomplete (`optimizer.step()`,
+`torch.manual_seed`) — not a blanket suppression, torch simply doesn't fully type these. Result:
+189/189 fast tests, 18/18 integration tests unaffected, 0 ruff findings, 0 pyright errors. Training
+verified to reduce reconstruction error and to be deterministic given a fixed seed on tiny synthetic
+data; full real 10-seed x 9-client training against actual N-BaIoT is the next step and will take real
+wall-clock time.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
