@@ -13,6 +13,11 @@ def _require_text(name: str, value: str) -> None:
         raise ValueError(f"{name} must not be empty")
 
 
+def _require_identifier(name: str, value: str) -> None:
+    if not _IDENTIFIER_PATTERN.fullmatch(value):
+        raise ValueError(f"invalid {name}: {value!r}")
+
+
 @dataclass(frozen=True, slots=True)
 class ClientId:
     value: str
@@ -62,8 +67,7 @@ class BudgetId:
     value: str
 
     def __post_init__(self) -> None:
-        if not _IDENTIFIER_PATTERN.fullmatch(self.value):
-            raise ValueError(f"invalid budget id: {self.value!r}")
+        _require_identifier("budget id", self.value)
 
     def __str__(self) -> str:
         return self.value
@@ -74,8 +78,18 @@ class CampaignId:
     value: str
 
     def __post_init__(self) -> None:
-        if not _IDENTIFIER_PATTERN.fullmatch(self.value):
-            raise ValueError(f"invalid campaign id: {self.value!r}")
+        _require_identifier("campaign id", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactName:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_identifier("artifact name", self.value)
 
     def __str__(self) -> str:
         return self.value
