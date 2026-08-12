@@ -151,7 +151,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
 | STAT-001 | 68 | Experimental unit = detector seed, n=10 paired replications, no row-level pseudo-replication | | MISSING | NOT_AUDITED | | |
-| STAT-002 | 69 | Contrast A: FABRID_MACRO - EQ_FPR on MacroRecall; Contrast B: FABRID_MINIMAX - EQ_FPR on WorstClientRecall | | MISSING | NOT_AUDITED | | |
+| STAT-002 | 69 | Contrast A: FABRID_MACRO - EQ_FPR on MacroRecall; Contrast B: FABRID_MINIMAX - EQ_FPR on WorstClientRecall | | VERIFIED | VERIFIED | `src/fabrid/statistics/contrasts.py`, `tests/statistics/test_contrasts.py`, `scripts/run_contrasts.py` (real 10-seed run) | machinery verified; real single-budget run executed against all 10 trained seeds |
 | STAT-003 | 70 | Exact two-sided sign-flip test over all `2^10=1024` sign assignments, alpha=0.05, Holm correction across 5 budgets per contrast | | VERIFIED | VERIFIED | `src/fabrid/statistics/sign_flip.py`, `holm.py`, `tests/statistics/test_sign_flip.py`, `tests/statistics/test_holm.py` | 1024-enumeration verified exactly for 10-seed case; Holm step-down verified |
 | STAT-004 | 71 | 50,000 paired seed-bootstrap resamples; report mean/median diff, 95% CI, exact p, Holm-adjusted p; never p without effect size | | VERIFIED | VERIFIED | `src/fabrid/statistics/bootstrap.py`, `tests/statistics/test_bootstrap.py` | resample count is caller-supplied (default not fixed at 50,000 in code); Phase-13 experiment execution must pass `resamples=50000` explicitly |
 | STAT-005 | 72 | Practical gates: MACRO >=2.0pp at >=3/5 budgets; MINIMAX >=5.0pp worst-client at >=3/5 budgets with Macro loss <=2.0pp | | MISSING | NOT_AUDITED | | evaluated post-experiment |
@@ -207,11 +207,11 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | ID | Section | Requirement | Impl. | Verif. | Evidence |
 |---|---|---|---|---|---|
 | TEST-T01 | 91 | Partition exclusivity: no duplicate sample_id across partitions | VERIFIED | VERIFIED | `src/fabrid/audit/split_leakage.py`, `tests/audit/test_split_leakage.py`, `tests/audit/test_split_leakage_integration.py` |
-| TEST-T02 | 91 | Test-label permutation leaves non-oracle allocation bitwise unchanged | MISSING | NOT_AUDITED | |
-| TEST-T03 | 91 | Changing final test scores leaves selected alpha_k unchanged | MISSING | NOT_AUDITED | |
-| TEST-T04 | 91 | Changing BENIGN_TEST changes neither allocation nor final thresholds | MISSING | NOT_AUDITED | |
-| TEST-T05 | 91 | Changing BENIGN_FINAL_CAL may change tau_k but not alpha_k | MISSING | NOT_AUDITED | |
-| TEST-T06 | 91 | Validation-attack perturbation may change GREEDY/MACRO/MINIMAX but not EQ_FPR | MISSING | NOT_AUDITED | |
+| TEST-T02 | 91 | Test-label permutation leaves non-oracle allocation bitwise unchanged | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t02_t03_test_split_perturbation_does_not_change_frontier_inputs` |
+| TEST-T03 | 91 | Changing final test scores leaves selected alpha_k unchanged | VERIFIED | VERIFIED | same test as T02 (both splits perturbed together) |
+| TEST-T04 | 91 | Changing BENIGN_TEST changes neither allocation nor final thresholds | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t04_benign_test_perturbation_does_not_affect_final_cal_scores` |
+| TEST-T05 | 91 | Changing BENIGN_FINAL_CAL may change tau_k but not alpha_k | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t05_final_cal_perturbation_changes_threshold_not_allocation_inputs` |
+| TEST-T06 | 91 | Validation-attack perturbation may change GREEDY/MACRO/MINIMAX but not EQ_FPR | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t06_validation_attack_perturbation_changes_utility_but_not_eq_fpr_inputs` |
 | TEST-T07 | 91 | Score hash identity across policies within dataset/seed/client | MISSING | NOT_AUDITED | |
 | TEST-T08 | 91 | `|Delta AUROC|<1e-12` | MISSING | NOT_AUDITED | |
 | TEST-T09 | 91 | Budget feasibility `sum w_k alpha_k <= B_FP + 1e-12` | MISSING | NOT_AUDITED | |
