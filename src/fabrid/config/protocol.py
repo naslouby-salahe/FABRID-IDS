@@ -112,7 +112,7 @@ class Protocol:
     utility_eligibility: UtilityEligibilityGuardrails
 
 
-def _read_yaml(path: Path) -> dict[str, Any]:
+def read_yaml_mapping(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         payload: Any = yaml.safe_load(handle)
     if not isinstance(payload, dict):
@@ -121,7 +121,7 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 
 
 def load_protocol(path: Path = PROTOCOL_PATH) -> Protocol:
-    payload = _read_yaml(path)
+    payload = read_yaml_mapping(path)
 
     benign_fractions_raw = payload["benign_split_fractions"]
     benign_split_fractions = BenignSplitFractions(

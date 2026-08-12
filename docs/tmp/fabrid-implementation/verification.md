@@ -127,6 +127,14 @@ attack traffic well), a scientific sanity signal beyond mere structural correctn
 `ruff check`, `pyright` re-run after: 193/193 fast tests, 0 ruff findings, 0 pyright errors — the
 smoke script did not touch any tested module's behavior, only exercised it.
 
+## Cycle 15 (frozen detector hyperparameter config)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `config/detector.yaml` +
+`config/detector.py` (`DetectorHyperparameters`, `load_detector_hyperparameters`,
+`load_detector_seeds`). Renamed `protocol.py`'s private `_read_yaml` to public `read_yaml_mapping`
+since `detector.py` now needs to share it (avoiding the private-cross-module-import smell caught
+earlier in the MILP optimizer work). Result: 196/196 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
