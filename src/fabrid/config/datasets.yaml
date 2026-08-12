@@ -83,4 +83,11 @@ cic_iot_diad_2024:
     - source_file
     - split_id
   numeric_parse_success_threshold: 0.999
-  raw_data_path: data/raw/CIC_IOT_DIAD_2024 # not present as of protocol freeze; see BLOCKED_EXTERNAL
+  # downloaded 2026-08-13 (see decisions.md); path case matches the real directory name exactly
+  # (filesystem is case-sensitive). The "Device Identification..." packet-level CSVs are the
+  # variant with a device-identity column; it is populated with a human-readable device name
+  # string in the `src_mac` column (not a literal MAC), not the `dst_mac` column — pass
+  # device_column="src_mac" to cic_iot_diad_reader.read_packet_csv, not "device_mac" (no column
+  # by that literal name exists in the real CSVs; excluded_features above is a conceptual list,
+  # and cic_iot_diad_reader.py always excludes device_column from features regardless).
+  raw_data_path: data/raw/CIC_IoT_DIAD_2024
