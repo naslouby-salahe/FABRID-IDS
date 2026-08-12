@@ -60,7 +60,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | SPLIT-001 | 24 | Benign split boundaries `i1=floor(0.5n)`, `i2=floor(0.7n)`, `i3=floor(0.8n)` -> TRAIN/FRONTIER/FINAL_CAL/TEST | exact floors | VERIFIED | VERIFIED | `src/fabrid/data/partitioner.py:compute_benign_split_boundaries`, `tests/data/test_partitioner.py` | 28/28 tests pass incl. all 9 published counts |
 | SPLIT-002 | 25 | Exact per-client split counts match published table | table in section 25 | VERIFIED | VERIFIED | `tests/data/test_partitioner.py:test_benign_split_matches_roadmap_table` | reproduces all 9 rows exactly from raw benign_rows n |
 | SPLIT-003 | 26 | Attack split `j_a = floor(0.2 n_a)` -> ATTACK_VALIDATION/ATTACK_TEST per client×subtype | | VERIFIED | VERIFIED | `src/fabrid/data/partitioner.py:compute_attack_split_boundary`, `tests/data/test_partitioner.py` | boundary arithmetic verified; per-client×subtype application to real data pending Phase 2 ingestion wiring |
-| SPLIT-004 | 28 | `D_select ∩ D_final_cal = ∅` (allocation/calibration partition disjointness) | | PARTIAL | PARTIAL | `tests/data/test_partitioner.py:test_benign_split_exclusivity_and_coverage` | boundary-level exclusivity proven by construction (half-open intervals cover [0,n) exactly once); full T01 duplicate-sample_id test against real ingested data still pending |
+| SPLIT-004 | 28 | `D_select ∩ D_final_cal = ∅` (allocation/calibration partition disjointness) | | VERIFIED | VERIFIED | `tests/data/test_partitioner.py:test_benign_split_exclusivity_and_coverage` (boundary-level), `tests/audit/test_split_leakage_integration.py` (T01 against a generated `ScoreArtifact`: zero cross-partition `sample_id` collisions across all 6 splits) | |
 | PREPROCESS-001 | 18 | FABRID-IDS's own frozen preprocessing/training-rule/architecture/hyperparameters, implemented standalone (no inheritance from an external research stack) | | VERIFIED | VERIFIED | `src/fabrid/data/preprocessing.py` (TRAIN-only z-score scaler), `src/fabrid/detector/model.py` + `training.py` (fixed autoencoder + FedAvg), `src/fabrid/config/detector.yaml` (frozen hyperparameters) | see decision D003; fully standalone, no external dependency |
 | ARCH-004 | 18 | No scientific or runtime dependency on any external federated-learning research codebase (e.g. DATP); FABRID-IDS is standalone | | VERIFIED | VERIFIED | `grep -rni datp src tests pyproject.toml` returns no matches | re-check at every future dependency addition and at final hostile audit |
 
@@ -206,7 +206,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Requirement | Impl. | Verif. | Evidence |
 |---|---|---|---|---|---|
-| TEST-T01 | 91 | Partition exclusivity: no duplicate sample_id across partitions | MISSING | NOT_AUDITED | |
+| TEST-T01 | 91 | Partition exclusivity: no duplicate sample_id across partitions | VERIFIED | VERIFIED | `src/fabrid/audit/split_leakage.py`, `tests/audit/test_split_leakage.py`, `tests/audit/test_split_leakage_integration.py` |
 | TEST-T02 | 91 | Test-label permutation leaves non-oracle allocation bitwise unchanged | MISSING | NOT_AUDITED | |
 | TEST-T03 | 91 | Changing final test scores leaves selected alpha_k unchanged | MISSING | NOT_AUDITED | |
 | TEST-T04 | 91 | Changing BENIGN_TEST changes neither allocation nor final thresholds | MISSING | NOT_AUDITED | |

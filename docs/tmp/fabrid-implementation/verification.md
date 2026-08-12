@@ -149,6 +149,14 @@ roadmap's exact published byte counts (896 bytes/client, 8,064 for 9 clients, 94
 8-bit candidate index for 207 candidates) exactly. Result: 206/206 tests, 0 ruff findings, 0 pyright
 errors.
 
+## Cycle 18 (T01/SPLIT-004 closed end-to-end)
+
+Added `tests/audit/test_split_leakage_integration.py`: generates a real `ScoreArtifact` via the full
+scoring pipeline and confirms `check_partition_exclusivity` finds zero cross-partition `sample_id`
+collisions across all 6 splits (4 benign + 2 attack). Closes `SPLIT-004`/`TEST-T01` from
+boundary-arithmetic-only evidence to full pipeline evidence. `pytest -q`, `ruff format`,
+`ruff check --fix`, `pyright`: 207/207 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
