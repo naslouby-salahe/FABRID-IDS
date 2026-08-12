@@ -14,3 +14,10 @@ def test_load_protocol_reads_frozen_yaml() -> None:
     assert protocol.solver_settings.mip_rel_gap == 0.0
     assert protocol.solver_settings.time_limit_seconds == 300.0
     assert protocol.solver_settings.accept_mip_gap_leq == 1.0e-5
+    assert protocol.practical_gates.fabrid_macro.min_delta_macro_recall_pp == 2.0
+    assert protocol.practical_gates.fabrid_macro.min_budgets_passing == 3
+    assert protocol.practical_gates.fabrid_macro.of_budgets == 5
+    assert protocol.practical_gates.fabrid_minimax.min_delta_worst_client_recall_pp == 5.0
+    assert protocol.practical_gates.fabrid_minimax.max_macro_recall_loss_pp == 2.0
+    assert protocol.practical_gates.budget_compliance.median_bur_leq == 1.05
+    assert protocol.practical_gates.budget_compliance.seeds_with_bur_leq_1_10_min_fraction == 0.9

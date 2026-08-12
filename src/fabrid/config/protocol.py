@@ -98,6 +98,57 @@ class SolverSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class FabridMacroGate:
+    min_delta_macro_recall_pp: float
+    min_budgets_passing: int
+    of_budgets: int
+
+    def __post_init__(self) -> None:
+        if not (0 <= self.min_budgets_passing <= self.of_budgets):
+            raise ValueError(
+                f"min_budgets_passing must be in [0, of_budgets], got "
+                f"{self.min_budgets_passing} of {self.of_budgets}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class FabridMinimaxGate:
+    min_delta_worst_client_recall_pp: float
+    max_macro_recall_loss_pp: float
+    min_budgets_passing: int
+    of_budgets: int
+
+    def __post_init__(self) -> None:
+        if not (0 <= self.min_budgets_passing <= self.of_budgets):
+            raise ValueError(
+                f"min_budgets_passing must be in [0, of_budgets], got "
+                f"{self.min_budgets_passing} of {self.of_budgets}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class BudgetComplianceThresholds:
+    median_bur_leq: float
+    seeds_with_bur_leq_1_10_min_fraction: float
+
+    def __post_init__(self) -> None:
+        if self.median_bur_leq <= 0:
+            raise ValueError(f"median_bur_leq must be positive, got {self.median_bur_leq}")
+        if not (0.0 <= self.seeds_with_bur_leq_1_10_min_fraction <= 1.0):
+            raise ValueError(
+                "seeds_with_bur_leq_1_10_min_fraction must be in [0, 1], got "
+                f"{self.seeds_with_bur_leq_1_10_min_fraction}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class PracticalGates:
+    fabrid_macro: FabridMacroGate
+    fabrid_minimax: FabridMinimaxGate
+    budget_compliance: BudgetComplianceThresholds
+
+
+@dataclass(frozen=True, slots=True)
 class Protocol:
     """Typed view over the constants this codebase currently consumes from `protocol.yaml`.
 
@@ -110,6 +161,7 @@ class Protocol:
     alpha_max: float
     solver_settings: SolverSettings
     utility_eligibility: UtilityEligibilityGuardrails
+    practical_gates: PracticalGates
 
 
 def read_yaml_mapping(path: Path) -> dict[str, Any]:
@@ -151,10 +203,36 @@ def load_protocol(path: Path = PROTOCOL_PATH) -> Protocol:
         min_rows_per_eligible_subtype=int(eligibility_raw["min_rows_per_eligible_subtype"]),
     )
 
+    macro_gate_raw = payload["practical_gates"]["fabrid_macro"]
+    minimax_gate_raw = payload["practical_gates"]["fabrid_minimax"]
+    compliance_raw = payload["practical_gates"]["budget_compliance"]
+    practical_gates = PracticalGates(
+        fabrid_macro=FabridMacroGate(
+            min_delta_macro_recall_pp=float(macro_gate_raw["min_delta_macro_recall_pp"]),
+            min_budgets_passing=int(macro_gate_raw["min_budgets_passing"]),
+            of_budgets=int(macro_gate_raw["of_budgets"]),
+        ),
+        fabrid_minimax=FabridMinimaxGate(
+            min_delta_worst_client_recall_pp=float(
+                minimax_gate_raw["min_delta_worst_client_recall_pp"]
+            ),
+            max_macro_recall_loss_pp=float(minimax_gate_raw["max_macro_recall_loss_pp"]),
+            min_budgets_passing=int(minimax_gate_raw["min_budgets_passing"]),
+            of_budgets=int(minimax_gate_raw["of_budgets"]),
+        ),
+        budget_compliance=BudgetComplianceThresholds(
+            median_bur_leq=float(compliance_raw["median_bur_leq"]),
+            seeds_with_bur_leq_1_10_min_fraction=float(
+                compliance_raw["seeds_with_bur_leq_1_10_min_fraction"]
+            ),
+        ),
+    )
+
     return Protocol(
         benign_split_fractions=benign_split_fractions,
         attack_split_fraction=attack_split_fraction,
         utility_eligibility=utility_eligibility,
         alpha_max=alpha_max,
         solver_settings=solver_settings,
+        practical_gates=practical_gates,
     )
