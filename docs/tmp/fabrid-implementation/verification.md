@@ -135,6 +135,12 @@ smoke script did not touch any tested module's behavior, only exercised it.
 since `detector.py` now needs to share it (avoiding the private-cross-module-import smell caught
 earlier in the MILP optimizer work). Result: 196/196 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 16 (result row schema)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `schemas/result.py`
+(`ResultRow`, `WeightMode`, `SolverStatus` — the primary per-client result schema). Result: 200/200
+tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
