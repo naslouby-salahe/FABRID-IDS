@@ -14,6 +14,7 @@ from fabrid.config.protocol import read_yaml_mapping
 from fabrid.evaluation.record_level import AttackSubtype
 
 ATTACK_FOLDS_PATH = Path(__file__).with_name("attack_folds.yaml")
+DATASETS_PATH = Path(__file__).with_name("datasets.yaml")
 
 FoldId = NewType("FoldId", int)
 
@@ -131,3 +132,17 @@ def load_attack_folds(path: Path = ATTACK_FOLDS_PATH) -> AttackFoldsConfig:
         rotations=rotations,
         botnet_family_disjoint=botnet_family_disjoint,
     )
+
+
+def load_botnet_family_subtypes(
+    path: Path = DATASETS_PATH,
+) -> dict[BotnetFamily, tuple[AttackSubtype, ...]]:
+    """Which attack subtypes belong to each botnet family, per `datasets.yaml`'s
+    `nbaiot.attack_subtypes` section.
+    """
+    payload = read_yaml_mapping(path)
+    families_raw = payload["nbaiot"]["attack_subtypes"]
+    return {
+        BotnetFamily(family): tuple(AttackSubtype(s) for s in subtypes)
+        for family, subtypes in families_raw.items()
+    }

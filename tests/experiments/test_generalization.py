@@ -3,7 +3,14 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from fabrid.config.attack_folds import FoldId, FoldRotation, load_attack_folds
+from fabrid.config.attack_folds import (
+    BotnetFamily,
+    BotnetFamilyDirection,
+    FoldId,
+    FoldRotation,
+    load_attack_folds,
+    load_botnet_family_subtypes,
+)
 from fabrid.config.protocol import (
     AttackSplitFraction,
     BenignSplitFractions,
@@ -19,7 +26,10 @@ from fabrid.data.partitioner import (
 from fabrid.data.preprocessing import fit_feature_scaler
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
-from fabrid.experiments.generalization import run_attack_subtype_disjoint_rotation
+from fabrid.experiments.generalization import (
+    run_attack_subtype_disjoint_rotation,
+    run_botnet_family_disjoint_direction,
+)
 from fabrid.schemas.allocation import AllocationPolicy
 from fabrid.schemas.score_artifact import DetectorSeed
 from fabrid.scoring.score_generation import generate_score_artifact
@@ -104,3 +114,30 @@ def test_rotation_uses_only_frozen_fold_config() -> None:
     validation_subtypes = set(fold_config.validation_subtypes(rotation))
     test_subtypes = set(fold_config.test_subtypes(rotation))
     assert validation_subtypes.isdisjoint(test_subtypes)
+
+
+def test_run_botnet_family_disjoint_direction_returns_valid_metrics() -> None:
+    family_subtypes = load_botnet_family_subtypes()
+    direction = BotnetFamilyDirection(
+        validation_family=BotnetFamily.BASHLITE, test_family=BotnetFamily.MIRAI
+    )
+    artifacts = {
+        ClientId("1"): _client_artifact(0, ClientId("1")),
+        ClientId("2"): _client_artifact(1, ClientId("2")),
+        ClientId("3"): _client_artifact(2, ClientId("3")),
+    }
+
+    result = run_botnet_family_disjoint_direction(
+        artifacts,
+        _GRID,
+        _GUARDRAILS,
+        family_subtypes,
+        direction,
+        budget=0.05,
+        alpha_max=0.05,
+        solver_settings=_SETTINGS,
+    )
+
+    assert AllocationPolicy.EQ_FPR in result.macro_recall_by_policy
+    for macro_recall in result.macro_recall_by_policy.values():
+        assert 0.0 <= macro_recall <= 1.0

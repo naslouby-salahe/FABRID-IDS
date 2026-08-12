@@ -17,7 +17,12 @@ from fabrid.allocation.fabrid_macro import allocate_fabrid_macro
 from fabrid.allocation.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.greedy import allocate_greedy
 from fabrid.calibration.final_calibration import calibrate_final_thresholds
-from fabrid.config.attack_folds import AttackFoldsConfig, FoldRotation
+from fabrid.config.attack_folds import (
+    AttackFoldsConfig,
+    BotnetFamily,
+    BotnetFamilyDirection,
+    FoldRotation,
+)
 from fabrid.config.protocol import SolverSettings, UtilityEligibilityGuardrails
 from fabrid.evaluation.record_level import (
     AttackSubtype,
@@ -100,22 +105,20 @@ def _evaluate_allocation_on_held_out_subtypes(
     return federation_macro_recall(client_recall), worst_client_recall(client_recall), bur
 
 
-def run_attack_subtype_disjoint_rotation(
+def _run_policies_restricted_to_subtypes(
     artifacts: Mapping[ClientId, ScoreArtifact],
     alpha_grid: tuple[float, ...],
     guardrails: UtilityEligibilityGuardrails,
-    fold_config: AttackFoldsConfig,
-    rotation: FoldRotation,
+    validation_subtypes: frozenset[AttackSubtype],
+    test_subtypes: frozenset[AttackSubtype],
     budget: float,
     alpha_max: float,
     solver_settings: SolverSettings,
 ) -> RotationResult:
-    """Resolve every deployable policy using only `rotation`'s validation-fold subtypes, then
-    evaluate MacroRecall/WorstClientRecall/BUR on `rotation`'s test-fold subtypes.
+    """Shared core for both attack-subtype-disjoint rotations and botnet-family-disjoint
+    directions: resolve every deployable policy using only `validation_subtypes` for utility/
+    eligibility, then evaluate MacroRecall/WorstClientRecall/BUR on `test_subtypes`.
     """
-    validation_subtypes = frozenset(fold_config.validation_subtypes(rotation))
-    test_subtypes = frozenset(fold_config.test_subtypes(rotation))
-
     client_inputs = {
         client_id: restrict_to_subtypes(
             build_client_frontier_inputs(artifact, alpha_grid), validation_subtypes
@@ -163,3 +166,57 @@ def run_attack_subtype_disjoint_rotation(
             )
 
     return result
+
+
+def run_attack_subtype_disjoint_rotation(
+    artifacts: Mapping[ClientId, ScoreArtifact],
+    alpha_grid: tuple[float, ...],
+    guardrails: UtilityEligibilityGuardrails,
+    fold_config: AttackFoldsConfig,
+    rotation: FoldRotation,
+    budget: float,
+    alpha_max: float,
+    solver_settings: SolverSettings,
+) -> RotationResult:
+    """Resolve every deployable policy using only `rotation`'s validation-fold subtypes, then
+    evaluate MacroRecall/WorstClientRecall/BUR on `rotation`'s test-fold subtypes.
+    """
+    return _run_policies_restricted_to_subtypes(
+        artifacts,
+        alpha_grid,
+        guardrails,
+        frozenset(fold_config.validation_subtypes(rotation)),
+        frozenset(fold_config.test_subtypes(rotation)),
+        budget,
+        alpha_max,
+        solver_settings,
+    )
+
+
+def run_botnet_family_disjoint_direction(
+    artifacts: Mapping[ClientId, ScoreArtifact],
+    alpha_grid: tuple[float, ...],
+    guardrails: UtilityEligibilityGuardrails,
+    family_subtypes: Mapping[BotnetFamily, tuple[AttackSubtype, ...]],
+    direction: BotnetFamilyDirection,
+    budget: float,
+    alpha_max: float,
+    solver_settings: SolverSettings,
+) -> RotationResult:
+    """Resolve every deployable policy using only `direction.validation_family`'s subtypes,
+    then evaluate MacroRecall/WorstClientRecall/BUR on `direction.test_family`'s subtypes.
+
+    `artifacts` must already be restricted by the caller to the roadmap's 7 dual-family
+    clients (both Mirai and BASHLITE present); this function does not filter clients by
+    family availability, only attack subtypes by family membership.
+    """
+    return _run_policies_restricted_to_subtypes(
+        artifacts,
+        alpha_grid,
+        guardrails,
+        frozenset(family_subtypes[direction.validation_family]),
+        frozenset(family_subtypes[direction.test_family]),
+        budget,
+        alpha_max,
+        solver_settings,
+    )
