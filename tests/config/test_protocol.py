@@ -12,5 +12,5 @@ def test_load_protocol_reads_frozen_yaml() -> None:
     assert protocol.attack_split_fraction.validation_end_fraction == 0.20
     assert protocol.alpha_max == 0.05
     assert protocol.solver_settings.mip_rel_gap == 0.0
-    assert protocol.solver_settings.time_limit_seconds == 60.0
+    assert protocol.solver_settings.time_limit_seconds == 300.0
     assert protocol.solver_settings.accept_mip_gap_leq == 1.0e-9

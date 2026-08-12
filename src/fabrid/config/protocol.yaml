@@ -52,7 +52,11 @@ solver:
   integrality: 1
   bounds: [0, 1]
   mip_rel_gap: 0
-  time_limit_seconds: 60
+  # Amended from 60s (decision D004, docs/tmp/fabrid-implementation/decisions.md): at full
+  # 9-client x 207-candidate (1863-variable) N-BaIoT scale, 60s left FABRID_MACRO/MINIMAX
+  # SOLVER_INVALID in a majority of seed x budget coordinates (measured, see D004). The
+  # acceptance gap below is unchanged; only wall-clock budget increased.
+  time_limit_seconds: 300
   accept_if:
     success: true
     status: 0

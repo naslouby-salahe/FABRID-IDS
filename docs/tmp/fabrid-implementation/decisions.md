@@ -39,6 +39,60 @@ written so far needs to change — the decision layer (partitioner, calibration,
 EQ_FPR/GREEDY baselines, MILP optimizer, FABRID_MACRO/MINIMAX) is dependency-free by construction and is
 kept as-is.
 
+## D004 — Raise MILP time_limit from 60s to 300s (disclosed protocol amendment); keep mip_gap<=1e-9 unchanged
+
+Explicit user authorization ("come up with the best solution... to make my chapter perfect... continue
+with the implementation") to resolve F001/F002, which are user-facing scientific decisions, not
+ordinary engineering bugs.
+
+**Evidence.** `scripts/run_budget_sweep.py` measured `SOLVER_INVALID` rate for `FABRID_MACRO`/
+`FABRID_MINIMAX` across all 5 primary budgets x all 10 real trained seeds, at the frozen
+`time_limit=60s`, `accept_if.mip_gap_leq=1e-9`:
+
+| Budget | FABRID_MACRO invalid | FABRID_MINIMAX invalid |
+|---|---|---|
+| 0.001 | 2/10 | 3/10 |
+| 0.0025 | 7/10 | 5/10 |
+| 0.005 | 7/10 | 1/10 |
+| 0.010 | 9/10 | 6/10 |
+| 0.020 | 10/10 | 9/10 |
+
+Invalid rate rises with budget (larger feasible region -> more near-ties -> branch-and-bound needs
+longer to certify optimality at 9-client x 207-candidate = 1863-variable scale). Researched
+(WebSearch, scipy/HiGHS docs): `mip_rel_gap=0` (already frozen) instructs HiGHS to target exact
+optimality; `time_limit` is the only lever that increases certified-solution rate without touching
+solution quality. The roadmap's `time_limit=60s` (section 41) was evidently never validated against
+real record-level N-BaIoT scale.
+
+**Decision.** Raise `time_limit_seconds` in `protocol.yaml` from 60 to 300. `accept_if.mip_gap_leq`
+stays at `1e-9`, completely unchanged — this preserves 100% of the solution-quality rigor the roadmap
+specifies; only wall-clock budget increases so more coordinates can actually reach that bar rather
+than being excluded by an untested clock value. This is a disclosed, evidenced amendment (this
+decision record + the sweep table above, both committed), not a silent tolerance weakening — the
+original 60s evidence in `failures.md` F001 is preserved, not deleted. Standard practice for a
+pre-registered protocol: when an implementation constraint invalidates an untested parameter, the
+correct response is transparent amendment with the discovery evidence retained, not silent
+adjustment or in the other direction, blind adherence to a number now known to be practically
+unworkable at the specified scale.
+
+Re-measurement after this change is required before treating any FABRID_MACRO/MINIMAX result as
+final; see `state.md` for the follow-up sweep.
+
+## D005 — F002 mitigation: wire the roadmap's own conservative/LCB utility ablation into FABRID_MINIMAX
+
+F002 (see `failures.md`) is grounded in the Group-DRO/minimax-fairness literature (WebSearch,
+2026): validation-time worst-group/worst-client estimates are well documented not to reliably predict
+the test-time worst group, and variance-reduction/regularization is the standard mitigation. The
+roadmap already mandates exactly this experiment — section 63 "Conservative Utility Sensitivity":
+resolve FABRID using the one-sided 95% LCB utility curve (`frontier/conservative.py`, already built)
+"and report whether policy conclusions survive." This was implemented (utility curve construction) but
+never actually run through `FABRID_MINIMAX`. Decision: run `FABRID_MINIMAX` under both the raw
+validation utility curve and the conservative LCB curve on the same real seeds/budget, and report
+both `WorstClientRecall` results side by side. This is precisely the on-roadmap ablation already
+required (section 98, ablation #9: "raw-utility vs conservative-utility FABRID") — not a new
+experiment invented to explain away F002, and turns F002 from a bare anomaly into a documented,
+literature-grounded, empirically-tested finding.
+
 ## D002 — CIC IoT-DIAD 2024 not available; external replication provisionally BLOCKED_EXTERNAL
 
 `datp-shared-data/raw` contains `CIC_IOT_Dataset2023` (a different, earlier CIC dataset) but not
