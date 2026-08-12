@@ -76,6 +76,16 @@ roadmap-published table and section 21's 115-feature claim; all 10 attack subtyp
 5 mirai) read successfully with plausible row counts. Result: 172/172 tests, 0 ruff findings, 0 pyright
 errors.
 
+## Cycle 10 (real-data integration test, all 9 clients)
+
+Added `tests/data/test_nbaiot_reader_integration.py`: reads all 9 real N-BaIoT devices'
+`benign_traffic.csv` and asserts shape `(published_row_count, 115)` for every one — all 9 pass,
+confirming `CLIENT-001`/`DATASET-001` exactly against real data (not just the config table). Marked
+`@pytest.mark.integration` (real I/O, ~70s) and excluded from the default `pytest` run via
+`addopts = "-m 'not integration'"` in `pyproject.toml`, keeping the fast unit suite fast (172 tests,
+~3s) while the integration check remains available on demand or at major checkpoints. Result: fast
+suite 172/172 in 3s; integration suite 9/9 in ~69s; ruff/pyright clean.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
