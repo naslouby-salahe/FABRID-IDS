@@ -66,6 +66,16 @@ pyright errors.
 final_calibration.py` and `evaluation/heterogeneity.py`. Result: 168/168 tests, 0 ruff findings, 0
 pyright errors.
 
+## Cycle 9 (real N-BaIoT ingestion — first real-data-touching code)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `data/nbaiot_reader.py`
+(standalone pandas-based CSV reader, no external stack dependency). Installed `pandas-stubs` for
+typing. Manual smoke check against the real symlinked raw data
+(`data/raw/N-BaIoT/Danmini_Doorbell`): benign shape (49548, 115) and 115 features exactly match the
+roadmap-published table and section 21's 115-feature claim; all 10 attack subtype files (5 bashlite +
+5 mirai) read successfully with plausible row counts. Result: 172/172 tests, 0 ruff findings, 0 pyright
+errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
