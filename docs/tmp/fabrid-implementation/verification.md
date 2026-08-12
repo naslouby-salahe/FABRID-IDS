@@ -225,6 +225,19 @@ near-identical contrast builders into one generic `_build_contrast` taking a met
 Fixed a pyright dataclass mutable-default inference issue (`field(default_factory=dict[K, V])` instead
 of bare `dict`). Result: 249/249 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 26 (T02-T06 perturbation invariance, all 10 seeds trained)
+
+Added `tests/audit/test_perturbation_invariance.py` (T02-T06): confirms `ClientFrontierInputs` is
+unaffected by ATTACK_TEST/BENIGN_TEST perturbation (allocation never reads those splits), unaffected
+by BENIGN_FINAL_CAL perturbation (read only after allocation), and that ATTACK_VALIDATION perturbation
+does change utility-relevant confusion counts (as it should) while EQ_FPR's signature has no path for
+validation scores to reach it at all. `pytest -q`, `ruff format`, `ruff check --fix`, `pyright`:
+254/254 tests, 0 ruff findings, 0 pyright errors.
+
+**All 10 detector seeds now trained and persisted at full scale** (`results/scores/seed_0`..`seed_9`,
+each with a `manifest.json` of per-client sha256 hashes) — the real full-scale training run launched
+earlier completed successfully across all seeds.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
