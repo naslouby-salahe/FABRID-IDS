@@ -29,7 +29,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 |---|---|---|---|---|---|---|
 | NOVELTY-001 | 8 | Novelty claim limited to combined cross-client reallocation formulation, not generic threshold/budget/federated-calibration novelty | MISSING | NOT_AUDITED | manuscript not yet drafted | applies at Phase 23-25 (reporting) |
 | NOVELTY-002 | 7.1-7.8 | Prior-art acknowledgment list (Bridges/Kumar/Laridi/Ochiai/conformal/CALIBURN/Heydari/Pădurean) present in manuscript related-work | MISSING | NOT_AUDITED | | manuscript-stage requirement |
-| NOVELTY-003 | 103 | Forbidden-claims list enforced in generated reports/manuscript text | MISSING | NOT_AUDITED | | should be a lint/check over generated report text at Phase 23 |
+| NOVELTY-003 | 103 | Forbidden-claims list enforced in generated reports/manuscript text | VERIFIED | VERIFIED | `src/fabrid/audit/forbidden_claims.py`, `tests/audit/test_forbidden_claims.py` | checker + assertion exist and are tested; still needs to be actually invoked over generated report text once Phase 23 exists |
 | NOVELTY-004 | 109 Phase 25 | Final novelty search re-run immediately before submission using the 9 listed query strings | MISSING | NOT_AUDITED | | only performable once implementation mature; deferred |
 
 ## THREAT-* / PRIVACY-*
@@ -142,8 +142,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | METRIC-008 | 56 | Secondary metrics: pooled recall, Macro-F1, balanced accuracy, AUROC, AUPRC | | MISSING | NOT_AUDITED | | |
 | METRIC-009 | 57(T08) | `|Delta AUROC| < 1e-12` across all policies within dataset×seed | | MISSING | NOT_AUDITED | | `src/fabrid/audit/score_identity.py` |
 | METRIC-010 | 60 | `H_u(alpha_j)=SD_k(u_{k,j})`; `H_U=(1/J) sum_j H_u(alpha_j)` | | MISSING | NOT_AUDITED | | `src/fabrid/evaluation/heterogeneity.py` |
-| GENERALIZATION-001 | 58 | Attack-subtype-disjoint folds: fixed global mapping (not hashed), 3 rotations | fold table | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/attack_folds.yaml` | orchestration not yet built |
-| GENERALIZATION-002 | 59 | Botnet-family-disjoint transfer for 7 dual-family clients, both directions, explicit K=7 reporting, Ennio+Samsung not silently excluded | | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/attack_folds.yaml:botnet_family_disjoint` | orchestration not yet built |
+| GENERALIZATION-001 | 58 | Attack-subtype-disjoint folds: fixed global mapping (not hashed), 3 rotations | fold table | PARTIAL | PARTIAL | `src/fabrid/config/attack_folds.yaml`, `src/fabrid/config/attack_folds.py` (typed loader + `AttackFoldsConfig.validation_subtypes`/`test_subtypes`), `tests/config/test_attack_folds.py` (8 tests) | loader verified; the actual per-fold utility/allocation/evaluation run against real seed data (Phase 14) not yet built |
+| GENERALIZATION-002 | 59 | Botnet-family-disjoint transfer for 7 dual-family clients, both directions, explicit K=7 reporting, Ennio+Samsung not silently excluded | | PARTIAL | PARTIAL | `src/fabrid/config/attack_folds.py:BotnetFamilyDisjointConfig` | loader verified; per-direction run against real seed data (Phase 15) not yet built |
 | STABILITY-001 | 62 | `Instability_k = 1 - max_j P(alpha_k=alpha_j)` from 500 replicates | | MISSING | NOT_AUDITED | | |
 
 ## STAT-*
@@ -199,7 +199,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 |---|---|---|---|---|---|---|
 | ARTIFACT-001 | 89 | Immutable score artifact per dataset×seed×client×split with exact minimum columns; persisted SHA-256 for artifact/model/preprocessing/split-manifest/feature-manifest/protocol; git commit recorded | PARTIAL | PARTIAL | `src/fabrid/schemas/score_artifact.py` (typed record + artifact sha256), `scripts/run_seed_training.py` (pickled persistence + manifest.json) | artifact-level sha256 done; model/preprocessing/split-manifest/feature-manifest/protocol sha256 and git-commit recording not yet wired into the persisted manifest |
 | ARTIFACT-002 | 93 | Primary result schema: exact column list per client-level result row | VERIFIED | VERIFIED | `src/fabrid/schemas/result.py:ResultRow`, `tests/schemas/test_result.py` | all roadmap-listed fields present as typed dataclass fields |
-| REPRO-001 | 94 | Reproducibility metadata: OS/Python/NumPy/SciPy/PyTorch/CUDA/GPU/CPU/RAM/solver version/git commit/dataset checksums/CLI/wall-clock/seeds | MISSING | NOT_AUDITED | | |
+| REPRO-001 | 94 | Reproducibility metadata: OS/Python/NumPy/SciPy/PyTorch/CUDA/GPU/CPU/RAM/solver version/git commit/dataset checksums/CLI/wall-clock/seeds | VERIFIED | VERIFIED | `src/fabrid/audit/reproducibility.py:capture_reproducibility_metadata`, `tests/audit/test_reproducibility.py` | all fields captured except explicit wall-clock timing (left to the calling script, which already knows its own start/end); not yet wired into a persisted per-run artifact |
 | REPRO-002 | 109 Phase 24 | Clean-environment reproduction: install, acquire data, verify hashes, build manifests, reproduce >=1 seed end-to-end, reproduce all post-training allocation from frozen scores | MISSING | NOT_AUDITED | | final-stage requirement |
 
 ## TEST-* (mandatory scientific software tests T01-T18)
