@@ -43,6 +43,7 @@ from fabrid.scoring.frontier_inputs import (
 class SeedBudgetResult:
     seed: int
     budget: float
+    fallback_rate: float
     macro_recall_by_policy: dict[AllocationPolicy, float] = field(
         default_factory=dict[AllocationPolicy, float]
     )
@@ -186,13 +187,12 @@ def run_seed_at_budget(
     solver_settings: SolverSettings,
     seed: int,
 ) -> SeedBudgetResult:
-    result = SeedBudgetResult(seed=seed, budget=budget)
-
     client_inputs = {
         client_id: build_client_frontier_inputs(artifact, alpha_grid)
         for client_id, artifact in artifacts.items()
     }
     federation = build_federation_frontier(client_inputs, alpha_grid, guardrails)
+    result = SeedBudgetResult(seed=seed, budget=budget, fallback_rate=federation.fallback_rate)
     eligible_ids = federation.eligible_client_ids()
     utility_curves = federation.utility_curves()
     weight = dict.fromkeys(artifacts, 1.0 / len(artifacts))

@@ -11,7 +11,11 @@ def _result(
     seed: int, macro: dict[AllocationPolicy, float], worst: dict[AllocationPolicy, float]
 ) -> SeedBudgetResult:
     return SeedBudgetResult(
-        seed=seed, budget=0.01, macro_recall_by_policy=macro, worst_client_recall_by_policy=worst
+        seed=seed,
+        budget=0.01,
+        fallback_rate=0.0,
+        macro_recall_by_policy=macro,
+        worst_client_recall_by_policy=worst,
     )
 
 
