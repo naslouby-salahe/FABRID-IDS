@@ -34,7 +34,7 @@ from fabrid.schemas.score_artifact import DetectorSeed, ScoreArtifact
 from fabrid.scoring.score_generation import generate_score_artifact
 
 _RAW_DIR = Path(__file__).parents[1] / "data" / "raw" / "N-BaIoT"
-_RESULTS_DIR = Path(__file__).parents[1] / "results" / "scores"
+RESULTS_DIR = Path(__file__).parents[1] / "results" / "scores"
 
 _CLIENT_NAMES = [
     "Danmini_Doorbell",
@@ -98,7 +98,7 @@ def run_seed(seed: int) -> dict[str, str]:
     model = train_federated_autoencoder(scaled_train, training_config)
     print(f"[{time.time() - t0:6.1f}s] training complete")
 
-    output_dir = _RESULTS_DIR / f"seed_{seed}"
+    output_dir = RESULTS_DIR / f"seed_{seed}"
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, str] = {}
 

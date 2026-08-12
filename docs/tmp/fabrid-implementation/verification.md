@@ -157,6 +157,20 @@ collisions across all 6 splits (4 benign + 2 attack). Closes `SPLIT-004`/`TEST-T
 boundary-arithmetic-only evidence to full pipeline evidence. `pytest -q`, `ruff format`,
 `ruff check --fix`, `pyright`: 207/207 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 19 (real full-scale seed-0 training run — major scientific validation)
+
+Ran `scripts/run_seed_training.py 0` at FULL scale (no subsampling) against all 9 real N-BaIoT clients:
+completed in 298.8s (~5 min). Total generated score records across all 9 clients: 7,062,606 — matches
+the roadmap's published "~7.06 million sequential observations" (section 21) almost exactly, an
+independent real-data confirmation of the dataset identity claim (DATASET-001) beyond the per-file
+counts already verified. Persisted 9 pickled `ScoreArtifact`s (616MB total) + `manifest.json` with
+per-client sha256 hashes to `results/scores/seed_0/`.
+
+Launched `scripts/run_all_seeds.py` (resumable: skips seeds with an existing manifest) in the
+background to complete the remaining 9 seeds, estimated ~45 additional minutes based on the seed-0
+timing. `pytest -q` (207/207), `ruff`, `pyright` all still clean — the orchestration scripts are
+outside the package (`scripts/`) and don't affect the tested library surface.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
