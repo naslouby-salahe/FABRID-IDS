@@ -24,6 +24,12 @@ inline stub package, so without this every module touching `scipy.optimize` casc
 `Unknown`-typed noise unrelated to actual code correctness). Brute-force parity and 100x-determinism
 tests both pass for `FABRID_MACRO` and `FABRID_MINIMAX`.
 
+## Cycle 3 (score contract/artifact, frontier utility, eligibility)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `scoring/score_contract.py`,
+`schemas/score_artifact.py`, `frontier/utility.py`, `data/eligibility.py` (+ `UtilityEligibilityGuardrails`
+added to the canonical `Protocol` loader). Result: 109/109 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading

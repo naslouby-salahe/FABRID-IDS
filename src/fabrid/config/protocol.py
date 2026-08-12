@@ -54,6 +54,31 @@ class AttackSplitFraction:
 
 
 @dataclass(frozen=True, slots=True)
+class UtilityEligibilityGuardrails:
+    """Preregistered data-sufficiency guardrails for validation-informed utility estimation."""
+
+    min_attack_validation_rows: int
+    min_eligible_subtypes: int
+    min_rows_per_eligible_subtype: int
+
+    def __post_init__(self) -> None:
+        if self.min_attack_validation_rows < 0:
+            raise ValueError(
+                f"min_attack_validation_rows must be non-negative, got "
+                f"{self.min_attack_validation_rows}"
+            )
+        if self.min_eligible_subtypes < 0:
+            raise ValueError(
+                f"min_eligible_subtypes must be non-negative, got {self.min_eligible_subtypes}"
+            )
+        if self.min_rows_per_eligible_subtype < 0:
+            raise ValueError(
+                f"min_rows_per_eligible_subtype must be non-negative, got "
+                f"{self.min_rows_per_eligible_subtype}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class SolverSettings:
     """MILP solver configuration and the strict solve-acceptance rule."""
 
@@ -84,6 +109,7 @@ class Protocol:
     attack_split_fraction: AttackSplitFraction
     alpha_max: float
     solver_settings: SolverSettings
+    utility_eligibility: UtilityEligibilityGuardrails
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
@@ -118,9 +144,17 @@ def load_protocol(path: Path = PROTOCOL_PATH) -> Protocol:
         accept_mip_gap_leq=float(solver_raw["accept_if"]["mip_gap_leq"]),
     )
 
+    eligibility_raw = payload["utility_eligibility"]
+    utility_eligibility = UtilityEligibilityGuardrails(
+        min_attack_validation_rows=int(eligibility_raw["min_attack_validation_rows"]),
+        min_eligible_subtypes=int(eligibility_raw["min_eligible_subtypes"]),
+        min_rows_per_eligible_subtype=int(eligibility_raw["min_rows_per_eligible_subtype"]),
+    )
+
     return Protocol(
         benign_split_fractions=benign_split_fractions,
         attack_split_fraction=attack_split_fraction,
+        utility_eligibility=utility_eligibility,
         alpha_max=alpha_max,
         solver_settings=solver_settings,
     )
