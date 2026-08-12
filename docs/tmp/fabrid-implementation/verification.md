@@ -197,6 +197,15 @@ expectation (chose alert timing that didn't actually land in the cooldown-only-m
 to alerts whose dilated intervals are within cooldown but not within merge_gap). Result: 230/230 tests,
 0 ruff findings, 0 pyright errors.
 
+## Cycle 23 (weight-heterogeneity sensitivity)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing
+`evaluation/weight_sensitivity.py` (`WeightConcentration` enum for the 4 preregistered gammas,
+`gamma_reweight`, `preregistered_gamma_sweep`). Simplified away a redundant gamma==0 special case and
+its floating-point-equality lint warning once noticing `w**0 == 1` for any positive `w` already
+produces equal shares through the general formula. Result: 238/238 tests, 0 ruff findings, 0 pyright
+errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
