@@ -214,6 +214,17 @@ errors.
 into `frontier.builder.ClientFrontierInputs`, completing the path from real scores to the allocation
 layer. Result: 242/242 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 25 (main experiment execution + paired contrasts)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `experiments/main_experiment.py`
+(`run_seed_at_budget` — one seed x one budget across EQ_FPR/GREEDY/FABRID_MACRO/FABRID_MINIMAX,
+`SOLVER_INVALID` excluded per-policy not raised) and `statistics/contrasts.py` (`macro_recall_contrast`,
+`worst_client_recall_contrast` — paired seed-level differences feeding the existing sign-flip/bootstrap
+machinery, with excluded seeds reported explicitly rather than silently dropped). Deduplicated the two
+near-identical contrast builders into one generic `_build_contrast` taking a metric-accessor closure.
+Fixed a pyright dataclass mutable-default inference issue (`field(default_factory=dict[K, V])` instead
+of bare `dict`). Result: 249/249 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
