@@ -61,14 +61,18 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | SPLIT-002 | 25 | Exact per-client split counts match published table | table in section 25 | VERIFIED | VERIFIED | `tests/data/test_partitioner.py:test_benign_split_matches_roadmap_table` | reproduces all 9 rows exactly from raw benign_rows n |
 | SPLIT-003 | 26 | Attack split `j_a = floor(0.2 n_a)` -> ATTACK_VALIDATION/ATTACK_TEST per client×subtype | | VERIFIED | VERIFIED | `src/fabrid/data/partitioner.py:compute_attack_split_boundary`, `tests/data/test_partitioner.py` | boundary arithmetic verified; per-client×subtype application to real data pending Phase 2 ingestion wiring |
 | SPLIT-004 | 28 | `D_select ∩ D_final_cal = ∅` (allocation/calibration partition disjointness) | | PARTIAL | PARTIAL | `tests/data/test_partitioner.py:test_benign_split_exclusivity_and_coverage` | boundary-level exclusivity proven by construction (half-open intervals cover [0,n) exactly once); full T01 duplicate-sample_id test against real ingested data still pending |
-| PREPROCESS-001 | 18 | Inherit frozen preprocessing/FedAvg/training rule/architecture/hyperparameters from existing DATP stack | | NOT_AUDITED | NOT_AUDITED | | see decision D001; must confirm datp-core contract before coding Phase 3 |
+| PREPROCESS-001 | 18 | FABRID-IDS's own frozen preprocessing/training-rule/architecture/hyperparameters, implemented standalone (no inheritance from an external research stack) | | MISSING | NOT_AUDITED | | see decision D001 (superseded); implement directly in `fabrid`/detector substrate module, not via an external project dependency |
+| ARCH-004 | 18 | No scientific or runtime dependency on any external federated-learning research codebase (e.g. DATP); FABRID-IDS is standalone | | VERIFIED | VERIFIED | `grep -rni datp src tests pyproject.toml` returns no matches | re-check at every future dependency addition and at final hostile audit |
 
-## TRAIN-* / (detector via datp-core dependency)
+## TRAIN-* / MODEL-003 (standalone detector substrate)
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| TRAIN-001 | 64,109 Phase 3 | Exactly 10 detector seeds {0..9} trained, no seed removal for poor performance | MISSING | NOT_AUDITED | | via datp-core, invoked from fabrid orchestration (not yet written) |
+| TRAIN-001 | 64,109 Phase 3 | Exactly 10 detector seeds {0..9} trained, no seed removal for poor performance | MISSING | NOT_AUDITED | | detector training implemented standalone within `fabrid` (no external stack dependency); not yet written |
 | TRAIN-002 | 19 | Persist model/scaler/config/hashes per seed | MISSING | NOT_AUDITED | | |
+| MODEL-003 | 18 | Detector trained exactly once per dataset x seed and frozen before any policy branching (no per-policy retraining or fine-tuning) | | MISSING | NOT_AUDITED | | enforced by `fabrid/scoring` reading persisted score artifacts only; `fabrid/allocation` must never import a trainer (ARCH-002) |
+| SCORE-003 | 89 | Identical persisted anomaly scores consumed by every policy at a given dataset x seed x client x split coordinate (`score_sha256` equality) | | MISSING | NOT_AUDITED | | `fabrid/audit/score_identity.py` (T07); scores generated once, policies only read |
+| ARCH-005 | 88 | Policy branching (EQ_FPR/GREEDY/FABRID_MACRO/FABRID_MINIMAX/POOLED_SHARED/TEST_ORACLE) occurs only downstream of frozen score generation; no policy triggers rescoring | | PARTIAL | PARTIAL | `src/fabrid/allocation/*` take `ClientUtilityCurve`/scores as pure inputs, never a trainer or score-generation handle | consistent by construction in code written so far; re-verify once scoring pipeline lands |
 
 ## CALIBRATION-*
 
@@ -257,6 +261,23 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | NEGATIVE-001 | 99 | Negative-result policy: no budget/seed/metric/fold/detector/cap changes after seeing unfavorable results | NOT_AUDITED | NOT_AUDITED | | procedural discipline; monitor at each phase |
 | PHASE-000..025 | 109 | 26 implementation phases | see state.md | | `docs/tmp/fabrid-implementation/state.md` | Phase 0-1 done, Phase 2 next |
 | DOD-001..027 | 110 | Definition-of-Done checklist (27 items) | PARTIAL | NOT_AUDITED | | tracked cumulatively; re-audit at final hostile review |
+
+---
+
+## Standalone/decoupling audit (cross-reference)
+
+Explicit checks requested by the standalone-decoupling correction, with pointers into the rows above
+rather than duplicated content:
+
+| Check | Row(s) |
+|---|---|
+| No DATP (or other external stack) scientific/runtime dependency | ARCH-004 |
+| Detector trained once and frozen | MODEL-001, MODEL-002, MODEL-003 |
+| Identical persisted scores across all policies | SCORE-003, TEST-T07, METRIC-009 (T08 AUROC identity) |
+| Policy branching only after score generation | ARCH-005 |
+| Allocation/final-calibration independence | SPLIT-004, CALIBRATION-003, TEST-T05 |
+| Matched-budget fairness | BUDGET-001, WEIGHT-001, STAT-002, TEST-T09 |
+| Test blindness | ARCH-003, TEST-T02, TEST-T03, TEST-T04, TEST-T06 |
 
 ---
 

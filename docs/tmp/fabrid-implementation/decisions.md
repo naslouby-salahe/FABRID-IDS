@@ -1,6 +1,6 @@
 # Decisions
 
-## D001 — Reuse datp-core for detector/scoring, fabrid-ids owns the decision layer only
+## D001 — SUPERSEDED by D003. Originally: reuse datp-core for detector/scoring, fabrid-ids owns the decision layer only
 
 Roadmap section 18: "Where FABRID is implemented on the existing DATP experimental stack, inherit its
 frozen preprocessing; FedAvg implementation; local training rule; architecture; optimization
@@ -20,6 +20,24 @@ exact partitioning rule (section 24-26) or score contract (section 20, strict `>
 wins per prompt.md section 0 ("roadmap overrides existing code"), and fabrid-ids will need to either
 (a) call datp-core's raw feature/preprocessing pipeline but apply FABRID's own partitioner and calibration
 rule, or (b) reimplement the minimal preprocessing needed if datp-core's is not reusable as-is.
+
+## D003 — FABRID-IDS is fully standalone; no scientific or runtime dependency on DATP
+
+Course correction (explicit user instruction, supersedes D001): FABRID-IDS must not be presented as a
+DATP extension/variant/derivative and must not scientifically or at runtime depend on
+`datp-core`/`datp`. The detector is only the fixed experimental substrate; FABRID's contribution is the
+post-training decision layer (frontier/allocation/calibration/statistics), which was already being built
+standalone in `src/fabrid/` and never imported `datp_core` (verified: `grep -rni datp src tests
+pyproject.toml` returns no matches as of this correction).
+
+What changes: the detector-training and score-generation substrate (Phase 3-4) will be implemented
+directly inside `fabrid` (or a vendored/reimplemented minimal detector), not obtained via a `datp-core`
+library dependency. `docs/FABRID-IDS Roadmap.md` section 18 was rewritten to describe FABRID as
+detector-agnostic and standalone; the audit matrix's `PREPROCESS-001`/`TRAIN-001` rows and a new
+`ARCH-004` (no external scientific/runtime dependency) row were added/updated accordingly. No code
+written so far needs to change — the decision layer (partitioner, calibration, evaluation metrics,
+EQ_FPR/GREEDY baselines, MILP optimizer, FABRID_MACRO/MINIMAX) is dependency-free by construction and is
+kept as-is.
 
 ## D002 — CIC IoT-DIAD 2024 not available; external replication provisionally BLOCKED_EXTERNAL
 

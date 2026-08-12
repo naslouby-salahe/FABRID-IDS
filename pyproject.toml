@@ -42,6 +42,9 @@ include = ["src", "tests"]
 extraPaths = ["src"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
+# scipy ships no py.typed stub package; its Unknown types would otherwise
+# cascade into every module that touches scipy.optimize.
+reportMissingTypeStubs = false
 
 # pytest.approx's own type stubs are only partially typed; this affects test
 # files exclusively and never the production `src/` code they exercise.

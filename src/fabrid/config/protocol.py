@@ -54,6 +54,25 @@ class AttackSplitFraction:
 
 
 @dataclass(frozen=True, slots=True)
+class SolverSettings:
+    """MILP solver configuration and the strict solve-acceptance rule."""
+
+    mip_rel_gap: float
+    time_limit_seconds: float
+    accept_mip_gap_leq: float
+
+    def __post_init__(self) -> None:
+        if self.mip_rel_gap < 0:
+            raise ValueError(f"mip_rel_gap must be non-negative, got {self.mip_rel_gap}")
+        if self.time_limit_seconds <= 0:
+            raise ValueError(f"time_limit_seconds must be positive, got {self.time_limit_seconds}")
+        if self.accept_mip_gap_leq < 0:
+            raise ValueError(
+                f"accept_mip_gap_leq must be non-negative, got {self.accept_mip_gap_leq}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class Protocol:
     """Typed view over the constants this codebase currently consumes from `protocol.yaml`.
 
@@ -64,6 +83,7 @@ class Protocol:
     benign_split_fractions: BenignSplitFractions
     attack_split_fraction: AttackSplitFraction
     alpha_max: float
+    solver_settings: SolverSettings
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
@@ -91,8 +111,16 @@ def load_protocol(path: Path = PROTOCOL_PATH) -> Protocol:
 
     alpha_max = float(payload["alpha_grid"]["alpha_max"])
 
+    solver_raw = payload["solver"]
+    solver_settings = SolverSettings(
+        mip_rel_gap=float(solver_raw["mip_rel_gap"]),
+        time_limit_seconds=float(solver_raw["time_limit_seconds"]),
+        accept_mip_gap_leq=float(solver_raw["accept_if"]["mip_gap_leq"]),
+    )
+
     return Protocol(
         benign_split_fractions=benign_split_fractions,
         attack_split_fraction=attack_split_fraction,
         alpha_max=alpha_max,
+        solver_settings=solver_settings,
     )

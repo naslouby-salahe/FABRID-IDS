@@ -699,19 +699,43 @@ Therefore never claim differential privacy or privacy preservation without an ac
 
 # 18. Detector Contract
 
-The detector is not the contribution.
+The detector is not the contribution. FABRID-IDS is a standalone, detector-agnostic decision layer:
 
-Use one fixed detector family for the confirmatory study.
+[
+\boxed{
+\text{frozen detector}
+\rightarrow
+\text{frozen anomaly scores}
+\rightarrow
+\text{local detection–budget utility estimation}
+\rightarrow
+\text{cross-client target-rate allocation}
+\rightarrow
+\text{independent final benign calibration}
+\rightarrow
+\text{matched-budget evaluation}.
+}
+]
 
-Where FABRID is implemented on the existing DATP experimental stack, inherit its frozen:
+FABRID-IDS must not be presented, implemented, or described as an extension, variant, or derivative of
+any other named federated-learning research codebase or project. It has no scientific or runtime
+dependency on any such codebase.
+
+Use one fixed detector family for the confirmatory study, with its own frozen:
 
 * preprocessing;
-* FedAvg implementation;
+* federated aggregation rule (e.g. FedAvg) or centralized training rule, as applicable;
 * local training rule;
 * architecture;
 * optimization hyperparameters;
 * training rounds;
 * anomaly-score function.
+
+These are implemented directly within the FABRID-IDS codebase (or vendored/reimplemented as needed)
+rather than imported from an external research stack. Internal code reuse of generic, non-FABRID-specific
+utilities is permitted where it does not create a scientific or runtime dependency; FABRID-IDS's own
+partitioning, calibration, allocation, optimization, and statistics contracts always take precedence and
+are never inherited from elsewhere.
 
 Do not retune the detector for FABRID after allocation results are observed.
 

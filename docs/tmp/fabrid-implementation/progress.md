@@ -46,3 +46,32 @@ exact reuse boundary with datp-core's N-BaIoT reader.
   so the src-layout package resolves for both tools without an editable install.
 
 Next: raw-data wiring (NBaIoTReader -> partitioner -> split manifest), provenance/eligibility modules.
+
+## 2026-08-12 — Session 1 continued (baselines, MILP optimizer, FABRID_MACRO/MINIMAX)
+
+- Added typed allocation contracts (`src/fabrid/schemas/allocation.py`), `EQ_FPR` and `GREEDY`
+  baselines, `src/fabrid/optimization/milp.py` (strict `scipy.optimize.milp` wrapper), shared MILP
+  formulation helpers, and `FABRID_MACRO`/`FABRID_MINIMAX` with full deterministic tie-breaking.
+- Verified both FABRID policies against exhaustive brute-force enumeration on a 3-client/4-candidate
+  synthetic case and 100x-repeated-solve determinism — both pass.
+- Installed `scipy-stubs` for real `scipy.optimize` typing under strict pyright.
+
+## 2026-08-12 — Course correction: standalone decoupling (decision D003)
+
+User instruction: FABRID-IDS must be fully standalone with no scientific or runtime dependency on DATP,
+not presented as a DATP extension/variant. Applied:
+- Rewrote roadmap section 18 (Detector Contract) to be detector-agnostic/standalone, replacing the one
+  DATP reference in the whole roadmap file.
+- Updated the audit matrix: reworded `PREPROCESS-001`/`TRAIN-001`/`TRAIN-002`, added `ARCH-004` (no
+  external dependency, VERIFIED via grep), `MODEL-003`, `SCORE-003`, `ARCH-005`, and a "Standalone/
+  decoupling audit" cross-reference table covering the seven explicit checks requested.
+- Marked decision D001 superseded, added D003 explaining the correction.
+- Confirmed via `grep -rni datp src tests pyproject.toml`: zero matches — no source code required any
+  change, since the decision layer built so far was already dependency-free by construction. The only
+  planned dependency (detector training reusing an external stack) had not yet been implemented.
+- Rewrote `state.md` (had drifted into repetitive, stale "previously completed" blocks) into one
+  consolidated, current status section.
+
+Next: finish the small open pyright findings on the MILP/minimax optimizer files, then start the
+standalone detector/scoring substrate (Phase 2 real-data ingestion + Phase 3 training), implemented
+directly in `fabrid` per D003.
