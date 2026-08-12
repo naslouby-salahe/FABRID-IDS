@@ -52,6 +52,14 @@ determinism,score_identity,budget_invariants}.py`. Renamed exceptions to the `*E
 N818; converted `assert_deterministic` to PEP 695 generic syntax (`def f[T](...)`) per ruff UP047.
 Result: 142/142 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 7 (statistics: sign-flip, bootstrap, Holm)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `statistics/{sign_flip,
+bootstrap,holm}.py`. Found and fixed a genuine test-expectation bug in the sign-flip test (two-sided
+extremeness matches both the all-positive AND all-negative sign assignment when the observed mean is a
+unique extremum, not just one — fixed 1/1024 -> 2/1024). Result: 159/159 tests, 0 ruff findings, 0
+pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
