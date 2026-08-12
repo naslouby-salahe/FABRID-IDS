@@ -28,8 +28,8 @@ from fabrid.schemas.allocation import (
     ClientUtilityCurve,
 )
 
-_UTILITY_TOLERANCE = 1e-9
-_BUDGET_TOLERANCE = 1e-12
+_UTILITY_TOLERANCE_FLOOR = 1e-9
+_BUDGET_TOLERANCE_FLOOR = 1e-12
 
 
 def _shared_client_grid(
@@ -81,6 +81,12 @@ def allocate_fabrid_macro(
     bounds = Bounds(0.0, 1.0)
     integrality = np.ones(n_clients * n_candidates)
 
+    # A prior stage's reported objective is only known to within its own accepted mip_gap, so a
+    # later stage's floor/ceiling around that objective can never be tighter than that gap without
+    # risking spurious infeasibility (see decisions.md D007).
+    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+
     # Stage 1: maximize mean utility (milp minimizes, so negate).
     stage1 = solve_milp(-utility / n_clients, [one_hot, budget], integrality, bounds, settings)
     optimal_mean_utility = -stage1.objective_value
@@ -88,7 +94,7 @@ def allocate_fabrid_macro(
     # Stage 2: among near-optimal-utility solutions, minimize total budget consumption.
     utility_floor = LinearConstraint(
         (utility / n_clients).reshape(1, -1),
-        lb=optimal_mean_utility - _UTILITY_TOLERANCE,
+        lb=optimal_mean_utility - utility_tolerance,
         ub=np.inf,
     )
     stage2 = solve_milp(cost, [one_hot, budget, utility_floor], integrality, bounds, settings)
@@ -96,7 +102,7 @@ def allocate_fabrid_macro(
 
     # Stage 3: lexicographically minimize the selected alpha vector by client order.
     cost_ceiling = LinearConstraint(
-        cost.reshape(1, -1), lb=-np.inf, ub=optimal_cost + _BUDGET_TOLERANCE
+        cost.reshape(1, -1), lb=-np.inf, ub=optimal_cost + budget_tolerance
     )
     alpha_flat = np.array([alpha for _ in client_ids for alpha in shared_grid], dtype=np.float64)
     stage3 = solve_milp(

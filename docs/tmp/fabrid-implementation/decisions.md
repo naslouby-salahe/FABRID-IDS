@@ -138,6 +138,43 @@ Re-measurement across the full 5-budget x 10-seed sweep against real trained dat
 `run_seed_at_budget`, not the ad-hoc diagnostics above) is required to confirm the practical
 `SOLVER_INVALID` rate after this change; see `state.md` for the follow-up sweep.
 
+## D007 — F001's remaining cause: HiGHS's own feasibility tolerance was looser than the sequential tie-break constraints; tighten it explicitly
+
+D006's `accept_if.mip_gap_leq` fix reduced but did not eliminate `SOLVER_INVALID`; re-running
+`scripts/run_budget_sweep.py` against real trained scores still showed `FABRID_MACRO` invalid on
+1-6/10 seeds per budget, now failing with `HiGHS Status 8: Infeasible`, not a gap-tolerance
+rejection. Direct stage-by-stage reproduction (`allocate_fabrid_macro`'s 3-stage sequential solve
+on seed 0, budget 0.0025) found the cause: stage 2's own returned solution `x2` satisfied the
+`utility_floor` constraint stage 2 was itself given only to within `~7e-7` — i.e. HiGHS accepted a
+solution slightly outside the constraint it was asked to satisfy. That is HiGHS's default MIP/LP
+*feasibility* tolerance (~1e-6, a different knob from `mip_rel_gap`/`accept_if.mip_gap_leq`, which
+bound the *objective* gap, not constraint satisfaction). Stage 3 then re-imposes that exact same
+`utility_floor` (plus a `cost_ceiling` anchored to stage 2's reported cost) as hard constraints; the
+composed system, tightened around a point HiGHS itself only approximately satisfied, was proved
+genuinely infeasible by branch-and-bound. Confirmed directly: passing
+`mip_feasibility_tolerance`/`primal_feasibility_tolerance` (HiGHS-native options, forwarded verbatim
+by `scipy.optimize.milp` for any key its stub does not itself model) as `1e-9` to HiGHS makes stage
+2's `x2` satisfy `utility_floor` to `-2.8e-7` (i.e. with margin, not a near-violation), and stage 3
+solves successfully on the same previously-infeasible instance.
+
+**Decision.** `fabrid/optimization/milp.py:solve_milp` now passes `mip_feasibility_tolerance` and
+`primal_feasibility_tolerance` explicitly as `1e-9` (`_HIGHS_FEASIBILITY_TOLERANCE`) to HiGHS on
+every solve, tighter than any tie-break tolerance in use, so that a stage's own reported solution is
+never numerically inconsistent with a constraint built from it in a later stage. This is a distinct
+fix from D006: D006 widened the *objective-gap acceptance* bar; D007 tightens the *constraint-
+satisfaction* precision of the underlying solver so the multi-stage sequential tie-break (frozen
+protocol design, `protocol.yaml`'s `tie_breaking` section) stays internally consistent regardless of
+that gap bar. Additionally, `allocate_fabrid_macro`'s `_UTILITY_TOLERANCE`/`_BUDGET_TOLERANCE` and
+`allocate_fabrid_minimax`'s `_Z_TOLERANCE`/`_UTILITY_TOLERANCE`/`_BUDGET_TOLERANCE` were renamed to
+`*_FLOOR` and are now combined as `max(frozen_floor, settings.accept_mip_gap_leq)` at call time: the
+frozen protocol tolerance (`1e-9`/`1e-12`) is preserved as a floor and never loosened below what the
+protocol specifies, but it also can never be tighter than the solver's own accepted objective-gap
+precision, which would otherwise make an accepted-but-gap-imprecise earlier stage's solution
+infeasible for a later stage by construction.
+
+Re-measured on the full 5-budget x 10-seed sweep after this change; see `state.md` for the final
+`SOLVER_INVALID` rate.
+
 ## D002 — CIC IoT-DIAD 2024 not available; external replication provisionally BLOCKED_EXTERNAL
 
 `datp-shared-data/raw` contains `CIC_IOT_Dataset2023` (a different, earlier CIC dataset) but not

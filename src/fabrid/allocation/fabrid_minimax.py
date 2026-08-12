@@ -30,9 +30,9 @@ from fabrid.schemas.allocation import (
     ClientUtilityCurve,
 )
 
-_Z_TOLERANCE = 1e-9
-_UTILITY_TOLERANCE = 1e-9
-_BUDGET_TOLERANCE = 1e-12
+_Z_TOLERANCE_FLOOR = 1e-9
+_UTILITY_TOLERANCE_FLOOR = 1e-9
+_BUDGET_TOLERANCE_FLOOR = 1e-12
 
 
 def _shared_client_grid(
@@ -107,6 +107,13 @@ def allocate_fabrid_minimax(
     integrality = np.concatenate([np.ones(n_binary), np.zeros(1)])
     bounds = Bounds(np.zeros(n_vars), np.ones(n_vars))
 
+    # A prior stage's reported objective is only known to within its own accepted mip_gap, so a
+    # later stage's floor/ceiling around that objective can never be tighter than that gap without
+    # risking spurious infeasibility (see decisions.md D007).
+    z_tolerance = max(_Z_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+
     # Stage 1: maximize z (worst-client utility).
     stage1_objective = np.zeros(n_vars)
     stage1_objective[z_index] = -1.0
@@ -115,7 +122,7 @@ def allocate_fabrid_minimax(
 
     z_floor_row = np.zeros((1, n_vars))
     z_floor_row[0, z_index] = 1.0
-    z_floor = LinearConstraint(z_floor_row, lb=optimal_z - _Z_TOLERANCE, ub=np.inf)
+    z_floor = LinearConstraint(z_floor_row, lb=optimal_z - z_tolerance, ub=np.inf)
     constraints_with_z = [*constraints, z_floor]
 
     # Stage 2: among worst-client-optimal solutions, maximize mean utility.
@@ -126,7 +133,7 @@ def allocate_fabrid_minimax(
 
     utility_floor_mean = LinearConstraint(
         _padded_row(utility / n_clients, n_vars),
-        lb=optimal_mean_utility - _UTILITY_TOLERANCE,
+        lb=optimal_mean_utility - utility_tolerance,
         ub=np.inf,
     )
     constraints_with_utility = [*constraints_with_z, utility_floor_mean]
@@ -138,7 +145,7 @@ def allocate_fabrid_minimax(
     optimal_cost = stage3.objective_value
 
     cost_ceiling = LinearConstraint(
-        _padded_row(cost, n_vars), lb=-np.inf, ub=optimal_cost + _BUDGET_TOLERANCE
+        _padded_row(cost, n_vars), lb=-np.inf, ub=optimal_cost + budget_tolerance
     )
     constraints_final = [*constraints_with_utility, cost_ceiling]
 

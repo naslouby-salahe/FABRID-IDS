@@ -17,6 +17,14 @@ from fabrid.config.protocol import SolverSettings
 _OPTIMAL_STATUS = 0
 _BINARY_LOWER_BOUND = 0.0
 _BINARY_UPPER_BOUND = 1.0
+# HiGHS's default feasibility tolerance (~1e-6) is looser than the tie-break floor/ceiling
+# constraints chained across allocate_fabrid_macro/allocate_fabrid_minimax's sequential-solve
+# stages: a stage's own returned solution can then satisfy a constraint only within that default
+# tolerance, not exactly, which the next stage re-imposes as a hard constraint and can find
+# genuinely infeasible. Tightening HiGHS's own tolerance below the tightest tie-break tolerance in
+# use eliminates that cross-stage inconsistency (see docs/tmp/fabrid-implementation/decisions.md
+# D007).
+_HIGHS_FEASIBILITY_TOLERANCE = 1e-9
 
 
 class SolverInvalidError(Exception):
@@ -46,7 +54,16 @@ def solve_milp(
         constraints=constraints,
         integrality=integrality,
         bounds=bounds,
-        options={"mip_rel_gap": settings.mip_rel_gap, "time_limit": settings.time_limit_seconds},
+        # scipy-stubs' `_OptionsMILP` only declares mip_rel_gap/time_limit/disp/presolve/
+        # node_limit, but scipy.optimize.milp forwards unrecognized keys to HiGHS verbatim
+        # (confirmed at runtime); the tolerance keys below are real HiGHS options the stub
+        # does not yet model.
+        options={  # pyright: ignore[reportArgumentType]
+            "mip_rel_gap": settings.mip_rel_gap,
+            "time_limit": settings.time_limit_seconds,
+            "mip_feasibility_tolerance": _HIGHS_FEASIBILITY_TOLERANCE,
+            "primal_feasibility_tolerance": _HIGHS_FEASIBILITY_TOLERANCE,
+        },
     )
 
     objective_value = result.fun
