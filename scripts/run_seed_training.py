@@ -29,6 +29,8 @@ from fabrid.data.partitioner import (
     compute_benign_split_boundaries,
 )
 from fabrid.data.preprocessing import FeatureScaler, fit_feature_scaler
+from fabrid.detector.model import AutoencoderArchitecture
+from fabrid.detector.persistence import save_detector_state
 from fabrid.detector.training import FederatedTrainingConfig, train_federated_autoencoder
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
 from fabrid.schemas.score_artifact import DetectorSeed, ScoreArtifact
@@ -105,6 +107,17 @@ def run_seed(seed: int) -> dict[str, str]:
 
     output_dir = RESULTS_DIR / f"seed_{seed}"
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    architecture = AutoencoderArchitecture(
+        n_features=len(feature_manifest.feature_names), hidden_dims=hyperparameters.hidden_dims
+    )
+    detector_hashes = save_detector_state(output_dir, model, architecture, scaler_by_client)
+    print(
+        f"[{time.time() - t0:6.1f}s] persisted model/scalers: "
+        f"model_sha256={detector_hashes.model_sha256[:12]}, "
+        f"scalers_sha256={detector_hashes.scalers_sha256[:12]}"
+    )
+
     with (output_dir / "feature_manifest.json").open("w", encoding="utf-8") as handle:
         json.dump(
             {
