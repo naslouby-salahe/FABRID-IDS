@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from fabrid.data.feature_manifest import build_feature_manifest_from_csv_header
 from fabrid.data.nbaiot_reader import read_device_directory
 from fabrid.evaluation.record_level import ClientId
 
@@ -40,3 +41,16 @@ pytestmark = [
 def test_real_benign_row_counts_match_published_table(device_name: str, expected_rows: int) -> None:
     data = read_device_directory(ClientId(device_name), _RAW_NBAIOT_DIR / device_name)
     assert data.benign_features.shape == (expected_rows, _EXPECTED_FEATURE_COUNT)
+
+
+@pytest.mark.parametrize("device_name", _EXPECTED_BENIGN_ROWS.keys())
+def test_real_feature_manifest_identical_across_devices(device_name: str) -> None:
+    reference = build_feature_manifest_from_csv_header(
+        _RAW_NBAIOT_DIR / "Danmini_Doorbell" / "benign_traffic.csv"
+    )
+    manifest = build_feature_manifest_from_csv_header(
+        _RAW_NBAIOT_DIR / device_name / "benign_traffic.csv"
+    )
+    assert manifest.feature_names == reference.feature_names
+    assert manifest.sha256() == reference.sha256()
+    assert len(manifest.feature_names) == _EXPECTED_FEATURE_COUNT

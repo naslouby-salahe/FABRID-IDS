@@ -86,6 +86,14 @@ confirming `CLIENT-001`/`DATASET-001` exactly against real data (not just the co
 ~3s) while the integration check remains available on demand or at major checkpoints. Result: fast
 suite 172/172 in 3s; integration suite 9/9 in ~69s; ruff/pyright clean.
 
+## Cycle 11 (feature manifest freeze)
+
+`pytest -q` (both default and `-m integration`), `ruff format`, `ruff check --fix`, `pyright` after
+landing `data/feature_manifest.py` (`FeatureManifest`, `build_feature_manifest_from_csv_header`) plus
+a real-data integration test confirming all 9 N-BaIoT devices share an identical 115-column feature
+manifest (same names, same order, same sha256). Result: fast suite 176/176 (3s), integration suite
+18/18 (~57s), ruff/pyright clean.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
