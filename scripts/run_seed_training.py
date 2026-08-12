@@ -19,6 +19,7 @@ import numpy as np
 
 from fabrid.config.detector import load_detector_hyperparameters
 from fabrid.config.protocol import load_protocol
+from fabrid.data.feature_manifest import build_feature_manifest_from_csv_header
 from fabrid.data.nbaiot_reader import read_device_directory
 from fabrid.data.partitioner import (
     AttackSplitBoundary,
@@ -98,8 +99,22 @@ def run_seed(seed: int) -> dict[str, str]:
     model = train_federated_autoencoder(scaled_train, training_config)
     print(f"[{time.time() - t0:6.1f}s] training complete")
 
+    feature_manifest = build_feature_manifest_from_csv_header(
+        _RAW_DIR / _CLIENT_NAMES[0] / "benign_traffic.csv"
+    )
+
     output_dir = RESULTS_DIR / f"seed_{seed}"
     output_dir.mkdir(parents=True, exist_ok=True)
+    with (output_dir / "feature_manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(
+            {
+                "feature_names": list(feature_manifest.feature_names),
+                "sha256": feature_manifest.sha256(),
+            },
+            handle,
+            indent=2,
+        )
+
     manifest: dict[str, str] = {}
 
     for client_id, raw in raw_by_client.items():
