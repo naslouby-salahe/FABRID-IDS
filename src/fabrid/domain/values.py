@@ -13,6 +13,11 @@ def _require_non_negative(name: str, value: float) -> None:
         raise ValueError(f"{name} must be non-negative, got {value}")
 
 
+def _require_positive_integer(name: str, value: int) -> None:
+    if value <= 0:
+        raise ValueError(f"{name} must be positive, got {value}")
+
+
 @dataclass(frozen=True, slots=True)
 class DetectorSeed:
     value: int
@@ -45,8 +50,48 @@ class FeatureCount:
     value: int
 
     def __post_init__(self) -> None:
-        if self.value <= 0:
-            raise ValueError(f"feature count must be positive, got {self.value}")
+        _require_positive_integer("feature count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class LayerWidth:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("layer width", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class LocalEpochCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("local epoch count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class FederatedRoundCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("federated round count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class BatchSize:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("batch size", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class LearningRate:
+    value: float
+
+    def __post_init__(self) -> None:
+        if self.value <= 0.0:
+            raise ValueError(f"learning rate must be positive, got {self.value}")
 
 
 @dataclass(frozen=True, slots=True)
