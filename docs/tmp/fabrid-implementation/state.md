@@ -7,7 +7,17 @@ raw-data ingestion/provenance wiring not yet done
 current requirement/group: SPLIT-001..004 (boundary arithmetic) DONE; DATASET/CLIENT provenance wiring
 to `datp_core.data.nbaiot.NBaIoTReader` NEXT
 
-last completed major implementation chunk (this entry):
+last completed major implementation chunk (this entry, supersedes prior "this entry"):
+- `src/fabrid/evaluation/record_level.py`: MacroRecall, WorstClientRecall, federation FPR (weighted),
+  BUR (never clamped), BVR, FPR dispersion (median/IQR/min/max/CV with `None`/NA when mean FPR is 0),
+  false-alert Gini (0 when total is 0). Typed `ClientId`/`AttackSubtype` NewTypes, `ClientWeight`/
+  `TruePositiveRate`/`FalsePositiveRate` validated value dataclasses — no raw floats crossing this
+  module's public API.
+- `tests/evaluation/test_record_level.py`: 14 tests covering formulas, equal-client weighting, BUR
+  non-clamping, NA-vs-zero CV distinction, Gini edge cases, invalid-value rejection.
+- Batched verification: ruff format/check, pyright, pytest — all clean, 56/56 tests passing total.
+
+Previously completed (superseded entry, kept for history):
 - `src/fabrid/data/partitioner.py`: pure index-arithmetic `compute_benign_split_boundaries` (i1/i2/i3
   floor rule, section 24) and `compute_attack_split_boundary` (j_a floor rule, section 26), typed via
   `BenignSplit`/`AttackSplit` StrEnums and frozen dataclasses with invariant validation in `__post_init__`.
