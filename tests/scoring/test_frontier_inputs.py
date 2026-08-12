@@ -15,6 +15,7 @@ from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
 from fabrid.schemas.score_artifact import DetectorSeed
 from fabrid.scoring.frontier_inputs import (
+    all_test_auprc,
     all_test_auroc,
     attack_test_scores_by_subtype,
     benign_final_cal_scores,
@@ -92,3 +93,9 @@ def test_all_test_auroc_in_valid_range() -> None:
     artifact = _artifact()
     auroc = all_test_auroc(artifact)
     assert 0.0 <= auroc <= 1.0
+
+
+def test_all_test_auprc_in_valid_range() -> None:
+    artifact = _artifact()
+    auprc = all_test_auprc(artifact)
+    assert 0.0 <= auprc <= 1.0

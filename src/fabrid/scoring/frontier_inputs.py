@@ -12,7 +12,7 @@ from fabrid.evaluation.record_level import AttackSubtype
 from fabrid.frontier.builder import ClientFrontierInputs
 from fabrid.frontier.utility import SubtypeConfusionCounts
 from fabrid.schemas.score_artifact import ScoreArtifact
-from fabrid.scoring.score_contract import compute_auroc
+from fabrid.scoring.score_contract import compute_auprc, compute_auroc
 
 
 def _scores_by_split(artifact: ScoreArtifact, split_id: BenignSplit | AttackSplit) -> np.ndarray:
@@ -71,8 +71,7 @@ def attack_test_scores_by_subtype(artifact: ScoreArtifact) -> dict[AttackSubtype
     return _attack_scores_by_subtype(artifact, AttackSplit.TEST)
 
 
-def all_test_auroc(artifact: ScoreArtifact) -> float:
-    """AUROC over BENIGN_TEST vs all ATTACK_TEST rows, for the AUROC-invariance audit."""
+def _all_test_scores_and_labels(artifact: ScoreArtifact) -> tuple[np.ndarray, np.ndarray]:
     benign = benign_test_scores(artifact)
     attack_by_subtype = attack_test_scores_by_subtype(artifact)
     attack = np.concatenate(list(attack_by_subtype.values())) if attack_by_subtype else np.array([])
@@ -80,4 +79,18 @@ def all_test_auroc(artifact: ScoreArtifact) -> float:
     is_attack = np.concatenate(
         [np.zeros(benign.shape[0], dtype=bool), np.ones(attack.shape[0], dtype=bool)]
     )
+    return scores, is_attack
+
+
+def all_test_auroc(artifact: ScoreArtifact) -> float:
+    """AUROC over BENIGN_TEST vs all ATTACK_TEST rows, for the AUROC-invariance audit."""
+    scores, is_attack = _all_test_scores_and_labels(artifact)
     return compute_auroc(scores, is_attack)
+
+
+def all_test_auprc(artifact: ScoreArtifact) -> float:
+    """AUPRC over BENIGN_TEST vs all ATTACK_TEST rows; describes the frozen detector's score
+    ranking, same as AUROC — never recomputed per policy.
+    """
+    scores, is_attack = _all_test_scores_and_labels(artifact)
+    return compute_auprc(scores, is_attack)

@@ -33,6 +33,30 @@ def compute_auroc(scores: np.ndarray, is_attack: np.ndarray) -> float:
     return (sum_ranks_positive - n_positive * (n_positive + 1) / 2) / (n_positive * n_negative)
 
 
+def compute_auprc(scores: np.ndarray, is_attack: np.ndarray) -> float:
+    """Precision-recall AUC via the trapezoidal rule over the score-sorted precision/recall
+    curve (attack = positive class), matching the score contract's strict `>` decision rule at
+    every candidate threshold. Depends only on score ranking, like AUROC.
+    """
+    n_positive = int(np.sum(is_attack))
+    if n_positive == 0:
+        raise ValueError("compute_auprc requires at least one attack sample")
+    if is_attack.size - n_positive == 0:
+        raise ValueError("compute_auprc requires at least one benign sample")
+
+    order = np.argsort(-scores, kind="stable")
+    sorted_is_attack = is_attack[order]
+    cumulative_tp = np.cumsum(sorted_is_attack)
+    cumulative_fp = np.cumsum(~sorted_is_attack)
+
+    recall = cumulative_tp / n_positive
+    precision = cumulative_tp / (cumulative_tp + cumulative_fp)
+
+    recall_with_origin = np.concatenate(([0.0], recall))
+    precision_with_origin = np.concatenate(([1.0], precision))
+    return float(np.trapezoid(precision_with_origin, recall_with_origin))
+
+
 def assert_auroc_invariant(auroc_by_policy: Mapping[str, float]) -> None:
     if not auroc_by_policy:
         raise ValueError("assert_auroc_invariant requires at least one policy")

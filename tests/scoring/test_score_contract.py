@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from fabrid.scoring.score_contract import assert_auroc_invariant, compute_auroc, decide
+from fabrid.scoring.score_contract import (
+    assert_auroc_invariant,
+    compute_auprc,
+    compute_auroc,
+    decide,
+)
 
 
 def test_decide_is_strict_greater_than() -> None:
@@ -48,3 +53,26 @@ def test_auroc_invariant_detects_violation() -> None:
 def test_auroc_invariant_requires_at_least_one_policy() -> None:
     with pytest.raises(ValueError):
         assert_auroc_invariant({})
+
+
+def test_compute_auprc_perfect_separation() -> None:
+    scores = np.array([0.1, 0.2, 0.8, 0.9])
+    is_attack = np.array([False, False, True, True])
+    assert compute_auprc(scores, is_attack) == pytest.approx(1.0)
+
+
+def test_compute_auprc_worst_case_ordering() -> None:
+    # attacks scored strictly lower than every benign row: every prefix by
+    # descending score hits both benign rows before either attack row.
+    scores = np.array([0.9, 0.8, 0.2, 0.1])
+    is_attack = np.array([False, False, True, True])
+    n_positive = 2
+    n_total = 4
+    assert compute_auprc(scores, is_attack) < n_positive / n_total
+
+
+def test_compute_auprc_requires_both_classes() -> None:
+    with pytest.raises(ValueError):
+        compute_auprc(np.array([1.0, 2.0]), np.array([True, True]))
+    with pytest.raises(ValueError):
+        compute_auprc(np.array([1.0, 2.0]), np.array([False, False]))
