@@ -182,8 +182,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| COMM-001 | 86 | Client message logical payload = 896 bytes/client (207 float32 utilities=828 + 16+8+4+4+2+2+32); 9 clients=8,064B; 105 clients=94,080B | | MISSING | NOT_AUDITED | | `src/fabrid/evaluation/` overhead measurement; Table 6 |
-| COMM-002 | 87 | Server response: 8-bit candidate index (ceil(log2(207))=8) + epoch ID + config hash + client ID + budget ID + integrity metadata | | MISSING | NOT_AUDITED | | |
+| COMM-001 | 86 | Client message logical payload = 896 bytes/client (207 float32 utilities=828 + 16+8+4+4+2+2+32); 9 clients=8,064B; 105 clients=94,080B | | VERIFIED | VERIFIED | `src/fabrid/evaluation/workload.py:ClientUploadPayload`/`federation_upload_bytes`, `tests/evaluation/test_workload.py` (exact byte-count parity with 896B/8,064B/94,080B) | |
+| COMM-002 | 87 | Server response: 8-bit candidate index (ceil(log2(207))=8) + epoch ID + config hash + client ID + budget ID + integrity metadata | | VERIFIED | VERIFIED | `src/fabrid/evaluation/workload.py:candidate_index_bits`/`candidate_index_bytes`, `tests/evaluation/test_workload.py::test_candidate_index_needs_8_bits_for_207_candidates` | only the candidate-index sizing is computed; epoch ID/config hash/client ID/budget ID/integrity metadata are fixed-size fields not yet assembled into a full response-payload byte count |
 
 ## ARCH-*
 
