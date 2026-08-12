@@ -206,6 +206,14 @@ its floating-point-equality lint warning once noticing `w**0 == 1` for any posit
 produces equal shares through the general formula. Result: 238/238 tests, 0 ruff findings, 0 pyright
 errors.
 
+## Cycle 24 (frontier_inputs: bridges persisted ScoreArtifact -> frontier/builder)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `scoring/frontier_inputs.py`
+(`build_client_frontier_inputs`, `benign_final_cal_scores`, `benign_test_scores`,
+`attack_test_scores_by_subtype`, `all_test_auroc`) — the module that turns a persisted `ScoreArtifact`
+into `frontier.builder.ClientFrontierInputs`, completing the path from real scores to the allocation
+layer. Result: 242/242 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
