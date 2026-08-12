@@ -180,6 +180,13 @@ Generalized `frontier/utility.py:client_utility` to accept a `SubtypeRecallSourc
 and LCB-adjusted recall sources reuse the same averaging function rather than duplicating it. Result:
 214/214 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 21 (allocation-sensitivity analysis)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `frontier/stability.py`
+(`summarize_client_stability` — modal/median/5th/95th percentile + `Instability_k`;
+`run_allocation_sensitivity` — generic replicate-driven aggregator, caller supplies the
+resample-and-reallocate closure). Result: 220/220 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
