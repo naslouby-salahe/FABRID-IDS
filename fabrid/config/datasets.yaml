@@ -1,0 +1,86 @@
+# Dataset/client population contracts (roadmap sections 21-26, 74-79).
+
+nbaiot:
+  dataset_id: n-baiot
+  weight_evidence_level: C # equal-client; see roadmap section 12.3
+  attack_subtypes:
+    bashlite: [bashlite_scan, bashlite_junk, bashlite_udp, bashlite_tcp, bashlite_combo]
+    mirai: [mirai_scan, mirai_ack, mirai_syn, mirai_udp, mirai_udpplain]
+  clients:
+    - id: 1
+      name: Danmini_Doorbell
+      benign_rows: 49548
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 24774, frontier: 9909, final_cal: 4955, test: 9910 }
+    - id: 2
+      name: Ennio_Doorbell
+      benign_rows: 39100
+      has_mirai: false
+      has_bashlite: true
+      split_counts: { train: 19550, frontier: 7820, final_cal: 3910, test: 7820 }
+    - id: 3
+      name: Ecobee_Thermostat
+      benign_rows: 13113
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 6556, frontier: 2623, final_cal: 1311, test: 2623 }
+    - id: 4
+      name: Philips_B120N10_Baby_Monitor
+      benign_rows: 175240
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 87620, frontier: 35047, final_cal: 17525, test: 35048 }
+    - id: 5
+      name: Provision_PT_737E_Security_Camera
+      benign_rows: 62154
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 31077, frontier: 12430, final_cal: 6216, test: 12431 }
+    - id: 6
+      name: Provision_PT_838_Security_Camera
+      benign_rows: 98514
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 49257, frontier: 19702, final_cal: 9852, test: 19703 }
+    - id: 7
+      name: SimpleHome_XCS7_1002_WHT_Security_Camera
+      benign_rows: 46585
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 23292, frontier: 9317, final_cal: 4659, test: 9317 }
+    - id: 8
+      name: SimpleHome_XCS7_1003_WHT_Security_Camera
+      benign_rows: 19528
+      has_mirai: true
+      has_bashlite: true
+      split_counts: { train: 9764, frontier: 3905, final_cal: 1953, test: 3906 }
+    - id: 9
+      name: Samsung_SNH_1011_N_Webcam
+      benign_rows: 52150
+      has_mirai: false
+      has_bashlite: true
+      split_counts: { train: 26075, frontier: 10430, final_cal: 5215, test: 10430 }
+  raw_data_path: data/raw/N-BaIoT
+
+cic_iot_diad_2024:
+  dataset_id: cic-iot-diad-2024
+  status: candidate_external_replication
+  weight_evidence_level: not_applicable
+  client_key: device_mac
+  eligibility:
+    min_benign_rows: 10000
+    min_attack_rows: 1000
+    min_attack_validation_rows: 200
+    min_eligible_subtypes: 2
+    min_rows_per_eligible_subtype: 50
+    min_qualifying_clients_for_confirmatory: 10
+  excluded_features:
+    - device_mac
+    - anomaly_label
+    - device_identification_label
+    - source_row_id
+    - source_file
+    - split_id
+  numeric_parse_success_threshold: 0.999
+  raw_data_path: data/raw/CIC_IOT_DIAD_2024 # not present as of protocol freeze; see BLOCKED_EXTERNAL

@@ -1,0 +1,114 @@
+# FABRID-IDS frozen protocol (roadmap Phase 1 / v2.0, 2026-08-12).
+# This file is a scientific artifact: do not edit values after confirmatory
+# execution begins. Any change requires a recorded decision in
+# docs/tmp/fabrid-implementation/decisions.md and a fresh protocol hash.
+
+identity:
+  method_name: FABRID
+  public_identifier: FABRID-IDS
+  package: fabrid
+  protocol_version: "2.0"
+  protocol_date: "2026-08-12"
+
+score_contract:
+  decision_operator: strict_greater_than # s(x) > tau ; never >=
+  tie_at_threshold: non_alert
+
+detector:
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  retrain_per_policy: false
+
+alpha_grid:
+  path: fabrid/config/alpha_grid.json
+  expected_size: 207
+  alpha_max: 0.05
+
+budgets_record_level:
+  values: [0.001, 0.0025, 0.005, 0.010, 0.020]
+
+benign_split_fractions:
+  # source-order contiguous cut points, floor(fraction * n)
+  train: 0.50
+  frontier: 0.70 # cumulative boundary i2 = floor(0.70n)
+  final_cal: 0.80 # cumulative boundary i3 = floor(0.80n)
+  # test = remainder [i3, n)
+
+attack_split:
+  validation_fraction: 0.20 # first 20% (source order) -> ATTACK_VALIDATION
+  # remaining 80% -> ATTACK_TEST
+
+utility_eligibility:
+  min_attack_validation_rows: 200
+  min_eligible_subtypes: 2
+  min_rows_per_eligible_subtype: 50
+  fallback_policy: equal_fpr_at_budget # alpha_k = min(B_FP, alpha_max)
+
+finite_sample_calibration:
+  # r = ceil((n+1) * (1 - alpha)); tau = s_(r) if r <= n else +inf; alpha=0 -> +inf
+  rank_formula: "ceil((n + 1) * (1 - alpha))"
+
+solver:
+  backend: scipy.optimize.milp
+  integrality: 1
+  bounds: [0, 1]
+  mip_rel_gap: 0
+  time_limit_seconds: 60
+  accept_if:
+    success: true
+    status: 0
+    mip_gap_leq: 1.0e-9
+
+tie_breaking:
+  fabrid_macro:
+    - maximize_macro_utility
+    - constrain_utility_within_1e-9_of_optimum
+    - minimize_total_budget_consumption
+    - constrain_budget_within_1e-12_of_optimum
+    - lexicographic_minimize_alpha_by_client_id
+  fabrid_minimax:
+    - maximize_minimum_utility
+    - fix_minimum_utility
+    - maximize_macro_utility
+    - fix_macro_utility
+    - minimize_total_budget
+    - lexicographic_minimize_alpha_by_client_id
+
+statistics:
+  experimental_unit: detector_seed
+  sign_flip_enumeration: 1024 # 2^10 seeds
+  alpha_significance: 0.05
+  holm_family_size: 5 # per contrast, across budgets
+  bootstrap_resamples: 50000
+
+practical_gates:
+  fabrid_macro:
+    min_delta_macro_recall_pp: 2.0
+    min_budgets_passing: 3
+    of_budgets: 5
+  fabrid_minimax:
+    min_delta_worst_client_recall_pp: 5.0
+    max_macro_recall_loss_pp: 2.0
+    min_budgets_passing: 3
+    of_budgets: 5
+  budget_compliance:
+    median_bur_leq: 1.05
+    seeds_with_bur_leq_1_10_min_fraction: 0.9 # >= 9/10
+
+allocation_sensitivity:
+  replicates: 500
+
+conservative_utility:
+  one_sided_binomial_lcb_confidence: 0.95
+
+event_gate:
+  dilation_seconds: 2
+  merge_gap_seconds: 5
+  min_event_length_seconds: 2
+  cooldown_seconds: 10
+  max_alarm_duty: 0.25
+  event_budgets_per_client_hour: [0.1, 0.2, 0.5]
+  sensitivity_grid:
+    dilation_seconds: [1, 2, 3]
+    merge_gap_seconds: [3, 5, 10]
+    min_event_length_seconds: [1, 2, 3]
+    cooldown_seconds: [5, 10, 20]
