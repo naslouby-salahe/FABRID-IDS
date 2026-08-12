@@ -152,8 +152,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 |---|---|---|---|---|---|---|---|
 | STAT-001 | 68 | Experimental unit = detector seed, n=10 paired replications, no row-level pseudo-replication | | MISSING | NOT_AUDITED | | |
 | STAT-002 | 69 | Contrast A: FABRID_MACRO - EQ_FPR on MacroRecall; Contrast B: FABRID_MINIMAX - EQ_FPR on WorstClientRecall | | MISSING | NOT_AUDITED | | |
-| STAT-003 | 70 | Exact two-sided sign-flip test over all `2^10=1024` sign assignments, alpha=0.05, Holm correction across 5 budgets per contrast | | MISSING | NOT_AUDITED | | `src/fabrid/statistics/sign_flip.py`, `holm.py`; GATE G14 |
-| STAT-004 | 71 | 50,000 paired seed-bootstrap resamples; report mean/median diff, 95% CI, exact p, Holm-adjusted p; never p without effect size | | MISSING | NOT_AUDITED | | `src/fabrid/statistics/bootstrap.py` |
+| STAT-003 | 70 | Exact two-sided sign-flip test over all `2^10=1024` sign assignments, alpha=0.05, Holm correction across 5 budgets per contrast | | VERIFIED | VERIFIED | `src/fabrid/statistics/sign_flip.py`, `holm.py`, `tests/statistics/test_sign_flip.py`, `tests/statistics/test_holm.py` | 1024-enumeration verified exactly for 10-seed case; Holm step-down verified |
+| STAT-004 | 71 | 50,000 paired seed-bootstrap resamples; report mean/median diff, 95% CI, exact p, Holm-adjusted p; never p without effect size | | VERIFIED | VERIFIED | `src/fabrid/statistics/bootstrap.py`, `tests/statistics/test_bootstrap.py` | resample count is caller-supplied (default not fixed at 50,000 in code); Phase-13 experiment execution must pass `resamples=50000` explicitly |
 | STAT-005 | 72 | Practical gates: MACRO >=2.0pp at >=3/5 budgets; MINIMAX >=5.0pp worst-client at >=3/5 budgets with Macro loss <=2.0pp | | MISSING | NOT_AUDITED | | evaluated post-experiment |
 | STAT-006 | 73 | Budget compliance: `median(BUR)<=1.05` and `#{seed:BUR<=1.10}>=9/10`; also report `max(BUR)` | | MISSING | NOT_AUDITED | | |
 
@@ -216,14 +216,14 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | TEST-T08 | 91 | `|Delta AUROC|<1e-12` | MISSING | NOT_AUDITED | |
 | TEST-T09 | 91 | Budget feasibility `sum w_k alpha_k <= B_FP + 1e-12` | MISSING | NOT_AUDITED | |
 | TEST-T10 | 91 | One target per client `sum_j x_kj = 1` | MISSING | NOT_AUDITED | |
-| TEST-T11 | 91 | Brute-force solver parity (3 clients x 4 candidates) | MISSING | NOT_AUDITED | |
-| TEST-T12 | 91 | Determinism 100/100 | MISSING | NOT_AUDITED | |
-| TEST-T13 | 91 | Zero-budget -> all alpha_k=0 | MISSING | NOT_AUDITED | |
-| TEST-T14 | 91 | Single-client K=1 reduction | MISSING | NOT_AUDITED | |
-| TEST-T15 | 91 | Equal utility curves -> no unexplained advantage | MISSING | NOT_AUDITED | |
-| TEST-T16 | 91 | Monotonic budget feasibility | MISSING | NOT_AUDITED | |
-| TEST-T17 | 91 | Final-cal resolution: below 1/(n+1) -> +inf | MISSING | NOT_AUDITED | |
-| TEST-T18 | 91 | Duplicate-score strict `>` ties | MISSING | NOT_AUDITED | |
+| TEST-T11 | 91 | Brute-force solver parity (3 clients x 4 candidates) | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py`, `test_fabrid_minimax.py` |
+| TEST-T12 | 91 | Determinism 100/100 | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py`, `test_fabrid_minimax.py`, generic `audit/determinism.py` |
+| TEST-T13 | 91 | Zero-budget -> all alpha_k=0 | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_zero_budget_allocates_nothing`, minimax equivalent |
+| TEST-T14 | 91 | Single-client K=1 reduction | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_single_client_reduces_to_best_affordable_point` |
+| TEST-T15 | 91 | Equal utility curves -> no unexplained advantage | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_equal_utility_curves_no_unexplained_advantage` |
+| TEST-T16 | 91 | Monotonic budget feasibility | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_monotone_budget_feasibility` |
+| TEST-T17 | 91 | Final-cal resolution: below 1/(n+1) -> +inf | VERIFIED | VERIFIED | `tests/calibration/test_order_statistic.py::test_finite_sample_resolution_below_threshold_yields_infinite` |
+| TEST-T18 | 91 | Duplicate-score strict `>` ties | VERIFIED | VERIFIED | `tests/calibration/test_order_statistic.py::test_strict_greater_than_ties_are_non_alerts`, `tests/scoring/test_score_contract.py::test_decide_is_strict_greater_than` |
 | TEST-alpha-grid | 29 | Alpha grid = 207 unique sorted values, frozen artifact | VERIFIED | VERIFIED | `python -m fabrid.config.alpha_grid` output; `src/fabrid/config/alpha_grid.json` |
 
 ## GATE-* (pre-execution gates G01-G17)
@@ -240,10 +240,10 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | GATE-G08 | 207-target grid frozen | VERIFIED | VERIFIED | `src/fabrid/config/alpha_grid.json` | |
 | GATE-G09 | Five primary budgets frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml` | |
 | GATE-G10 | Non-oracle test access impossible | MISSING | NOT_AUDITED | | ARCH-003 |
-| GATE-G11 | Brute-force parity | MISSING | NOT_AUDITED | | TEST-T11 |
-| GATE-G12 | 100/100 determinism | MISSING | NOT_AUDITED | | TEST-T12 |
+| GATE-G11 | Brute-force parity | VERIFIED | VERIFIED | TEST-T11 |
+| GATE-G12 | 100/100 determinism | VERIFIED | VERIFIED | TEST-T12 |
 | GATE-G13 | Metrics formulas unit-tested | MISSING | NOT_AUDITED | | METRIC-* |
-| GATE-G14 | 1,024-sign implementation validated | MISSING | NOT_AUDITED | | STAT-003 |
+| GATE-G14 | 1,024-sign implementation validated | VERIFIED | VERIFIED | STAT-003 |
 | GATE-G15 | External eligibility rule frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/datasets.yaml:cic_iot_diad_2024.eligibility` | data itself BLOCKED_EXTERNAL |
 | GATE-G16 | Event provenance pass or event claims disabled | BLOCKED_EXTERNAL | NOT_AUDITED | decisions.md | data not present |
 | GATE-G17 | Environment locked | MISSING | NOT_AUDITED | | need `requirements.lock`/uv lock |
