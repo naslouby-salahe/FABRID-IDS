@@ -8,6 +8,7 @@ from fabrid.evaluation.eventization import (
     alarm_duty_fraction,
     eventize_alerts,
     events_per_hour,
+    load_event_gate_config,
 )
 
 _PARAMS = EventizationParameters(
@@ -80,3 +81,18 @@ def test_zero_observation_duration_rejected() -> None:
         events_per_hour((), observation_duration_seconds=0.0)
     with pytest.raises(ValueError):
         alarm_duty_fraction((), observation_duration_seconds=0.0)
+
+
+def test_load_event_gate_config_reads_frozen_yaml() -> None:
+    config = load_event_gate_config()
+
+    assert config.parameters.dilation_seconds == 2.0
+    assert config.parameters.merge_gap_seconds == 5.0
+    assert config.parameters.min_event_length_seconds == 2.0
+    assert config.parameters.cooldown_seconds == 10.0
+    assert config.max_alarm_duty == 0.25
+    assert config.event_budgets_per_client_hour == (0.1, 0.2, 0.5)
+    assert config.sensitivity_grid.dilation_seconds == (1.0, 2.0, 3.0)
+    assert config.sensitivity_grid.merge_gap_seconds == (3.0, 5.0, 10.0)
+    assert config.sensitivity_grid.min_event_length_seconds == (1.0, 2.0, 3.0)
+    assert config.sensitivity_grid.cooldown_seconds == (5.0, 10.0, 20.0)

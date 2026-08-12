@@ -173,8 +173,8 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
 | EVENT-001 | 81 | `EVENT_DATA_GATE`: PASS only if immutable client ID, timestamp, attack-interval provenance, deterministic score association, in-client ordering, observation duration, non-overlapping eval period all proven | BLOCKED_EXTERNAL | NOT_AUDITED | | Gotham/CICIoMT2024 not present in shared raw data |
-| EVENT-002 | 82 | Eventization params `(d,m,l_min,c)=(2,5,2,10)s`, duty<=0.25, `B_E in {0.1,0.2,0.5}` events/client/hour | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml:event_gate` | params frozen; code + data blocked |
-| EVENT-003 | 83 | 81-combination post-processing sensitivity grid at `B_E=0.2` | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml:event_gate.sensitivity_grid` | params frozen; execution blocked |
+| EVENT-002 | 82 | Eventization params `(d,m,l_min,c)=(2,5,2,10)s`, duty<=0.25, `B_E in {0.1,0.2,0.5}` events/client/hour | VERIFIED | VERIFIED | `src/fabrid/evaluation/eventization.py:load_event_gate_config`, `tests/evaluation/test_eventization.py` | loader verified; execution against real event data still BLOCKED_EXTERNAL |
+| EVENT-003 | 83 | 81-combination post-processing sensitivity grid at `B_E=0.2` | VERIFIED | VERIFIED | `src/fabrid/evaluation/eventization.py:EventSensitivityGrid`/`load_event_gate_config` | 3^4=81 combinations confirmed (3 values per each of 4 parameters); execution blocked |
 | EVENT-004 | 84 | Terminology guardrail: "non-attack-interval alert events/hour", not automatic "false positive" during attacked stream | NOT_AUDITED | NOT_AUDITED | | reporting-stage guardrail |
 | EVENT-005 | 85 | Event metrics list (FA events/hr, attacked-stream events/hr, attack-event recall/miss, MTTD mean/median/p90, duty fraction, per-client Gini) | MISSING | NOT_AUDITED | | `src/fabrid/evaluation/eventization.py`; blocked |
 

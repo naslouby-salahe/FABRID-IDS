@@ -18,6 +18,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
+
+from fabrid.config.protocol import PROTOCOL_PATH, read_yaml_mapping
 
 _SECONDS_PER_HOUR = 3600.0
 
@@ -104,3 +107,55 @@ def alarm_duty_fraction(
         )
     total_event_seconds = sum(event.duration_seconds() for event in events)
     return total_event_seconds / observation_duration_seconds
+
+
+@dataclass(frozen=True, slots=True)
+class EventSensitivityGrid:
+    """The 3^4=81-combination sensitivity grid (roadmap section 83) evaluated at the primary
+    event budget.
+    """
+
+    dilation_seconds: tuple[float, ...]
+    merge_gap_seconds: tuple[float, ...]
+    min_event_length_seconds: tuple[float, ...]
+    cooldown_seconds: tuple[float, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class EventGateConfig:
+    parameters: EventizationParameters
+    max_alarm_duty: float
+    event_budgets_per_client_hour: tuple[float, ...]
+    sensitivity_grid: EventSensitivityGrid
+
+    def __post_init__(self) -> None:
+        if not (0.0 <= self.max_alarm_duty <= 1.0):
+            raise ValueError(f"max_alarm_duty must be in [0, 1], got {self.max_alarm_duty}")
+        if not self.event_budgets_per_client_hour:
+            raise ValueError("event_budgets_per_client_hour must contain at least one value")
+
+
+def load_event_gate_config(path: Path = PROTOCOL_PATH) -> EventGateConfig:
+    payload = read_yaml_mapping(path)
+    event_gate_raw = payload["event_gate"]
+    sensitivity_raw = event_gate_raw["sensitivity_grid"]
+    return EventGateConfig(
+        parameters=EventizationParameters(
+            dilation_seconds=float(event_gate_raw["dilation_seconds"]),
+            merge_gap_seconds=float(event_gate_raw["merge_gap_seconds"]),
+            min_event_length_seconds=float(event_gate_raw["min_event_length_seconds"]),
+            cooldown_seconds=float(event_gate_raw["cooldown_seconds"]),
+        ),
+        max_alarm_duty=float(event_gate_raw["max_alarm_duty"]),
+        event_budgets_per_client_hour=tuple(
+            float(v) for v in event_gate_raw["event_budgets_per_client_hour"]
+        ),
+        sensitivity_grid=EventSensitivityGrid(
+            dilation_seconds=tuple(float(v) for v in sensitivity_raw["dilation_seconds"]),
+            merge_gap_seconds=tuple(float(v) for v in sensitivity_raw["merge_gap_seconds"]),
+            min_event_length_seconds=tuple(
+                float(v) for v in sensitivity_raw["min_event_length_seconds"]
+            ),
+            cooldown_seconds=tuple(float(v) for v in sensitivity_raw["cooldown_seconds"]),
+        ),
+    )
