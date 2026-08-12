@@ -36,6 +36,10 @@ class SolverBackend(StrEnum):
     SCIPY_MILP = "scipy.optimize.milp"
 
 
+class OptimizationVariableKind(StrEnum):
+    BINARY = "binary"
+
+
 class DecisionOperator(StrEnum):
     STRICT_GREATER_THAN = "strict_greater_than"
 
@@ -46,6 +50,14 @@ class ThresholdTiePolicy(StrEnum):
 
 class FallbackPolicy(StrEnum):
     EQUAL_FPR_AT_BUDGET = "equal_fpr_at_budget"
+
+
+class RetrainingPolicy(StrEnum):
+    FROZEN_ACROSS_POLICIES = "frozen_across_policies"
+
+
+class ExperimentalUnit(StrEnum):
+    DETECTOR_SEED = "detector_seed"
 
 
 class Label(StrEnum):
