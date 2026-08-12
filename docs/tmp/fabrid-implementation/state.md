@@ -8,6 +8,20 @@ current requirement/group: SPLIT-001..004 (boundary arithmetic) DONE; DATASET/CL
 to `datp_core.data.nbaiot.NBaIoTReader` NEXT
 
 last completed major implementation chunk (this entry, supersedes prior "this entry"):
+- `src/fabrid/schemas/allocation.py`: `AllocationPolicy` StrEnum, validated `ClientUtilityCurve`
+  (ascending grid starting at 0.0, no duplicates, utility in [0,1]), `AllocationDecision`, `Allocation`
+  (with `total_weighted_cost`/`is_budget_feasible` helpers).
+- `src/fabrid/allocation/equal_fpr.py`: EQ_FPR baseline.
+- `src/fabrid/allocation/greedy.py`: GREEDY baseline with the exact 4-level tie-break order
+  (largest efficiency, larger delta-utility, lower incremental cost, lower client_id, lower resulting
+  alpha), refactored into `_feasible_increment`/`_best_increment`/`_validate_inputs` helpers to keep
+  cyclomatic complexity down.
+- `tests/allocation/test_equal_fpr.py`, `tests/allocation/test_greedy.py`: 14 tests incl. a hand-verified
+  efficiency-ordering scenario, alpha_max capping, zero-budget, budget-never-exceeded sweep, tie-break
+  determinism, mismatched-grid rejection, and `ClientUtilityCurve` invariant tests.
+- Batched verification: ruff, pyright, pytest all clean — 70/70 tests total.
+
+Previously completed (superseded entry, kept for history):
 - `src/fabrid/evaluation/record_level.py`: MacroRecall, WorstClientRecall, federation FPR (weighted),
   BUR (never clamped), BVR, FPR dispersion (median/IQR/min/max/CV with `None`/NA when mean FPR is 0),
   false-alert Gini (0 when total is 0). Typed `ClientId`/`AttackSubtype` NewTypes, `ClientWeight`/
