@@ -1,6 +1,6 @@
 """Candidate target-rate grid construction (roadmap section 29).
 
-The grid is generated once, persisted to ``fabrid/config/alpha_grid.json``, and
+The grid is generated once, persisted to ``src/fabrid/config/alpha_grid.json``, and
 must never be regenerated implicitly at run time. ``load_alpha_grid`` reads the
 frozen artifact; ``build_alpha_grid`` exists only to produce/verify it.
 """

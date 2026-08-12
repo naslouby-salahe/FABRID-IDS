@@ -27,6 +27,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["fabrid*"]
 
 [tool.ruff]
@@ -37,7 +38,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B", "SIM", "N"]
 
 [tool.pyright]
-include = ["fabrid", "tests"]
+include = ["src", "tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 

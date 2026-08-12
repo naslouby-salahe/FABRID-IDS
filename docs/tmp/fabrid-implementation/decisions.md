@@ -8,7 +8,7 @@ hyperparameters; training rounds; anomaly-score function." `/home/naslouby/Proje
 stack (federated detector training, checkpoints, scoring, thresholds already implemented and presumably
 verified in its own project). Decision: `fabrid-ids` will depend on `datp-core` as a library for detector
 training + immutable score generation (Phases 3-4), and will not reimplement federated training,
-preprocessing, or the autoencoder. `fabrid/` implements only the FABRID-specific decision layer: dataset
+preprocessing, or the autoencoder. `src/fabrid/` implements only the FABRID-specific decision layer: dataset
 partitioning contracts specific to the FABRID protocol (roadmap section 24-26 exact split rule, which is
 FABRID-specific and NOT necessarily the same as datp-core's existing splits), calibration, utility
 frontier, allocation (EQ_FPR/GREEDY/FABRID_MACRO/FABRID_MINIMAX/POOLED_SHARED/TEST_ORACLE), optimization,
