@@ -45,6 +45,13 @@ EQ_ALERT baseline are now implemented.
 (`ClientFrontierInputs`/`ClientFrontier`/`FederationFrontier`, eligible/fallback partitioning). Result:
 125/125 tests, 0 ruff findings, 0 pyright errors.
 
+## Cycle 6 (audit module: T01, T07-T10, T12 generic checks)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `audit/{split_leakage,
+determinism,score_identity,budget_invariants}.py`. Renamed exceptions to the `*Error` suffix per ruff
+N818; converted `assert_deterministic` to PEP 695 generic syntax (`def f[T](...)`) per ruff UP047.
+Result: 142/142 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
