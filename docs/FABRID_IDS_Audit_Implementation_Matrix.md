@@ -44,10 +44,10 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| SCORE-001 | 20 | Decision rule strict `>` everywhere, never `>=` | `1[s(x) > tau]` | MISSING | NOT_AUDITED | | to enforce in `src/fabrid/calibration/order_statistic.py` and `src/fabrid/allocation/*` |
-| SCORE-002 | 20 | Ties at threshold are non-alerts | | MISSING | NOT_AUDITED | | test T18 |
-| MODEL-001 | 19 | One terminal detector state per dataset×seed; all policies reference same state (`SHA256` equality) | | MISSING | NOT_AUDITED | | requires `src/fabrid/audit/score_identity.py` (T07) |
-| MODEL-002 | 18 | Detector frozen; no retraining per policy | | MISSING | NOT_AUDITED | | architectural constraint: allocation package must not import trainer (section 88) |
+| SCORE-001 | 20 | Decision rule strict `>` everywhere, never `>=` | `1[s(x) > tau]` | VERIFIED | VERIFIED | `src/fabrid/scoring/score_contract.py:decide`, `src/fabrid/calibration/order_statistic.py` | |
+| SCORE-002 | 20 | Ties at threshold are non-alerts | | VERIFIED | VERIFIED | TEST-T18 | |
+| MODEL-001 | 19 | One terminal detector state per dataset×seed; all policies reference same state (`SHA256` equality) | | VERIFIED | VERIFIED | `src/fabrid/audit/score_identity.py`, `tests/audit/test_score_identity.py` (T07) | |
+| MODEL-002 | 18 | Detector frozen; no retraining per policy | | VERIFIED | VERIFIED | `src/fabrid/allocation/*` never imports `detector.training` (see MODEL-003/ARCH-005) | |
 
 ## DATASET-* / CLIENT-* / SPLIT-*
 
@@ -78,30 +78,30 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| CALIBRATION-001 | 32 | Finite-sample rank rule `r=ceil((n+1)(1-alpha))`; `tau=+inf` if `r>n` or `alpha=0`; else `tau=s_(r)` | | MISSING | NOT_AUDITED | | `src/fabrid/calibration/order_statistic.py` |
-| CALIBRATION-002 | 33 | Minimum resolvable rate ~= 1/(n+1); below-resolution alpha yields `tau=+inf`, zero alerts, no silent substitution | | MISSING | NOT_AUDITED | | test T17 |
-| CALIBRATION-003 | 48 | Final calibration uses ONLY `BENIGN_FINAL_CAL`, after alpha* is frozen; persists alpha_selected/threshold/calibration_n/calibration_sha256 | | MISSING | NOT_AUDITED | | `src/fabrid/calibration/final_calibration.py` |
-| CALIBRATION-004 | 18(T18) | Duplicate-score strict `>` behavior matches hand-computed examples | | MISSING | NOT_AUDITED | | test T18 |
+| CALIBRATION-001 | 32 | Finite-sample rank rule `r=ceil((n+1)(1-alpha))`; `tau=+inf` if `r>n` or `alpha=0`; else `tau=s_(r)` | | VERIFIED | VERIFIED | `src/fabrid/calibration/order_statistic.py:calibrate_threshold`, `tests/calibration/test_order_statistic.py` (11 tests) | |
+| CALIBRATION-002 | 33 | Minimum resolvable rate ~= 1/(n+1); below-resolution alpha yields `tau=+inf`, zero alerts, no silent substitution | | VERIFIED | VERIFIED | TEST-T17 | |
+| CALIBRATION-003 | 48 | Final calibration uses ONLY `BENIGN_FINAL_CAL`, after alpha* is frozen; persists alpha_selected/threshold/calibration_n/calibration_sha256 | | VERIFIED | VERIFIED | `src/fabrid/calibration/final_calibration.py`, `tests/calibration/test_final_calibration.py` | |
+| CALIBRATION-004 | 18(T18) | Duplicate-score strict `>` behavior matches hand-computed examples | | VERIFIED | VERIFIED | TEST-T18 | |
 
 ## FRONTIER-*
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| FRONTIER-001 | 35 | Client utility `u_{k,j} = mean over eligible subtypes of TPR_{k,a,j}` (subtype-averaged, not row-weighted) | MISSING | NOT_AUDITED | | `src/fabrid/frontier/utility.py` |
-| FRONTIER-002 | 36 | Eligibility guardrails: `n_attack_val>=200`, `>=2` eligible subtypes each `>=50` rows | MISSING | NOT_AUDITED | | `src/fabrid/frontier/builder.py` |
-| FRONTIER-003 | 37 | Fallback: ineligible client gets `alpha_k=min(B_FP,0.05)`, budget reserved before optimizing eligible clients; report `FallbackRate` | PARTIAL | PARTIAL | `src/fabrid/data/eligibility.py:fallback_rate`; `src/fabrid/allocation/equal_fpr.py` provides the alpha_k=min(B,alpha_max) computation | rate metric + fallback alpha formula both exist; the orchestration step that partitions clients into eligible/fallback sets and reserves budget before solving MACRO/MINIMAX is not yet written (needs `frontier/builder.py`) |
-| FRONTIER-004 | 63 | Conservative utility curve via one-sided 95% binomial LCB per subtype recall | MISSING | NOT_AUDITED | | `src/fabrid/frontier/conservative.py` |
-| FRONTIER-005 | 62 | 500 allocation-sensitivity replicates resampling BENIGN_FRONTIER + ATTACK_VALIDATION (within-subtype), report modal/median/5th/95th pct alpha and Instability_k | MISSING | NOT_AUDITED | | `src/fabrid/frontier/stability.py` |
+| FRONTIER-001 | 35 | Client utility `u_{k,j} = mean over eligible subtypes of TPR_{k,a,j}` (subtype-averaged, not row-weighted) | VERIFIED | VERIFIED | `src/fabrid/frontier/utility.py:client_utility`, `tests/frontier/test_utility.py` (7 tests) | |
+| FRONTIER-002 | 36 | Eligibility guardrails: `n_attack_val>=200`, `>=2` eligible subtypes each `>=50` rows | VERIFIED | VERIFIED | `src/fabrid/frontier/builder.py:build_federation_frontier`, `tests/frontier/test_builder.py` | |
+| FRONTIER-003 | 37 | Fallback: ineligible client gets `alpha_k=min(B_FP,0.05)`, budget reserved before optimizing eligible clients; report `FallbackRate` | VERIFIED | VERIFIED | `src/fabrid/data/eligibility.py:fallback_rate`, `src/fabrid/frontier/builder.py:FederationFrontier.fallback_rate`/`eligible_client_ids` | orchestration confirmed wired via `frontier/builder.py`, consumed by `experiments/main_experiment.py` |
+| FRONTIER-004 | 63 | Conservative utility curve via one-sided 95% binomial LCB per subtype recall | VERIFIED | VERIFIED | `src/fabrid/frontier/conservative.py`, `tests/frontier/test_conservative.py` | wired into `run_conservative_minimax_at_budget` (D005) |
+| FRONTIER-005 | 62 | 500 allocation-sensitivity replicates resampling BENIGN_FRONTIER + ATTACK_VALIDATION (within-subtype), report modal/median/5th/95th pct alpha and Instability_k | VERIFIED | VERIFIED | `src/fabrid/frontier/stability.py`, `tests/frontier/test_stability.py` | replicate count is caller-supplied; `protocol.yaml:allocation_sensitivity.replicates=500` must be passed explicitly at Phase-13 execution |
 
 ## BUDGET-* / WEIGHT-* / POLICY-*
 
 | ID | Section | Atomic requirement | Exact value | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| BUDGET-001 | 31 | Primary record-level budgets frozen | `{0.001,0.0025,0.005,0.01,0.02}` | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml:budgets_record_level` | |
-| BUDGET-002 | 30 | Local target-rate cap | `alpha_max=0.05` | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml:alpha_grid.alpha_max` | |
-| WEIGHT-001 | 12.3,13 | Primary N-BaIoT weighting is equal-client `w_k=1/9` (Level C); dataset-count (Level B) and operational (Level A) never presented as each other | | MISSING | NOT_AUDITED | | `src/fabrid/allocation/` weight handling |
-| WEIGHT-002 | 61 | Weight-heterogeneity sensitivity `w_k^(gamma) proportional to w_k^gamma / sum`, `gamma in {0,0.5,1,1.5}` | | MISSING | NOT_AUDITED | | |
-| POLICY-001 | 14,45 | `EQ_ALERT` identical to `EQ_FPR` under equal weights; not duplicated as a primary baseline; only used with justified unequal weights | | MISSING | NOT_AUDITED | | `src/fabrid/allocation/equal_alert.py` must guard against equal-weight misuse |
+| BUDGET-001 | 31 | Primary record-level budgets frozen | `{0.001,0.0025,0.005,0.01,0.02}` | VERIFIED | VERIFIED | `src/fabrid/config/protocol.yaml:budgets_record_level`; exercised by `scripts/run_budget_sweep.py` across all 5 values | |
+| BUDGET-002 | 30 | Local target-rate cap | `alpha_max=0.05` | VERIFIED | VERIFIED | `src/fabrid/config/protocol.yaml:alpha_grid.alpha_max`, `tests/config/test_protocol.py` | |
+| WEIGHT-001 | 12.3,13 | Primary N-BaIoT weighting is equal-client `w_k=1/9` (Level C); dataset-count (Level B) and operational (Level A) never presented as each other | | VERIFIED | VERIFIED | `src/fabrid/experiments/main_experiment.py:run_seed_at_budget` uses `1.0/len(artifacts)`; no dataset-count or operational weighting code path exists anywhere in `allocation/` | |
+| WEIGHT-002 | 61 | Weight-heterogeneity sensitivity `w_k^(gamma) proportional to w_k^gamma / sum`, `gamma in {0,0.5,1,1.5}` | | VERIFIED | VERIFIED | `src/fabrid/evaluation/weight_sensitivity.py:gamma_reweight`/`preregistered_gamma_sweep`, `tests/evaluation/test_weight_sensitivity.py` | not yet run against real seed data |
+| POLICY-001 | 14,45 | `EQ_ALERT` identical to `EQ_FPR` under equal weights; not duplicated as a primary baseline; only used with justified unequal weights | | VERIFIED | VERIFIED | `src/fabrid/allocation/equal_alert.py` raises rather than silently degenerating under equal weights; `tests/allocation/test_equal_alert.py` | |
 
 ## FABRID-MACRO-* / FABRID-MINIMAX-* / OPTIMIZATION-*
 
@@ -122,7 +122,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|
-| BASELINE-001 | 43 | `EQ_FPR`: alpha_k = B_FP for all k | MISSING | NOT_AUDITED | | `src/fabrid/allocation/equal_fpr.py` |
+| BASELINE-001 | 43 | `EQ_FPR`: alpha_k = B_FP for all k | VERIFIED | VERIFIED | `src/fabrid/allocation/equal_fpr.py`, `tests/allocation/test_equal_fpr.py` (5 tests) | |
 | BASELINE-002 | 44 | `GREEDY`: marginal-efficiency incremental allocation with exact 4-level tie order | VERIFIED | VERIFIED | `src/fabrid/allocation/greedy.py`, `tests/allocation/test_greedy.py` | |
 | BASELINE-003 | 45 | `EQ_ALERT`: max constant budget share c s.t. sum min(c,0.05 w_k)<=B; conditional/only for unequal weights | VERIFIED | VERIFIED | `src/fabrid/allocation/equal_alert.py`, `tests/allocation/test_equal_alert.py` | rejects equal-weight calls rather than silently degenerating to EQ_FPR |
 | BASELINE-004 | 46 | `POOLED_SHARED`: pool validation scores, one global absolute cutoff maximizing validation Macro Recall under budget; explicitly non-federated/non-deployable | VERIFIED | VERIFIED | `src/fabrid/allocation/pooled_shared.py`, `tests/allocation/test_pooled_shared.py` | |
@@ -132,16 +132,16 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 
 | ID | Section | Atomic requirement | Exact formula | Impl. | Verif. | Evidence | Notes |
 |---|---|---|---|---|---|---|---|
-| METRIC-001 | 49 | `MacroRecall = (1/K) sum_k R_k`, `R_k` = mean subtype TPR | | MISSING | NOT_AUDITED | | `src/fabrid/evaluation/record_level.py` |
-| METRIC-002 | 50 | `WorstClientRecall = min_k R_k` | | MISSING | NOT_AUDITED | | |
-| METRIC-003 | 51 | `FPR_fed = sum_k w_k FPR_k`; primary equal-client `= (1/9) sum FPR_k` | | MISSING | NOT_AUDITED | | |
-| METRIC-004 | 52 | `BUR = FPR_fed / B_FP`, never clamped | | MISSING | NOT_AUDITED | | |
-| METRIC-005 | 53 | `BVR = max(0, BUR-1)`; also report `MaxClientFPR` | | MISSING | NOT_AUDITED | | |
-| METRIC-006 | 54 | Dispersion: Median/IQR/Min/Max FPR, `CV_FPR = sigma/mu`; `NA` (not 0) when mu=0 | | MISSING | NOT_AUDITED | | |
-| METRIC-007 | 55 | Gini concentration of false alerts; `G=0` if total FP=0; diagnostic-only labeling | | MISSING | NOT_AUDITED | | |
-| METRIC-008 | 56 | Secondary metrics: pooled recall, Macro-F1, balanced accuracy, AUROC, AUPRC | | MISSING | NOT_AUDITED | | |
-| METRIC-009 | 57(T08) | `|Delta AUROC| < 1e-12` across all policies within dataset×seed | | MISSING | NOT_AUDITED | | `src/fabrid/audit/score_identity.py` |
-| METRIC-010 | 60 | `H_u(alpha_j)=SD_k(u_{k,j})`; `H_U=(1/J) sum_j H_u(alpha_j)` | | MISSING | NOT_AUDITED | | `src/fabrid/evaluation/heterogeneity.py` |
+| METRIC-001 | 49 | `MacroRecall = (1/K) sum_k R_k`, `R_k` = mean subtype TPR | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:client_macro_recall`/`federation_macro_recall`, `tests/evaluation/test_record_level.py` (14 tests) | |
+| METRIC-002 | 50 | `WorstClientRecall = min_k R_k` | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:worst_client_recall` | |
+| METRIC-003 | 51 | `FPR_fed = sum_k w_k FPR_k`; primary equal-client `= (1/9) sum FPR_k` | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:federation_fpr` | |
+| METRIC-004 | 52 | `BUR = FPR_fed / B_FP`, never clamped | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:budget_usage_ratio` | |
+| METRIC-005 | 53 | `BVR = max(0, BUR-1)`; also report `MaxClientFPR` | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:budget_violation_ratio` | `MaxClientFPR` covered by `FprDispersion.max`, not a separate function |
+| METRIC-006 | 54 | Dispersion: Median/IQR/Min/Max FPR, `CV_FPR = sigma/mu`; `NA` (not 0) when mu=0 | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:fpr_dispersion`/`FprDispersion` | |
+| METRIC-007 | 55 | Gini concentration of false alerts; `G=0` if total FP=0; diagnostic-only labeling | | VERIFIED | VERIFIED | `src/fabrid/evaluation/record_level.py:false_alert_gini` | |
+| METRIC-008 | 56 | Secondary metrics: pooled recall, Macro-F1, balanced accuracy, AUROC, AUPRC | | MISSING | NOT_AUDITED | | not yet implemented; only AUROC exists (`scoring/frontier_inputs.py:all_test_auroc`, `scoring/score_contract.py:compute_auroc`) |
+| METRIC-009 | 57(T08) | `|Delta AUROC| < 1e-12` across all policies within dataset×seed | | VERIFIED | VERIFIED | `src/fabrid/audit/score_identity.py`, `tests/audit/test_score_identity.py` (T07/T08) | |
+| METRIC-010 | 60 | `H_u(alpha_j)=SD_k(u_{k,j})`; `H_U=(1/J) sum_j H_u(alpha_j)` | | VERIFIED | VERIFIED | `src/fabrid/evaluation/heterogeneity.py:utility_dispersion_per_candidate`/`aggregate_heterogeneity`, `tests/evaluation/test_heterogeneity.py` | |
 | GENERALIZATION-001 | 58 | Attack-subtype-disjoint folds: fixed global mapping (not hashed), 3 rotations | fold table | PARTIAL | PARTIAL | `src/fabrid/config/attack_folds.yaml`, `src/fabrid/config/attack_folds.py` (typed loader + `AttackFoldsConfig.validation_subtypes`/`test_subtypes`), `tests/config/test_attack_folds.py` (8 tests) | loader verified; the actual per-fold utility/allocation/evaluation run against real seed data (Phase 14) not yet built |
 | GENERALIZATION-002 | 59 | Botnet-family-disjoint transfer for 7 dual-family clients, both directions, explicit K=7 reporting, Ennio+Samsung not silently excluded | | PARTIAL | PARTIAL | `src/fabrid/config/attack_folds.py:BotnetFamilyDisjointConfig` | loader verified; per-direction run against real seed data (Phase 15) not yet built |
 | STABILITY-001 | 62 | `Instability_k = 1 - max_j P(alpha_k=alpha_j)` from 500 replicates | | MISSING | NOT_AUDITED | | |
@@ -191,7 +191,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 |---|---|---|---|---|---|---|
 | ARCH-001 | 88 | Package layout matches section-88 tree exactly | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/` directory tree | scaffold created; modules mostly empty stubs |
 | ARCH-002 | 88,8.5 | `allocation/` package never imports the detector trainer | NOT_AUDITED | NOT_AUDITED | | to grep-check once allocation modules exist |
-| ARCH-003 | 90 | Non-oracle modules structurally cannot receive ATTACK_TEST labels/attack_type, BENIGN_TEST labels, test metrics; `TEST_ORACLE` isolated, default execution refuses oracle access | MISSING | NOT_AUDITED | | typed API boundary, not just discipline; tests T02 |
+| ARCH-003 | 90 | Non-oracle modules structurally cannot receive ATTACK_TEST labels/attack_type, BENIGN_TEST labels, test metrics; `TEST_ORACLE` isolated, default execution refuses oracle access | VERIFIED | VERIFIED | `src/fabrid/allocation/test_oracle.py:OracleAccessToken` requires explicit `acknowledged_non_deployable=True`; `tests/allocation/test_test_oracle.py`; TEST-T02/T03/T04 | |
 
 ## ARTIFACT-* / REPRO-*
 
@@ -212,10 +212,10 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | TEST-T04 | 91 | Changing BENIGN_TEST changes neither allocation nor final thresholds | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t04_benign_test_perturbation_does_not_affect_final_cal_scores` |
 | TEST-T05 | 91 | Changing BENIGN_FINAL_CAL may change tau_k but not alpha_k | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t05_final_cal_perturbation_changes_threshold_not_allocation_inputs` |
 | TEST-T06 | 91 | Validation-attack perturbation may change GREEDY/MACRO/MINIMAX but not EQ_FPR | VERIFIED | VERIFIED | `tests/audit/test_perturbation_invariance.py::test_t06_validation_attack_perturbation_changes_utility_but_not_eq_fpr_inputs` |
-| TEST-T07 | 91 | Score hash identity across policies within dataset/seed/client | MISSING | NOT_AUDITED | |
-| TEST-T08 | 91 | `|Delta AUROC|<1e-12` | MISSING | NOT_AUDITED | |
-| TEST-T09 | 91 | Budget feasibility `sum w_k alpha_k <= B_FP + 1e-12` | MISSING | NOT_AUDITED | |
-| TEST-T10 | 91 | One target per client `sum_j x_kj = 1` | MISSING | NOT_AUDITED | |
+| TEST-T07 | 91 | Score hash identity across policies within dataset/seed/client | VERIFIED | VERIFIED | `src/fabrid/audit/score_identity.py`, `tests/audit/test_score_identity.py` |
+| TEST-T08 | 91 | `|Delta AUROC|<1e-12` | VERIFIED | VERIFIED | `src/fabrid/audit/score_identity.py`, `tests/audit/test_score_identity.py` |
+| TEST-T09 | 91 | Budget feasibility `sum w_k alpha_k <= B_FP + 1e-12` | VERIFIED | VERIFIED | `src/fabrid/audit/budget_invariants.py`, `tests/audit/test_budget_invariants.py` |
+| TEST-T10 | 91 | One target per client `sum_j x_kj = 1` | VERIFIED | VERIFIED | `src/fabrid/audit/budget_invariants.py`, `tests/audit/test_budget_invariants.py` |
 | TEST-T11 | 91 | Brute-force solver parity (3 clients x 4 candidates) | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py`, `test_fabrid_minimax.py` |
 | TEST-T12 | 91 | Determinism 100/100 | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py`, `test_fabrid_minimax.py`, generic `audit/determinism.py` |
 | TEST-T13 | 91 | Zero-budget -> all alpha_k=0 | VERIFIED | VERIFIED | `tests/allocation/test_fabrid_macro.py::test_zero_budget_allocates_nothing`, minimax equivalent |
@@ -233,16 +233,16 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | GATE-G01 | Protocol file frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml` | needs sha256 persisted (ARTIFACT-001 dependency) |
 | GATE-G02 | Clean commit recorded | PARTIAL | NOT_AUDITED | | this checkpoint not yet committed |
 | GATE-G03 | Exactly 9 primary natural clients | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/datasets.yaml` | |
-| GATE-G04 | Zero split overlap | MISSING | NOT_AUDITED | | depends on SPLIT-* + TEST-T01 |
-| GATE-G05 | Feature manifest frozen | MISSING | NOT_AUDITED | | depends on datp-core preprocessing reuse decision |
-| GATE-G06 | Detector configuration frozen | MISSING | NOT_AUDITED | | |
-| GATE-G07 | Immutable score artifacts | MISSING | NOT_AUDITED | | |
+| GATE-G04 | Zero split overlap | VERIFIED | VERIFIED | SPLIT-004, TEST-T01 | |
+| GATE-G05 | Feature manifest frozen | VERIFIED | VERIFIED | `src/fabrid/data/feature_manifest.py:build_feature_manifest_from_csv_header`; persisted alongside score artifacts (phase 89) | superseded by D003 standalone decision, not datp-core reuse |
+| GATE-G06 | Detector configuration frozen | VERIFIED | VERIFIED | `src/fabrid/config/detector.yaml`, `src/fabrid/config/detector.py` | |
+| GATE-G07 | Immutable score artifacts | VERIFIED | VERIFIED | ARTIFACT-001; `results/scores/` persisted for all 10 real seeds | |
 | GATE-G08 | 207-target grid frozen | VERIFIED | VERIFIED | `src/fabrid/config/alpha_grid.json` | |
 | GATE-G09 | Five primary budgets frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/protocol.yaml` | |
-| GATE-G10 | Non-oracle test access impossible | MISSING | NOT_AUDITED | | ARCH-003 |
+| GATE-G10 | Non-oracle test access impossible | VERIFIED | VERIFIED | ARCH-003 |
 | GATE-G11 | Brute-force parity | VERIFIED | VERIFIED | TEST-T11 |
 | GATE-G12 | 100/100 determinism | VERIFIED | VERIFIED | TEST-T12 |
-| GATE-G13 | Metrics formulas unit-tested | MISSING | NOT_AUDITED | | METRIC-* |
+| GATE-G13 | Metrics formulas unit-tested | VERIFIED | VERIFIED | METRIC-001..010 |
 | GATE-G14 | 1,024-sign implementation validated | VERIFIED | VERIFIED | STAT-003 |
 | GATE-G15 | External eligibility rule frozen | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | `src/fabrid/config/datasets.yaml:cic_iot_diad_2024.eligibility` | data itself BLOCKED_EXTERNAL |
 | GATE-G16 | Event provenance pass or event claims disabled | BLOCKED_EXTERNAL | NOT_AUDITED | decisions.md | data not present |
