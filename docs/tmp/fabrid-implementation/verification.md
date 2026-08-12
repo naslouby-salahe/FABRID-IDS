@@ -109,6 +109,13 @@ verified to reduce reconstruction error and to be deterministic given a fixed se
 data; full real 10-seed x 9-client training against actual N-BaIoT is the next step and will take real
 wall-clock time.
 
+## Cycle 13 (score generation: wires ingestion -> partitioning -> preprocessing -> model -> ScoreArtifact)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `scoring/score_generation.py`
+(`generate_score_artifact`), the first module that ties together `nbaiot_reader`, `partitioner`,
+`preprocessing`, `detector.model`, and `schemas.score_artifact` end to end. Result: 193/193 fast tests,
+18/18 integration tests unaffected, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
