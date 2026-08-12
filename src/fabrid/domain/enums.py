@@ -32,6 +32,22 @@ class SolverStatus(StrEnum):
     NOT_APPLICABLE = "not_applicable"
 
 
+class SolverBackend(StrEnum):
+    SCIPY_MILP = "scipy.optimize.milp"
+
+
+class DecisionOperator(StrEnum):
+    STRICT_GREATER_THAN = "strict_greater_than"
+
+
+class ThresholdTiePolicy(StrEnum):
+    NON_ALERT = "non_alert"
+
+
+class FallbackPolicy(StrEnum):
+    EQUAL_FPR_AT_BUDGET = "equal_fpr_at_budget"
+
+
 class Label(StrEnum):
     BENIGN = "benign"
     ATTACK = "attack"
