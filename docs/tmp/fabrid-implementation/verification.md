@@ -116,6 +116,17 @@ wall-clock time.
 `preprocessing`, `detector.model`, and `schemas.score_artifact` end to end. Result: 193/193 fast tests,
 18/18 integration tests unaffected, 0 ruff findings, 0 pyright errors.
 
+## Cycle 14 (end-to-end smoke pipeline against real data)
+
+`scripts/smoke_pipeline.py`: runs the FULL pipeline (real N-BaIoT ingestion -> partitioning ->
+per-client TRAIN-only scaler fitting -> FedAvg training -> score generation -> AUROC) against 3 real
+clients (Danmini, Ennio, Ecobee), subsampled to 400 rows/file for speed. Completed in 29.5s. Results:
+score artifacts generated with correct record counts and distinct hashes per client; smoke AUROC
+0.910-1.000 across the three clients — plausible and encouraging (benign-trained autoencoder separates
+attack traffic well), a scientific sanity signal beyond mere structural correctness. `pytest -q`,
+`ruff check`, `pyright` re-run after: 193/193 fast tests, 0 ruff findings, 0 pyright errors — the
+smoke script did not touch any tested module's behavior, only exercised it.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
