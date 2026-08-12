@@ -1,6 +1,9 @@
 # Raw data symlink (machine-local, points to shared dataset storage)
 /data/raw
 
+# Session cookies for external dataset downloads (contain live session tokens)
+/download_datasets/*cookies*.txt
+
 # Generated score/result artifacts (large, regenerable from frozen scores/config)
 /results/
 
