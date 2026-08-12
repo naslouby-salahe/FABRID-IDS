@@ -50,17 +50,30 @@ throughout.
   scientific result: fallback_rate=0.0 (all 9 clients eligible), EQ_FPR MacroRecall=0.8223,
   FABRID_MINIMAX MacroRecall=0.7110 (average/worst-case tradeoff, directionally as expected).
 
-## F001 — open question, not yet resolved
+## F001/F002 — two open findings needing a decision before Phase 12 confirmatory execution
 
-At full scale (9 clients x 207 candidates = 1863 binary vars), `FABRID_MACRO`'s stage-1 MILP hits
-`mip_gap≈1.25e-6` within the 60s time limit — short of the frozen `accept_mip_gap_leq=1e-9` — so it is
-correctly rejected as `SOLVER_INVALID` per protocol (roadmap: exclude the coordinate, never accept a
-time-limited near-optimum). This is protocol working as intended, not a bug, and no tolerance was
-weakened. See `failures.md` F001 for full detail. Needs a decision before Phase 12: accept that some
-coordinates will legitimately be `SOLVER_INVALID`, or investigate solver-side tuning (warm-starting
-across the 3-4 sequential stages, direct HiGHS options). Full main-experiment timing (10 seeds x 5
-budgets x {MACRO: 3 solves, MINIMAX: 4 solves}) has not been measured and could be substantial if many
-coordinates need the full 60s per solve.
+**F001 (confirmed systemic across all 10 real seeds, budget=0.01)**: `FABRID_MACRO` hit
+`SOLVER_INVALID` in 9/10 seeds (only seed 6 solved to `mip_gap<=1e-9` within 60s); `FABRID_MINIMAX`
+hit it in 6/10. This is the protocol working exactly as specified — never accept a time-limited
+near-optimum — not a bug, and no tolerance was weakened. But it leaves Contrast A with only n=1 usable
+seed at this budget, far short of the paired-10-seed design the roadmap's statistics assume. See
+`failures.md` F001. Needs a decision: accept a much smaller effective n and report it honestly, or
+investigate solver-side tuning (warm-starting across stages, direct HiGHS options — an implementation
+question, not a protocol change).
+
+**F002 (root-caused against real data, not a bug)**: on the seeds where `FABRID_MINIMAX` did solve,
+its `WorstClientRecall` was *worse* than `EQ_FPR`'s (mean_diff=-0.45). Verified against seed 6's real
+per-client results: `SimpleHome_XCS7_1003` gets alpha=0.01/recall=1.0 under `EQ_FPR` but
+alpha≈0.00026/recall=0.0 under `FABRID_MINIMAX`. Mechanism: the roadmap's own stage-3 tie-break
+(minimize total budget once `z*` and mean utility are fixed) pushes any non-bottleneck client's alpha
+toward zero, since it doesn't affect either binding constraint at *validation* time — but that
+client's *test*-time recall can still crash. This is the minimax formulation behaving exactly as
+specified; not a defect. Per roadmap section 99 (Negative Result Policy), must be reported as-is if it
+persists in the full confirmatory run — do not adjust budgets/folds/objective in response. See
+`failures.md` F002.
+
+Full main-experiment timing (10 seeds x 5 budgets x {MACRO: 3 solves, MINIMAX: 4 solves}) has not been
+measured and could be substantial if many coordinates need the full 60s per solve.
 
 ## What is NOT yet implemented
 
@@ -86,10 +99,11 @@ coordinates need the full 60s per solve.
 
 ## Next implementation chunk (priority order)
 
-1. Let the background 10-seed training run finish; verify all 10 manifests + hashes.
-2. Resolve F001 (measure how often/how badly this occurs across seeds/budgets before deciding how to
-   handle it — do not weaken the tolerance ad hoc).
-3. Statistics/contrast glue: populate `ResultRow` from real runs across all seeds x 5 budgets x
-   policies; wire Contrast A (`FABRID_MACRO - EQ_FPR` on MacroRecall) and Contrast B
-   (`FABRID_MINIMAX - EQ_FPR` on WorstClientRecall) through the sign-flip test + bootstrap + Holm.
-4. T02-T06 perturbation-invariance tests against the real pipeline.
+1. Decide how to handle F001/F002 before treating any FABRID_MACRO/MINIMAX result as confirmatory —
+   this is a decision, not further implementation; needs explicit sign-off given it may narrow what
+   can be claimed.
+2. If proceeding: measure whether F001 (SOLVER_INVALID rate) is budget-dependent by running the
+   5-budget sweep (currently only budget=0.01 has been run for real). Larger budgets may have fewer
+   candidates bound simultaneously and could solve faster/more reliably — untested assumption.
+3. Evaluate the roadmap's practical success gates (section 72) honestly against whatever n survives.
+4. Tables/figures generation, reproduction audit, once (1)-(3) are settled.
