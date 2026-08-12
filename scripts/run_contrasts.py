@@ -1,4 +1,4 @@
-"""Run the primary contrasts (FABRID_MACRO/MINIMAX vs EQ_FPR) across all persisted seeds, one budget.
+"""Run the primary contrasts (FABRID_MACRO/MINIMAX vs EQ_FPR) across all seeds at one budget.
 
 Not the full roadmap confirmatory protocol (single budget, no Holm correction
 across the 5-budget family, no attack-subtype-disjoint check) — a real
