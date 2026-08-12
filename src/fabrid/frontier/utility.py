@@ -8,9 +8,20 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import Protocol
 
 from fabrid.evaluation.record_level import AttackSubtype, ClientId
 from fabrid.schemas.allocation import ClientUtilityCurve
+
+
+class SubtypeRecallSource(Protocol):
+    """Anything that can report a subtype-level true positive rate.
+
+    Lets `client_utility` be reused for both raw and lower-confidence-bound
+    (`fabrid.frontier.conservative`) recall sources.
+    """
+
+    def true_positive_rate(self) -> float: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,7 +42,7 @@ class SubtypeConfusionCounts:
         return self.true_positive / (self.true_positive + self.false_negative)
 
 
-def client_utility(subtype_counts: Mapping[AttackSubtype, SubtypeConfusionCounts]) -> float:
+def client_utility(subtype_counts: Mapping[AttackSubtype, SubtypeRecallSource]) -> float:
     """u_{k,j}: mean subtype TPR for one client at one candidate rate."""
     if not subtype_counts:
         raise ValueError("client_utility requires at least one eligible attack subtype")

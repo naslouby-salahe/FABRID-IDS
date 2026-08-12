@@ -171,6 +171,15 @@ background to complete the remaining 9 seeds, estimated ~45 additional minutes b
 timing. `pytest -q` (207/207), `ruff`, `pyright` all still clean — the orchestration scripts are
 outside the package (`scripts/`) and don't affect the tested library surface.
 
+## Cycle 20 (conservative/LCB utility curves)
+
+`pytest -q`, `ruff format`, `ruff check --fix`, `pyright` after landing `frontier/conservative.py`
+(one-sided Clopper-Pearson LCB, `conservative_client_utility`, `build_conservative_utility_curve`).
+Generalized `frontier/utility.py:client_utility` to accept a `SubtypeRecallSource` Protocol
+(`true_positive_rate() -> float`) instead of the concrete `SubtypeConfusionCounts` type, so both raw
+and LCB-adjusted recall sources reuse the same averaging function rather than duplicating it. Result:
+214/214 tests, 0 ruff findings, 0 pyright errors.
+
 Follow-up from user feedback mid-session: renamed opaque `i1/i2/i3/n` boundary fields to descriptive
 names (`train_end`/`frontier_end`/`final_cal_end`/`total_rows`), replaced hardcoded split-fraction
 module constants with a typed `Protocol`/`BenignSplitFractions`/`AttackSplitFraction` loader reading
