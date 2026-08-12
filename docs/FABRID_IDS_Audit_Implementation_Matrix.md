@@ -253,7 +253,7 @@ Verif. status | Evidence pointer | Blocking reason | Notes/decisions
 | ID | Section | Requirement | Impl. | Verif. | Evidence |
 |---|---|---|---|---|---|
 | RESULT-001 | 93 | Every client-level result row has all 37 schema fields, no manually entered manuscript numbers | PARTIAL | PARTIAL | `ResultRow` schema exists; nothing yet populates it from real experiment runs | population/generation from real allocation+evaluation runs not yet implemented |
-| TABLE-001..006 | 95 | Tables 1-6 generated programmatically from artifacts | MISSING | NOT_AUDITED | |
+| TABLE-001..006 | 95 | Tables 1-6 generated programmatically from artifacts | PARTIAL | PARTIAL | `src/fabrid/reporting/tables.py:build_table_2_dataset_populations`/`build_table_6_system_overhead`, `tests/reporting/test_tables.py` | Table 2 (dataset populations) and Table 6 (system overhead payload-byte columns) implemented and tested; Table 1 is a manual literature-comparison table (not derivable from our data); Tables 3-5 need real confirmatory results plus a `SeedBudgetResult` extension to carry per-policy FPR/BUR (not yet designed) |
 | FIGURE-001..007 | 96 | Figures 1-7 generated programmatically | MISSING | NOT_AUDITED | |
 | CLAIM-001 | 101 | Only pre-registered process claims made before results exist | IMPLEMENTED_UNVERIFIED | NOT_AUDITED | no manuscript text written yet | |
 | CLAIM-002 | 102 | Result-dependent claims gated on actual evidence | NOT_AUDITED | NOT_AUDITED | | |
