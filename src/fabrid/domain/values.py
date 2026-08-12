@@ -36,6 +36,20 @@ class RowCount:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceRowIndex:
+    value: int
+
+    def __post_init__(self) -> None:
+        if self.value < 0:
+            raise ValueError(f"source row index must be non-negative, got {self.value}")
+
+
+@dataclass(frozen=True, slots=True)
+class EventTimestamp:
+    value: float
+
+
+@dataclass(frozen=True, slots=True)
 class FalseAlertCount:
     value: int
 
