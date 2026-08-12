@@ -8,6 +8,11 @@ def _require_unit_interval(name: str, value: float) -> None:
         raise ValueError(f"{name} must be in [0, 1], got {value}")
 
 
+def _require_non_negative(name: str, value: float) -> None:
+    if value < 0.0:
+        raise ValueError(f"{name} must be non-negative, got {value}")
+
+
 @dataclass(frozen=True, slots=True)
 class DetectorSeed:
     value: int
@@ -47,6 +52,30 @@ class SourceRowIndex:
 @dataclass(frozen=True, slots=True)
 class EventTimestamp:
     value: float
+
+
+@dataclass(frozen=True, slots=True)
+class DurationSeconds:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("duration", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class EventRatePerClientHour:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("event rate per client hour", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class PercentagePoints:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("percentage points", self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,8 +166,7 @@ class BudgetUsageRatio:
     value: float
 
     def __post_init__(self) -> None:
-        if self.value < 0.0:
-            raise ValueError(f"budget-usage ratio must be non-negative, got {self.value}")
+        _require_non_negative("budget-usage ratio", self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,8 +179,7 @@ class SolverGap:
     value: float
 
     def __post_init__(self) -> None:
-        if self.value < 0.0:
-            raise ValueError(f"solver gap must be non-negative, got {self.value}")
+        _require_non_negative("solver gap", self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,5 +187,4 @@ class SolverRuntimeMilliseconds:
     value: float
 
     def __post_init__(self) -> None:
-        if self.value < 0.0:
-            raise ValueError(f"solver runtime must be non-negative, got {self.value}")
+        _require_non_negative("solver runtime", self.value)
