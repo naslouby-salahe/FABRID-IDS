@@ -9,7 +9,7 @@ from fabrid.detector.model import Autoencoder, reconstruction_error_scores
 from fabrid.detector.preprocessing import FeatureScaler
 from fabrid.domain.coordinates import ScoreCoordinate
 from fabrid.domain.enums import AttackSplit, BenignSplit, DatasetId, Label
-from fabrid.domain.identifiers import SampleId
+from fabrid.domain.identifiers import AttackSubtypeId, SampleId, SourceFileId
 from fabrid.domain.values import AnomalyScore, DetectorSeed, SourceRowIndex
 
 
@@ -36,11 +36,11 @@ class ClientScoreArtifacts:
 
 def _record(
     dataset: DeviceDataset,
-    source_file,
+    source_file: SourceFileId,
     source_row: SourceRowIndex,
     score: AnomalyScore,
     label: Label,
-    attack_subtype,
+    attack_subtype: AttackSubtypeId | None,
 ) -> ScoreRecord:
     subtype_component = "benign" if attack_subtype is None else attack_subtype.value
     return ScoreRecord(
@@ -72,9 +72,11 @@ def generate_client_score_artifacts(
         detector_seed=detector_seed,
         client_id=dataset.client_id,
     )
-    benign_records: dict[BenignSplit, list[ScoreRecord]] = {
-        split: [] for split in BenignSplit
-    }
+    benign_train_records: list[ScoreRecord] = []
+    benign_frontier_records: list[ScoreRecord] = []
+    benign_final_cal_records: list[ScoreRecord] = []
+    benign_test_records: list[ScoreRecord] = []
+
     benign_scores = reconstruction_error_scores(
         model,
         scaler.transform(dataset.benign),
@@ -82,16 +84,22 @@ def generate_client_score_artifacts(
     for index in range(dataset.benign.row_count.value):
         source_row = SourceRowIndex(index)
         split = split_plan.benign.split_of(source_row)
-        benign_records[split].append(
-            _record(
-                dataset=dataset,
-                source_file=dataset.benign_source_file,
-                source_row=source_row,
-                score=AnomalyScore(float(benign_scores.values[index])),
-                label=Label.BENIGN,
-                attack_subtype=None,
-            )
+        record = _record(
+            dataset=dataset,
+            source_file=dataset.benign_source_file,
+            source_row=source_row,
+            score=benign_scores.at(source_row),
+            label=Label.BENIGN,
+            attack_subtype=None,
         )
+        if split is BenignSplit.TRAIN:
+            benign_train_records.append(record)
+        elif split is BenignSplit.FRONTIER:
+            benign_frontier_records.append(record)
+        elif split is BenignSplit.FINAL_CAL:
+            benign_final_cal_records.append(record)
+        else:
+            benign_test_records.append(record)
 
     attack_validation_records: list[ScoreRecord] = []
     attack_test_records: list[ScoreRecord] = []
@@ -112,7 +120,7 @@ def generate_client_score_artifacts(
                 dataset=dataset,
                 source_file=attack.source_file,
                 source_row=source_row,
-                score=AnomalyScore(float(scores.values[index])),
+                score=scores.at(source_row),
                 label=Label.ATTACK,
                 attack_subtype=attack.subtype,
             )
@@ -123,29 +131,21 @@ def generate_client_score_artifacts(
 
     return ClientScoreArtifacts(
         benign_train=ScorePartitionArtifact(
-            coordinate, BenignSplit.TRAIN, tuple(benign_records[BenignSplit.TRAIN])
+            coordinate, BenignSplit.TRAIN, tuple(benign_train_records)
         ),
         benign_frontier=ScorePartitionArtifact(
-            coordinate,
-            BenignSplit.FRONTIER,
-            tuple(benign_records[BenignSplit.FRONTIER]),
+            coordinate, BenignSplit.FRONTIER, tuple(benign_frontier_records)
         ),
         benign_final_cal=ScorePartitionArtifact(
-            coordinate,
-            BenignSplit.FINAL_CAL,
-            tuple(benign_records[BenignSplit.FINAL_CAL]),
+            coordinate, BenignSplit.FINAL_CAL, tuple(benign_final_cal_records)
         ),
         benign_test=ScorePartitionArtifact(
-            coordinate, BenignSplit.TEST, tuple(benign_records[BenignSplit.TEST])
+            coordinate, BenignSplit.TEST, tuple(benign_test_records)
         ),
         attack_validation=ScorePartitionArtifact(
-            coordinate,
-            AttackSplit.VALIDATION,
-            tuple(attack_validation_records),
+            coordinate, AttackSplit.VALIDATION, tuple(attack_validation_records)
         ),
         attack_test=ScorePartitionArtifact(
-            coordinate,
-            AttackSplit.TEST,
-            tuple(attack_test_records),
+            coordinate, AttackSplit.TEST, tuple(attack_test_records)
         ),
     )
