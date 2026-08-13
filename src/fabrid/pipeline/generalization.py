@@ -9,7 +9,7 @@ from fabrid.datasets.nbaiot.specification import (
     NBAIOT_DUAL_BOTNET_FAMILY_POPULATION,
     NBAIOT_PRIMARY_POPULATION,
 )
-from fabrid.domain.enums import AttackSplit, ExperimentId
+from fabrid.domain.enums import AttackSplit, ExperimentId, ExperimentVariantId
 from fabrid.domain.identifiers import AttackSubtypeId, CampaignId
 from fabrid.domain.population import ClientPopulation
 from fabrid.domain.values import DetectorSeed
@@ -27,11 +27,7 @@ from fabrid.pipeline.materialization import (
     MaterializedSeedBudget,
     materialize_seed_budget,
 )
-from fabrid.protocol.models import (
-    AttackFoldRotation,
-    BotnetFamilyDirection,
-    FabridProtocol,
-)
+from fabrid.protocol.models import AttackFoldRotation, FabridProtocol
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,33 +68,32 @@ def _restrict_scores(
     validation_subtypes: tuple[AttackSubtypeId, ...],
     test_subtypes: tuple[AttackSubtypeId, ...],
 ) -> LoadedSeedScores:
-    return LoadedSeedScores(
-        tuple(
+    clients: list[LoadedClientScores] = []
+    for client_id in population.clients:
+        source = scores.for_client(client_id)
+        clients.append(
             LoadedClientScores(
                 client_id=client_id,
                 frontier=FrontierScoreArtifacts(
-                    benign_frontier=scores.for_client(client_id).frontier.benign_frontier,
+                    benign_frontier=source.frontier.benign_frontier,
                     attack_validation=_filter_attack_artifact(
-                        scores.for_client(client_id).frontier.attack_validation,
+                        source.frontier.attack_validation,
                         AttackSplit.VALIDATION,
                         validation_subtypes,
                     ),
                 ),
                 evaluation=ClientEvaluationArtifacts(
-                    final_calibration=scores.for_client(
-                        client_id
-                    ).evaluation.final_calibration,
-                    benign_test=scores.for_client(client_id).evaluation.benign_test,
+                    final_calibration=source.evaluation.final_calibration,
+                    benign_test=source.evaluation.benign_test,
                     attack_test=_filter_attack_artifact(
-                        scores.for_client(client_id).evaluation.attack_test,
+                        source.evaluation.attack_test,
                         AttackSplit.TEST,
                         test_subtypes,
                     ),
                 ),
             )
-            for client_id in population.clients
         )
-    )
+    return LoadedSeedScores(tuple(clients))
 
 
 def _rotation_test_subtypes(
@@ -115,12 +110,12 @@ def _rotation_test_subtypes(
 def _run_variant(
     campaign_id: CampaignId,
     experiment_id: ExperimentId,
+    variant_id: ExperimentVariantId,
     detector_seed: DetectorSeed,
     scores: LoadedSeedScores,
     provenance: EvaluationProvenance,
     protocol: FabridProtocol,
     layout: ArtifactLayout,
-    variant_id,
 ) -> GeneralizationExecution:
     evaluations: list[SeedBudgetEvaluation] = []
     artifacts: list[MaterializedSeedBudget] = []
@@ -165,12 +160,12 @@ def run_attack_subtype_generalization_seed(
         execution = _run_variant(
             campaign_id=campaign_id,
             experiment_id=ExperimentId.ATTACK_SUBTYPE_DISJOINT,
+            variant_id=rotation.variant_id,
             detector_seed=detector_seed,
             scores=restricted,
             provenance=provenance,
             protocol=protocol,
             layout=layout,
-            variant_id=rotation.variant_id,
         )
         evaluations.extend(execution.evaluations)
         artifacts.extend(execution.artifacts)
@@ -209,12 +204,12 @@ def run_botnet_family_generalization_seed(
         execution = _run_variant(
             campaign_id=campaign_id,
             experiment_id=ExperimentId.BOTNET_FAMILY_DISJOINT,
+            variant_id=direction.variant_id,
             detector_seed=detector_seed,
             scores=restricted,
             provenance=subset_provenance,
             protocol=protocol,
             layout=layout,
-            variant_id=direction.variant_id,
         )
         evaluations.extend(execution.evaluations)
         artifacts.extend(execution.artifacts)
