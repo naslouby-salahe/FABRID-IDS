@@ -66,3 +66,43 @@ def _client_recall(scores: LoadedSeedScores, client_index: int, threshold: Thres
             )
         )
     return ClientMacroRecall(client.client_id, client_macro_recall(tuple(recalls)))
+
+
+def run_pooled_shared_diagnostic(
+    detector_seed: DetectorSeed,
+    budget: BudgetLevel,
+    scores: LoadedSeedScores,
+) -> DiagnosticPolicyEvidence:
+    weights = equal_client_weights(scores.population)
+    validation = FederationPooledValidation(
+        tuple(
+            ClientPooledValidation(
+                client_id=client.client_id,
+                benign_frontier=client.frontier.benign_frontier,
+                attack_validation=client.frontier.attack_validation,
+            )
+            for client in scores.clients
+        )
+    )
+    selected = select_pooled_shared_threshold(validation, weights, budget.value)
+    recalls = tuple(
+        _client_recall(scores, index, selected.threshold)
+        for index in range(len(scores.clients))
+    )
+    rates = tuple(
+        ClientFalsePositiveRate(
+            scores.clients[index].client_id,
+            _client_fpr(scores, index, selected.threshold),
+        )
+        for index in range(len(scores.clients))
+    )
+    federation_rate = federation_fpr(rates, weights)
+    return DiagnosticPolicyEvidence(
+        detector_seed=detector_seed,
+        budget=budget,
+        policy=AllocationPolicy.POOLED_SHARED,
+        macro_recall=federation_macro_recall(recalls),
+        worst_client_recall=worst_client_recall(recalls),
+        federation_fpr=federation_rate,
+        budget_usage=budget_usage_ratio(federation_rate, budget.value),
+    )
