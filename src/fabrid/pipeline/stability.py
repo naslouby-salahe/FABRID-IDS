@@ -13,6 +13,7 @@ from fabrid.allocation.policies.fabrid_macro import allocate_fabrid_macro
 from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.problem import build_allocation_problem, merge_full_allocation
 from fabrid.allocation.solver import SolverInvalidError
+from fabrid.allocation.weights import equal_client_weights
 from fabrid.analysis.frontier_resampling import bootstrap_frontier_populations
 from fabrid.analysis.stability import (
     AllocationStabilityAnalysis,
@@ -30,7 +31,7 @@ from fabrid.domain.enums import (
 )
 from fabrid.domain.identifiers import CampaignId, FailureReason
 from fabrid.domain.values import AnalysisSeed, DetectorSeed, RowCount
-from fabrid.pipeline.allocation import LoadedSeedScores, equal_client_weights
+from fabrid.pipeline.allocation import LoadedSeedScores
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
 
 _STABILITY_POLICIES = (
@@ -90,6 +91,13 @@ class SeedBudgetAllocationStability:
 @dataclass(frozen=True, slots=True)
 class CampaignAllocationStability:
     cells: tuple[SeedBudgetAllocationStability, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _PolicyReplicates:
+    policy: AllocationPolicy
+    allocations: tuple[Allocation, ...]
+    solver_invalid_replicates: RowCount
 
 
 def _base_populations(
@@ -153,6 +161,32 @@ def _allocate_policy(
     )
 
 
+def _summarize_policy(
+    replicates: _PolicyReplicates,
+    expected_replicates: RowCount,
+) -> PolicyStability:
+    completed_count = RowCount(len(replicates.allocations))
+    if completed_count == expected_replicates:
+        return AvailablePolicyStability(
+            policy=replicates.policy,
+            availability=EvidenceAvailability.AVAILABLE,
+            expected_replicates=expected_replicates,
+            completed_replicates=completed_count,
+            solver_invalid_replicates=replicates.solver_invalid_replicates,
+            analysis=summarize_allocations(replicates.allocations),
+        )
+    return UnavailablePolicyStability(
+        policy=replicates.policy,
+        availability=EvidenceAvailability.INSUFFICIENT_EVIDENCE,
+        expected_replicates=expected_replicates,
+        completed_replicates=completed_count,
+        solver_invalid_replicates=replicates.solver_invalid_replicates,
+        reason=FailureReason(
+            "one or more preregistered bootstrap allocation solves were invalid"
+        ),
+    )
+
+
 def run_seed_budget_allocation_stability(
     campaign_id: CampaignId,
     detector_seed: DetectorSeed,
@@ -175,59 +209,53 @@ def run_seed_budget_allocation_stability(
         protocol.allocation_sensitivity_replicates,
         AnalysisSeed(detector_seed.value),
     )
-    completed: dict[AllocationPolicy, list[Allocation]] = {
-        policy: [] for policy in _STABILITY_POLICIES
-    }
-    solver_invalid: dict[AllocationPolicy, int] = {
-        policy: 0 for policy in _STABILITY_POLICIES
-    }
+    macro_allocations: list[Allocation] = []
+    minimax_allocations: list[Allocation] = []
+    macro_invalid = RowCount(0)
+    minimax_invalid = RowCount(0)
 
     for replicate_seed in replicate_seeds:
         resampled = bootstrap_frontier_populations(base, replicate_seed)
-        for policy in _STABILITY_POLICIES:
-            try:
-                completed[policy].append(
-                    _allocate_policy(
-                        policy=policy,
-                        populations=resampled,
-                        scores=scores,
-                        budget_level=budget_level,
-                        protocol=protocol,
-                    )
-                )
-            except SolverInvalidError:
-                solver_invalid[policy] += 1
-
-    policy_results: list[PolicyStability] = []
-    for policy in _STABILITY_POLICIES:
-        completed_count = RowCount(len(completed[policy]))
-        invalid_count = RowCount(solver_invalid[policy])
-        if completed_count == protocol.allocation_sensitivity_replicates:
-            policy_results.append(
-                AvailablePolicyStability(
-                    policy=policy,
-                    availability=EvidenceAvailability.AVAILABLE,
-                    expected_replicates=protocol.allocation_sensitivity_replicates,
-                    completed_replicates=completed_count,
-                    solver_invalid_replicates=invalid_count,
-                    analysis=summarize_allocations(tuple(completed[policy])),
+        try:
+            macro_allocations.append(
+                _allocate_policy(
+                    policy=AllocationPolicy.FABRID_MACRO,
+                    populations=resampled,
+                    scores=scores,
+                    budget_level=budget_level,
+                    protocol=protocol,
                 )
             )
-        else:
-            policy_results.append(
-                UnavailablePolicyStability(
-                    policy=policy,
-                    availability=EvidenceAvailability.INSUFFICIENT_EVIDENCE,
-                    expected_replicates=protocol.allocation_sensitivity_replicates,
-                    completed_replicates=completed_count,
-                    solver_invalid_replicates=invalid_count,
-                    reason=FailureReason(
-                        "one or more preregistered bootstrap allocation solves were invalid"
-                    ),
+        except SolverInvalidError:
+            macro_invalid = RowCount(macro_invalid.value + 1)
+
+        try:
+            minimax_allocations.append(
+                _allocate_policy(
+                    policy=AllocationPolicy.FABRID_MINIMAX,
+                    populations=resampled,
+                    scores=scores,
+                    budget_level=budget_level,
+                    protocol=protocol,
                 )
             )
+        except SolverInvalidError:
+            minimax_invalid = RowCount(minimax_invalid.value + 1)
 
+    macro = _PolicyReplicates(
+        policy=AllocationPolicy.FABRID_MACRO,
+        allocations=tuple(macro_allocations),
+        solver_invalid_replicates=macro_invalid,
+    )
+    minimax = _PolicyReplicates(
+        policy=AllocationPolicy.FABRID_MINIMAX,
+        allocations=tuple(minimax_allocations),
+        solver_invalid_replicates=minimax_invalid,
+    )
     return SeedBudgetAllocationStability(
         experiment=coordinate,
-        policies=tuple(policy_results),
+        policies=(
+            _summarize_policy(macro, protocol.allocation_sensitivity_replicates),
+            _summarize_policy(minimax, protocol.allocation_sensitivity_replicates),
+        ),
     )
