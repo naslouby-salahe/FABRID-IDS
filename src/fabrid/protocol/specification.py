@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 from fabrid.domain.enums import (
+    AttackFoldId,
+    BotnetFamily,
     BudgetId,
     DecisionOperator,
     ExperimentalUnit,
+    ExperimentVariantId,
     FallbackPolicy,
     OptimizationVariableKind,
     RetrainingPolicy,
     SolverBackend,
     ThresholdTiePolicy,
 )
+from fabrid.domain.identifiers import AttackSubtypeId
 from fabrid.domain.values import (
     BatchSize,
     BudgetUsageRatio,
@@ -28,8 +32,12 @@ from fabrid.domain.values import (
 )
 from fabrid.protocol.alpha_grid import build_alpha_grid
 from fabrid.protocol.models import (
+    AttackFold,
+    AttackFoldRotation,
     AttackSplitFraction,
     BenignSplitFractions,
+    BotnetFamilyDirection,
+    BotnetFamilySubtypes,
     BudgetComplianceGate,
     BudgetLevel,
     DetectorHyperparameters,
@@ -39,6 +47,7 @@ from fabrid.protocol.models import (
     FabridMacroGate,
     FabridMinimaxGate,
     FabridProtocol,
+    GeneralizationProtocol,
     PracticalGates,
     ScoreContract,
     SolverSettings,
@@ -128,6 +137,87 @@ PROTOCOL = FabridProtocol(
             seed_usage_limit=BudgetUsageRatio(1.10),
             minimum_seed_fraction_below_limit=Probability(0.9),
         ),
+    ),
+    generalization=GeneralizationProtocol(
+        folds=(
+            AttackFold(
+                fold_id=AttackFoldId.FOLD_0,
+                subtypes=(
+                    AttackSubtypeId("bashlite_scan"),
+                    AttackSubtypeId("bashlite_tcp"),
+                    AttackSubtypeId("mirai_ack"),
+                    AttackSubtypeId("mirai_udp"),
+                ),
+            ),
+            AttackFold(
+                fold_id=AttackFoldId.FOLD_1,
+                subtypes=(
+                    AttackSubtypeId("bashlite_junk"),
+                    AttackSubtypeId("bashlite_udp"),
+                    AttackSubtypeId("mirai_scan"),
+                ),
+            ),
+            AttackFold(
+                fold_id=AttackFoldId.FOLD_2,
+                subtypes=(
+                    AttackSubtypeId("bashlite_combo"),
+                    AttackSubtypeId("mirai_syn"),
+                    AttackSubtypeId("mirai_udpplain"),
+                ),
+            ),
+        ),
+        rotations=(
+            AttackFoldRotation(
+                variant_id=ExperimentVariantId.ATTACK_SUBTYPE_FOLD_0,
+                validation_fold=AttackFoldId.FOLD_0,
+                test_folds=(AttackFoldId.FOLD_1, AttackFoldId.FOLD_2),
+            ),
+            AttackFoldRotation(
+                variant_id=ExperimentVariantId.ATTACK_SUBTYPE_FOLD_1,
+                validation_fold=AttackFoldId.FOLD_1,
+                test_folds=(AttackFoldId.FOLD_0, AttackFoldId.FOLD_2),
+            ),
+            AttackFoldRotation(
+                variant_id=ExperimentVariantId.ATTACK_SUBTYPE_FOLD_2,
+                validation_fold=AttackFoldId.FOLD_2,
+                test_folds=(AttackFoldId.FOLD_0, AttackFoldId.FOLD_1),
+            ),
+        ),
+        families=(
+            BotnetFamilySubtypes(
+                family=BotnetFamily.BASHLITE,
+                subtypes=(
+                    AttackSubtypeId("bashlite_scan"),
+                    AttackSubtypeId("bashlite_junk"),
+                    AttackSubtypeId("bashlite_udp"),
+                    AttackSubtypeId("bashlite_tcp"),
+                    AttackSubtypeId("bashlite_combo"),
+                ),
+            ),
+            BotnetFamilySubtypes(
+                family=BotnetFamily.MIRAI,
+                subtypes=(
+                    AttackSubtypeId("mirai_scan"),
+                    AttackSubtypeId("mirai_ack"),
+                    AttackSubtypeId("mirai_syn"),
+                    AttackSubtypeId("mirai_udp"),
+                    AttackSubtypeId("mirai_udpplain"),
+                ),
+            ),
+        ),
+        family_directions=(
+            BotnetFamilyDirection(
+                variant_id=ExperimentVariantId.BOTNET_BASHLITE_TO_MIRAI,
+                validation_family=BotnetFamily.BASHLITE,
+                test_family=BotnetFamily.MIRAI,
+            ),
+            BotnetFamilyDirection(
+                variant_id=ExperimentVariantId.BOTNET_MIRAI_TO_BASHLITE,
+                validation_family=BotnetFamily.MIRAI,
+                test_family=BotnetFamily.BASHLITE,
+            ),
+        ),
+        botnet_eligible_client_count=RowCount(7),
     ),
     allocation_sensitivity_replicates=RowCount(500),
     conservative_utility_confidence=Probability(0.95),
