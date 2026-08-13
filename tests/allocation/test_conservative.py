@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import numpy as np
+
 from fabrid.allocation.conservative import (
     build_conservative_utility_curve,
     one_sided_lower_confidence_bound,
@@ -10,12 +12,11 @@ from fabrid.allocation.frontier import (
     SubtypeConfusion,
     SubtypeConfusionCounts,
 )
+from fabrid.domain.enums import FallbackPolicy
 from fabrid.domain.identifiers import AttackSubtypeId, ClientId
 from fabrid.domain.scores import ScoreVector
 from fabrid.domain.values import Probability, RowCount, TargetFalsePositiveRate
 from fabrid.protocol.models import UtilityEligibility
-
-import numpy as np
 
 
 def test_one_sided_lower_bound_is_conservative() -> None:
@@ -66,7 +67,7 @@ def test_conservative_curve_preserves_target_grid_and_lowers_utility() -> None:
         minimum_attack_validation_rows=RowCount(100),
         minimum_eligible_subtypes=RowCount(2),
         minimum_rows_per_subtype=RowCount(50),
-        fallback_policy=__import__("fabrid.domain.enums", fromlist=["FallbackPolicy"]).FallbackPolicy.EQUAL_FPR_AT_BUDGET,
+        fallback_policy=FallbackPolicy.EQUAL_FPR_AT_BUDGET,
     )
 
     curve = build_conservative_utility_curve(
