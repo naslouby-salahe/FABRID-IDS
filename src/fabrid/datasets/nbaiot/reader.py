@@ -16,23 +16,23 @@ _MIRAI_DIRNAME = "mirai_attacks"
 
 @dataclass(frozen=True, slots=True)
 class _AttackFile:
-    filename: str
+    filename: SourceFileId
     subtype: AttackSubtypeId
 
 
 _BASHLITE_FILES = (
-    _AttackFile("combo", AttackSubtypeId("bashlite_combo")),
-    _AttackFile("junk", AttackSubtypeId("bashlite_junk")),
-    _AttackFile("scan", AttackSubtypeId("bashlite_scan")),
-    _AttackFile("tcp", AttackSubtypeId("bashlite_tcp")),
-    _AttackFile("udp", AttackSubtypeId("bashlite_udp")),
+    _AttackFile(SourceFileId("combo"), AttackSubtypeId("bashlite_combo")),
+    _AttackFile(SourceFileId("junk"), AttackSubtypeId("bashlite_junk")),
+    _AttackFile(SourceFileId("scan"), AttackSubtypeId("bashlite_scan")),
+    _AttackFile(SourceFileId("tcp"), AttackSubtypeId("bashlite_tcp")),
+    _AttackFile(SourceFileId("udp"), AttackSubtypeId("bashlite_udp")),
 )
 _MIRAI_FILES = (
-    _AttackFile("ack", AttackSubtypeId("mirai_ack")),
-    _AttackFile("scan", AttackSubtypeId("mirai_scan")),
-    _AttackFile("syn", AttackSubtypeId("mirai_syn")),
-    _AttackFile("udp", AttackSubtypeId("mirai_udp")),
-    _AttackFile("udpplain", AttackSubtypeId("mirai_udpplain")),
+    _AttackFile(SourceFileId("ack"), AttackSubtypeId("mirai_ack")),
+    _AttackFile(SourceFileId("scan"), AttackSubtypeId("mirai_scan")),
+    _AttackFile(SourceFileId("syn"), AttackSubtypeId("mirai_syn")),
+    _AttackFile(SourceFileId("udp"), AttackSubtypeId("mirai_udp")),
+    _AttackFile(SourceFileId("udpplain"), AttackSubtypeId("mirai_udpplain")),
 )
 
 
@@ -50,13 +50,13 @@ def _read_attack_family(
 
     blocks: list[AttackFeatureBlock] = []
     for file in files:
-        path = family_dir / f"{file.filename}.csv"
+        path = family_dir / f"{file.filename.value}.csv"
         if path.exists():
             blocks.append(
                 AttackFeatureBlock(
                     subtype=file.subtype,
                     source_file=SourceFileId(
-                        f"{family_dir.name}/{file.filename}.csv"
+                        f"{family_dir.name}/{file.filename.value}.csv"
                     ),
                     features=_read_feature_csv(path),
                 )
