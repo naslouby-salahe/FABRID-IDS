@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from fabrid.analysis.persistence import StoredPrimaryInference, persist_primary_inference
+from fabrid.analysis.primary import analyze_primary_inference
 from fabrid.artifacts.dataset_store import (
     StoredDatasetManifests,
     persist_dataset_manifests,
@@ -43,6 +45,7 @@ class FabridCampaign:
     matched_budget: ExperimentExecution
     attack_subtype_disjoint: ExperimentExecution
     botnet_family_disjoint: ExperimentExecution
+    primary_inference: StoredPrimaryInference
 
 
 def run_fabrid_campaign(
@@ -128,14 +131,21 @@ def run_fabrid_campaign(
         family_evaluations.extend(family_execution.evaluations)
         family_artifacts.extend(family_execution.artifacts)
 
+    matched_budget = ExperimentExecution(
+        evaluations=tuple(primary_evaluations),
+        artifacts=tuple(primary_artifacts),
+    )
+    primary_inference = persist_primary_inference(
+        campaign_id=campaign_id,
+        inference=analyze_primary_inference(matched_budget.evaluations, protocol),
+        layout=layout,
+    )
+
     return FabridCampaign(
         campaign_id=campaign_id,
         protocol_snapshot=protocol_snapshot,
         dataset_manifests=dataset_manifests,
-        matched_budget=ExperimentExecution(
-            evaluations=tuple(primary_evaluations),
-            artifacts=tuple(primary_artifacts),
-        ),
+        matched_budget=matched_budget,
         attack_subtype_disjoint=ExperimentExecution(
             evaluations=tuple(subtype_evaluations),
             artifacts=tuple(subtype_artifacts),
@@ -144,4 +154,5 @@ def run_fabrid_campaign(
             evaluations=tuple(family_evaluations),
             artifacts=tuple(family_artifacts),
         ),
+        primary_inference=primary_inference,
     )
