@@ -385,6 +385,8 @@ def _run_optimized(
 
 def run_seed_budget(
     campaign_id: CampaignId,
+    experiment_id: ExperimentId,
+    variant_id: ExperimentVariantId,
     detector_seed: DetectorSeed,
     budget_level: BudgetLevel,
     scores: LoadedSeedScores,
@@ -393,8 +395,8 @@ def run_seed_budget(
 ) -> SeedBudgetRun:
     coordinate = ExperimentCoordinate(
         campaign_id=campaign_id,
-        experiment_id=ExperimentId.MATCHED_BUDGET,
-        variant_id=ExperimentVariantId.PRIMARY,
+        experiment_id=experiment_id,
+        variant_id=variant_id,
         dataset_id=DatasetId.NBAIOT,
         detector_seed=detector_seed,
         budget_id=budget_level.budget_id,
