@@ -52,6 +52,18 @@ class MetricId(StrEnum):
     BUDGET_USAGE_RATIO = "budget_usage_ratio"
 
 
+class PrimaryContrastId(StrEnum):
+    FABRID_MACRO_VS_EQ_FPR_MACRO_RECALL = "fabrid_macro_vs_eq_fpr_macro_recall"
+    FABRID_MINIMAX_VS_EQ_FPR_WORST_CLIENT_RECALL = (
+        "fabrid_minimax_vs_eq_fpr_worst_client_recall"
+    )
+
+
+class EvidenceAvailability(StrEnum):
+    AVAILABLE = "available"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+
+
 class HypothesisDecision(StrEnum):
     REJECT = "reject"
     RETAIN = "retain"
