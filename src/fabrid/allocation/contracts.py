@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from fabrid.domain.enums import AllocationPolicy
 from fabrid.domain.identifiers import ClientId
+from fabrid.domain.population import ClientPopulation
 from fabrid.domain.values import (
     ClientWeight,
     DetectionUtility,
@@ -72,24 +73,51 @@ class ClientBudgetWeight:
 
 
 @dataclass(frozen=True, slots=True)
-class FederationWeights:
+class AllocationWeights:
     clients: tuple[ClientBudgetWeight, ...]
 
     def __post_init__(self) -> None:
         if not self.clients:
-            raise ValueError("federation weights require at least one client")
+            raise ValueError("allocation weights require at least one client")
         client_ids = tuple(client.client_id for client in self.clients)
         if len(set(client_ids)) != len(client_ids):
-            raise ValueError("federation weights contain duplicate clients")
+            raise ValueError("allocation weights contain duplicate clients")
         total = sum(client.weight.value for client in self.clients)
-        if abs(total - 1.0) > _FEASIBILITY_TOLERANCE:
-            raise ValueError(f"federation weights must sum to one, got {total}")
+        if total > 1.0 + _FEASIBILITY_TOLERANCE:
+            raise ValueError(f"allocation weights may not sum above one, got {total}")
 
     def for_client(self, client_id: ClientId) -> ClientWeight:
         for client in self.clients:
             if client.client_id == client_id:
                 return client.weight
         raise KeyError(client_id.value)
+
+
+@dataclass(frozen=True, slots=True)
+class FederationWeights:
+    allocation_weights: AllocationWeights
+
+    def __post_init__(self) -> None:
+        total = sum(
+            client.weight.value for client in self.allocation_weights.clients
+        )
+        if abs(total - 1.0) > _FEASIBILITY_TOLERANCE:
+            raise ValueError(f"federation weights must sum to one, got {total}")
+
+    @property
+    def clients(self) -> tuple[ClientBudgetWeight, ...]:
+        return self.allocation_weights.clients
+
+    def for_client(self, client_id: ClientId) -> ClientWeight:
+        return self.allocation_weights.for_client(client_id)
+
+    def subset(self, population: ClientPopulation) -> AllocationWeights:
+        return AllocationWeights(
+            tuple(
+                ClientBudgetWeight(client_id, self.for_client(client_id))
+                for client_id in population.clients
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,7 +144,7 @@ class Allocation:
                 return decision
         raise KeyError(client_id.value)
 
-    def total_weighted_cost(self, weights: FederationWeights) -> FalsePositiveBudget:
+    def total_weighted_cost(self, weights: AllocationWeights) -> FalsePositiveBudget:
         cost = sum(
             weights.for_client(decision.client_id).value * decision.target_rate.value
             for decision in self.decisions
@@ -125,7 +153,7 @@ class Allocation:
 
     def is_budget_feasible(
         self,
-        weights: FederationWeights,
+        weights: AllocationWeights,
         budget: FalsePositiveBudget,
     ) -> bool:
         return (
