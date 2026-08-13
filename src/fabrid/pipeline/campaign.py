@@ -13,7 +13,12 @@ from fabrid.artifacts.protocol_store import persist_protocol_snapshot
 from fabrid.artifacts.result_store import StoredResultArtifact, write_result_records
 from fabrid.datasets.nbaiot.specification import NBAIOT_PRIMARY_POPULATION
 from fabrid.domain.coordinates import AllocationCoordinate, ExperimentCoordinate
-from fabrid.domain.enums import AllocationPolicy, DatasetId
+from fabrid.domain.enums import (
+    AllocationPolicy,
+    DatasetId,
+    ExperimentId,
+    ExperimentVariantId,
+)
 from fabrid.domain.identifiers import CampaignId
 from fabrid.evaluation.results import SeedBudgetEvaluation
 from fabrid.pipeline.allocation import (
@@ -139,6 +144,8 @@ def run_matched_budget_campaign(
         for budget_level in protocol.budgets:
             run = run_seed_budget(
                 campaign_id=campaign_id,
+                experiment_id=ExperimentId.MATCHED_BUDGET,
+                variant_id=ExperimentVariantId.PRIMARY,
                 detector_seed=detector_seed,
                 budget_level=budget_level,
                 scores=loaded_scores,
