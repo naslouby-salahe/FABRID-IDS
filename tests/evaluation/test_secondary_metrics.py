@@ -2,86 +2,83 @@ from __future__ import annotations
 
 import pytest
 
-from fabrid.evaluation.record_level import ClientId
+from fabrid.domain.identifiers import ClientId
+from fabrid.domain.values import BalancedAccuracy, MacroF1, PooledRecall, RowCount
+from fabrid.evaluation.results import ConfusionCounts
 from fabrid.evaluation.secondary_metrics import (
     ClientConfusion,
+    FederationConfusions,
     balanced_accuracy,
     macro_f1,
     pooled_recall,
 )
 
 
-def test_client_confusion_rejects_negative_counts() -> None:
-    with pytest.raises(ValueError, match="non-negative"):
-        ClientConfusion(true_positive=-1, false_negative=0, false_positive=0, true_negative=0)
+def _client(
+    client_id: str,
+    true_positive: int,
+    false_negative: int,
+    false_positive: int,
+    true_negative: int,
+) -> ClientConfusion:
+    return ClientConfusion(
+        client_id=ClientId(client_id),
+        counts=ConfusionCounts(
+            true_positive=RowCount(true_positive),
+            false_negative=RowCount(false_negative),
+            false_positive=RowCount(false_positive),
+            true_negative=RowCount(true_negative),
+        ),
+    )
 
 
-def test_pooled_recall_pools_across_clients() -> None:
-    # client A: 9/10 attack rows caught; client B: 1/100 caught.
-    # pooled recall weights by row count, not per-client average.
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=9, false_negative=1, false_positive=0, true_negative=10
-        ),
-        ClientId("B"): ClientConfusion(
-            true_positive=1, false_negative=99, false_positive=0, true_negative=10
-        ),
-    }
-    assert pooled_recall(confusion) == pytest.approx(10 / 110)
+def test_pooled_recall_weights_by_attack_rows() -> None:
+    confusions = FederationConfusions(
+        (
+            _client("A", 9, 1, 0, 10),
+            _client("B", 1, 99, 0, 10),
+        )
+    )
+
+    assert pooled_recall(confusions).value == pytest.approx(10 / 110)
 
 
 def test_pooled_recall_requires_attack_rows() -> None:
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=0, false_negative=0, false_positive=0, true_negative=10
-        )
-    }
     with pytest.raises(ValueError):
-        pooled_recall(confusion)
+        pooled_recall(FederationConfusions((_client("A", 0, 0, 0, 10),)))
 
 
-def test_macro_f1_perfect_detection() -> None:
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=10, false_negative=0, false_positive=0, true_negative=10
-        )
-    }
-    assert macro_f1(confusion) == pytest.approx(1.0)
+def test_macro_f1_and_balanced_accuracy_return_semantic_values() -> None:
+    perfect = FederationConfusions((_client("A", 10, 0, 0, 10),))
+    mixed = FederationConfusions((_client("A", 5, 5, 0, 10),))
+
+    assert macro_f1(perfect) == MacroF1(1.0)
+    assert balanced_accuracy(perfect) == BalancedAccuracy(1.0)
+    assert balanced_accuracy(mixed) == BalancedAccuracy(0.75)
 
 
-def test_macro_f1_zero_denominator_contributes_zero() -> None:
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=0, false_negative=5, false_positive=0, true_negative=10
-        )
-    }
-    assert macro_f1(confusion) == pytest.approx(0.0)
+def test_macro_f1_zero_precision_or_recall_contributes_zero() -> None:
+    confusions = FederationConfusions((_client("A", 0, 5, 0, 10),))
+
+    assert macro_f1(confusions) == MacroF1(0.0)
 
 
-def test_balanced_accuracy_perfect_detection() -> None:
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=10, false_negative=0, false_positive=0, true_negative=10
-        )
-    }
-    assert balanced_accuracy(confusion) == pytest.approx(1.0)
-
-
-def test_balanced_accuracy_averages_sensitivity_and_specificity() -> None:
-    # sensitivity 0.5 (5/10), specificity 1.0 (10/10) -> balanced accuracy 0.75.
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=5, false_negative=5, false_positive=0, true_negative=10
-        )
-    }
-    assert balanced_accuracy(confusion) == pytest.approx(0.75)
-
-
-def test_balanced_accuracy_requires_both_classes_present() -> None:
-    confusion = {
-        ClientId("A"): ClientConfusion(
-            true_positive=0, false_negative=0, false_positive=0, true_negative=10
-        )
-    }
+def test_balanced_accuracy_requires_both_classes_per_client() -> None:
     with pytest.raises(ValueError):
-        balanced_accuracy(confusion)
+        balanced_accuracy(FederationConfusions((_client("A", 0, 0, 0, 10),)))
+
+
+def test_federation_confusions_require_unique_nonempty_clients() -> None:
+    with pytest.raises(ValueError):
+        FederationConfusions(())
+    with pytest.raises(ValueError):
+        FederationConfusions((_client("A", 1, 0, 0, 1), _client("A", 1, 0, 0, 1)))
+
+
+def test_secondary_metric_value_objects_reject_out_of_range_values() -> None:
+    with pytest.raises(ValueError):
+        PooledRecall(1.1)
+    with pytest.raises(ValueError):
+        MacroF1(-0.1)
+    with pytest.raises(ValueError):
+        BalancedAccuracy(1.1)
