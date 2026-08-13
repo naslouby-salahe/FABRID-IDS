@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from pydantic import TypeAdapter
 
 from fabrid.artifacts.json_store import StoredJsonArtifact, write_typed_json
+from fabrid.artifacts.layout import ArtifactLayout
 from fabrid.datasets.manifests import DatasetSplitManifest, FeatureManifest
 from fabrid.domain.enums import DatasetId
 from fabrid.domain.identifiers import CampaignId
-from fabrid.pipeline.context import PipelinePaths
 
 _FEATURE_MANIFEST_ADAPTER = TypeAdapter(FeatureManifest)
 _SPLIT_MANIFEST_ADAPTER = TypeAdapter(DatasetSplitManifest)
@@ -25,11 +25,10 @@ def persist_dataset_manifests(
     dataset_id: DatasetId,
     feature_manifest: FeatureManifest,
     split_manifest: DatasetSplitManifest,
-    paths: PipelinePaths,
+    layout: ArtifactLayout,
 ) -> StoredDatasetManifests:
     if split_manifest.dataset_id is not dataset_id:
         raise ValueError("split manifest dataset id does not match requested dataset")
-    layout = paths.artifacts
     return StoredDatasetManifests(
         features=write_typed_json(
             feature_manifest,
