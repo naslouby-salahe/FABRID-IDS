@@ -28,6 +28,20 @@ class ArtifactLayout:
     def dataset_root(self, campaign_id: CampaignId, dataset_id: DatasetId) -> Path:
         return self.campaign_root(campaign_id) / "datasets" / dataset_id.value
 
+    def split_manifest_path(
+        self,
+        campaign_id: CampaignId,
+        dataset_id: DatasetId,
+    ) -> Path:
+        return self.dataset_root(campaign_id, dataset_id) / "splits.json"
+
+    def feature_manifest_path(
+        self,
+        campaign_id: CampaignId,
+        dataset_id: DatasetId,
+    ) -> Path:
+        return self.dataset_root(campaign_id, dataset_id) / "features.json"
+
     def detector_root(
         self,
         campaign_id: CampaignId,
