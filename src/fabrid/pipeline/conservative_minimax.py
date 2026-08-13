@@ -4,6 +4,7 @@ from fabrid.allocation.conservative import build_conservative_utility_curve
 from fabrid.allocation.contracts import Allocation, ClientUtilityCurves
 from fabrid.allocation.frontier import client_eligibility
 from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
+from fabrid.allocation.problem import merge_full_allocation
 from fabrid.allocation.solver import SolverInvalidError
 from fabrid.domain.coordinates import ExperimentCoordinate
 from fabrid.domain.enums import (
@@ -24,9 +25,8 @@ from fabrid.pipeline.allocation import (
     ExcludedPolicyRun,
     LoadedSeedScores,
     SeedBudgetRun,
-    build_allocation_problem,
+    allocation_problem_for_scores,
     evaluate_policy,
-    merge_full_allocation,
 )
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
 
@@ -49,7 +49,7 @@ def run_conservative_minimax_seed_budget(
         budget=budget_level.value,
         weight_mode=WeightMode.EQUAL_CLIENT,
     )
-    problem = build_allocation_problem(
+    problem = allocation_problem_for_scores(
         scores=scores,
         protocol=protocol,
         budget=budget_level.value,
@@ -59,7 +59,9 @@ def run_conservative_minimax_seed_budget(
         excluded = ExcludedPolicyEvaluation(
             policy=AllocationPolicy.FABRID_MINIMAX_CONSERVATIVE,
             status=SolverStatus.NOT_APPLICABLE,
-            reason=FailureReason("no client is eligible for conservative Minimax sensitivity"),
+            reason=FailureReason(
+                "no client is eligible for conservative Minimax sensitivity"
+            ),
         )
         run = ExcludedPolicyRun(excluded)
         return SeedBudgetRun(
