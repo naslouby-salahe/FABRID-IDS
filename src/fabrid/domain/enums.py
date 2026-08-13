@@ -60,6 +60,16 @@ class SolverStatus(StrEnum):
     NOT_APPLICABLE = "not_applicable"
 
 
+class SolverStage(StrEnum):
+    MACRO_PRIMARY_UTILITY = "macro_primary_utility"
+    MACRO_MINIMUM_BUDGET = "macro_minimum_budget"
+    MACRO_TIE_BREAK = "macro_tie_break"
+    MINIMAX_WORST_CLIENT = "minimax_worst_client"
+    MINIMAX_MEAN_UTILITY = "minimax_mean_utility"
+    MINIMAX_MINIMUM_BUDGET = "minimax_minimum_budget"
+    MINIMAX_TIE_BREAK = "minimax_tie_break"
+
+
 class SolverBackend(StrEnum):
     SCIPY_MILP = "scipy.optimize.milp"
 
