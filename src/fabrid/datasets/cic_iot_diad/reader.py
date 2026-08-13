@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from fabrid.datasets.common import FeatureMatrix
+from fabrid.domain.enums import FeatureColumnStatus
 from fabrid.domain.identifiers import ClientId, ColumnName
 from fabrid.domain.values import Probability, RowCount
 
@@ -15,7 +16,7 @@ from fabrid.domain.values import Probability, RowCount
 class ColumnParseReport:
     column: ColumnName
     parse_success: Probability
-    kept: bool
+    status: FeatureColumnStatus
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,7 +69,7 @@ def select_numeric_feature_columns(
                 ColumnParseReport(
                     column=column,
                     parse_success=Probability(0.0),
-                    kept=False,
+                    status=FeatureColumnStatus.EXCLUDED,
                 )
             )
             continue
@@ -77,7 +78,11 @@ def select_numeric_feature_columns(
             ColumnParseReport(
                 column=column,
                 parse_success=parse_success,
-                kept=parse_success.value >= threshold.value,
+                status=(
+                    FeatureColumnStatus.KEPT
+                    if parse_success.value >= threshold.value
+                    else FeatureColumnStatus.PARSE_REJECTED
+                ),
             )
         )
     return tuple(reports)
@@ -107,7 +112,11 @@ def read_packet_csv(
         device_column,
     )
     kept_columns = FeatureColumns(
-        tuple(report.column for report in reports if report.kept)
+        tuple(
+            report.column
+            for report in reports
+            if report.status is FeatureColumnStatus.KEPT
+        )
     )
     if not kept_columns.values:
         raise ValueError(f"no feature columns survived filtering for {path}")
