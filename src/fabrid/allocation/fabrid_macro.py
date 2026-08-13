@@ -14,8 +14,8 @@ from fabrid.allocation.formulation import (
     lexicographic_weights,
     one_hot_constraint,
 )
-from fabrid.allocation.solver import solve_milp
-from fabrid.domain.enums import AllocationPolicy
+from fabrid.allocation.solver import OptimizedAllocation, SolverEvidence, solve_milp
+from fabrid.domain.enums import AllocationPolicy, SolverStage, SolverStatus
 from fabrid.domain.values import FalsePositiveBudget, RowCount
 from fabrid.protocol.models import SolverSettings
 
@@ -28,7 +28,7 @@ def allocate_fabrid_macro(
     weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
-) -> Allocation:
+) -> OptimizedAllocation:
     curve_client_ids = {curve.client_id for curve in utility_curves.clients}
     weight_client_ids = {client.client_id for client in weights.clients}
     if curve_client_ids != weight_client_ids:
@@ -62,6 +62,7 @@ def allocate_fabrid_macro(
     budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accepted_gap.value)
 
     stage_one = solve_milp(
+        SolverStage.MACRO_PRIMARY_UTILITY,
         -utility / client_count.value,
         (one_hot, budget),
         integrality,
@@ -76,6 +77,7 @@ def allocate_fabrid_macro(
         ub=np.inf,
     )
     stage_two = solve_milp(
+        SolverStage.MACRO_MINIMUM_BUDGET,
         cost,
         (one_hot, budget, utility_floor),
         integrality,
@@ -94,6 +96,7 @@ def allocate_fabrid_macro(
         dtype=np.float64,
     )
     stage_three = solve_milp(
+        SolverStage.MACRO_TIE_BREAK,
         target_rates * lexicographic_weights(client_count, candidate_count),
         (one_hot, budget, utility_floor, cost_ceiling),
         integrality,
@@ -105,7 +108,7 @@ def allocate_fabrid_macro(
         client_count.value,
         candidate_count.value,
     )
-    return Allocation(
+    allocation = Allocation(
         policy=AllocationPolicy.FABRID_MACRO,
         decisions=tuple(
             AllocationDecision(
@@ -113,5 +116,12 @@ def allocate_fabrid_macro(
                 target_rate=curve.points[int(np.argmax(selection[index]))].target_rate,
             )
             for index, curve in enumerate(curves)
+        ),
+    )
+    return OptimizedAllocation(
+        allocation=allocation,
+        solver=SolverEvidence(
+            status=SolverStatus.OPTIMAL,
+            stages=(stage_one.evidence, stage_two.evidence, stage_three.evidence),
         ),
     )
