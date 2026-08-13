@@ -7,6 +7,7 @@ import typer
 from fabrid.domain.identifiers import CampaignId
 from fabrid.pipeline.campaign import run_fabrid_campaign
 from fabrid.pipeline.context import PipelinePaths
+from fabrid.validation.datasets import CsvIntegrityStatus, validate_csv_tree
 
 app = typer.Typer(
     name="fabrid",
@@ -42,6 +43,30 @@ def run_campaign(
             outputs_root=outputs_root,
         ),
     )
+
+
+@app.command("validate-data")
+def validate_data(
+    root: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+        resolve_path=True,
+    ),
+) -> None:
+    report = validate_csv_tree(root)
+    typer.echo(
+        f"{report.status.value}: checked {report.files_checked.value} CSV files"
+    )
+    for issue in report.issues:
+        detail = issue.kind.value
+        if issue.row_number is not None:
+            detail = f"{detail} at row {issue.row_number.value}"
+        typer.echo(f"{issue.path}: {detail}")
+    if report.status is CsvIntegrityStatus.INVALID:
+        raise typer.Exit(code=1)
 
 
 def main() -> None:
