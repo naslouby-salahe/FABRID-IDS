@@ -1,11 +1,3 @@
-"""Fixed detector architecture: a benign-trained autoencoder.
-
-Anomaly score is per-row mean squared reconstruction error; larger values
-mean greater anomaly evidence, matching the score contract in
-`fabrid.scoring.score_contract`. The architecture itself is not the
-contribution and is intentionally simple.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,19 +6,36 @@ import numpy as np
 import torch
 from torch import nn
 
+from fabrid.datasets.common import FeatureMatrix
+from fabrid.domain.values import AnomalyScore, FeatureCount, LayerWidth, RowCount
+
 
 @dataclass(frozen=True, slots=True)
 class AutoencoderArchitecture:
-    n_features: int
-    hidden_dims: tuple[int, ...]
+    feature_count: FeatureCount
+    hidden_layers: tuple[LayerWidth, ...]
 
     def __post_init__(self) -> None:
-        if self.n_features < 1:
-            raise ValueError(f"n_features must be positive, got {self.n_features}")
-        if not self.hidden_dims:
-            raise ValueError("hidden_dims must contain at least one layer size")
-        if any(dim < 1 for dim in self.hidden_dims):
-            raise ValueError(f"all hidden_dims must be positive, got {self.hidden_dims}")
+        if not self.hidden_layers:
+            raise ValueError("autoencoder requires at least one hidden layer")
+
+
+@dataclass(frozen=True, slots=True)
+class ScoreVector:
+    values: np.ndarray
+
+    def __post_init__(self) -> None:
+        if self.values.ndim != 1:
+            raise ValueError("score vector must be one-dimensional")
+        if not np.isfinite(self.values).all():
+            raise ValueError("score vector must contain only finite values")
+
+    @property
+    def row_count(self) -> RowCount:
+        return RowCount(self.values.shape[0])
+
+    def at(self, index: int) -> AnomalyScore:
+        return AnomalyScore(float(self.values[index]))
 
 
 class Autoencoder(nn.Module):
@@ -34,33 +43,57 @@ class Autoencoder(nn.Module):
         super().__init__()
         self.architecture = architecture
 
-        encoder_dims = (architecture.n_features, *architecture.hidden_dims)
+        encoder_dimensions = (
+            architecture.feature_count.value,
+            *(layer.value for layer in architecture.hidden_layers),
+        )
         encoder_layers: list[nn.Module] = []
-        for in_dim, out_dim in zip(encoder_dims, encoder_dims[1:], strict=False):
-            encoder_layers += [nn.Linear(in_dim, out_dim), nn.ReLU()]
-        self.encoder = nn.Sequential(*encoder_layers[:-1])  # drop final ReLU on the bottleneck
+        for input_width, output_width in zip(
+            encoder_dimensions,
+            encoder_dimensions[1:],
+            strict=False,
+        ):
+            encoder_layers.extend(
+                (nn.Linear(input_width, output_width), nn.ReLU())
+            )
+        self.encoder = nn.Sequential(*encoder_layers[:-1])
 
-        decoder_dims = (*architecture.hidden_dims[::-1], architecture.n_features)
+        decoder_dimensions = (
+            *(layer.value for layer in reversed(architecture.hidden_layers)),
+            architecture.feature_count.value,
+        )
         decoder_layers: list[nn.Module] = []
-        for in_dim, out_dim in zip(decoder_dims, decoder_dims[1:], strict=False):
-            decoder_layers += [nn.Linear(in_dim, out_dim), nn.ReLU()]
-        self.decoder = nn.Sequential(*decoder_layers[:-1])  # linear output layer, no final ReLU
+        for input_width, output_width in zip(
+            decoder_dimensions,
+            decoder_dimensions[1:],
+            strict=False,
+        ):
+            decoder_layers.extend(
+                (nn.Linear(input_width, output_width), nn.ReLU())
+            )
+        self.decoder = nn.Sequential(*decoder_layers[:-1])
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.decoder(self.encoder(x))
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        return self.decoder(self.encoder(features))
 
 
 def resolve_device() -> torch.device:
-    """The accelerator to run all model compute on: CUDA whenever available, else CPU."""
     return torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def reconstruction_error_scores(model: Autoencoder, features: np.ndarray) -> np.ndarray:
+def reconstruction_error_scores(
+    model: Autoencoder,
+    features: FeatureMatrix,
+) -> ScoreVector:
     device = resolve_device()
     model = model.to(device)
     model.eval()
     with torch.no_grad():
-        inputs = torch.as_tensor(features, dtype=torch.float32, device=device)
+        inputs = torch.as_tensor(
+            features.values,
+            dtype=torch.float32,
+            device=device,
+        )
         reconstructed = model(inputs)
         per_row_mse = torch.mean((inputs - reconstructed) ** 2, dim=1)
-    return per_row_mse.cpu().numpy().astype(np.float64)
+    return ScoreVector(per_row_mse.cpu().numpy().astype(np.float64))
