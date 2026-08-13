@@ -101,6 +101,13 @@ class ArtifactLayout:
     ) -> Path:
         return self.experiment_root(coordinate) / "analysis" / f"{name.value}.parquet"
 
+    def campaign_analysis_path(
+        self,
+        campaign_id: CampaignId,
+        name: ArtifactName,
+    ) -> Path:
+        return self.campaign_root(campaign_id) / "analysis" / f"{name.value}.json"
+
     def publication_dir(
         self,
         coordinate: ExperimentCoordinate,
