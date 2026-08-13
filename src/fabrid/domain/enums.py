@@ -41,6 +41,7 @@ class AllocationPolicy(StrEnum):
     GREEDY = "greedy"
     FABRID_MACRO = "fabrid_macro"
     FABRID_MINIMAX = "fabrid_minimax"
+    FABRID_MINIMAX_CONSERVATIVE = "fabrid_minimax_conservative"
     POOLED_SHARED = "pooled_shared"
     TEST_ORACLE = "test_oracle"
 
