@@ -7,8 +7,8 @@ from pydantic import TypeAdapter
 from fabrid.allocation.contracts import Allocation
 from fabrid.allocation.solver import SolverEvidence
 from fabrid.artifacts.json_store import StoredJsonArtifact, write_typed_json
+from fabrid.artifacts.layout import ArtifactLayout
 from fabrid.domain.coordinates import AllocationCoordinate
-from fabrid.pipeline.context import PipelinePaths
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,10 +27,10 @@ _ALLOCATION_ADAPTER = TypeAdapter(AllocationArtifact)
 
 def persist_allocation(
     artifact: AllocationArtifact,
-    paths: PipelinePaths,
+    layout: ArtifactLayout,
 ) -> StoredJsonArtifact:
     return write_typed_json(
         artifact,
         _ALLOCATION_ADAPTER,
-        paths.artifacts.allocation_path(artifact.coordinate),
+        layout.allocation_path(artifact.coordinate),
     )
