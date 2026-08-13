@@ -1,161 +1,120 @@
-"""Alarm eventization: merge raw alert timestamps into investigation-level events.
-
-Only meaningful where `EVENT_DATA_GATE` has passed (client identity, packet
-timestamp, and interval provenance all verified from source — see
-`fabrid.audit` for the gate itself, which is data-dependent and out of scope
-for this pure sequence-processing module).
-
-Algorithm (a documented engineering interpretation of the roadmap's four
-named parameters, since the roadmap fixes their values but not the merge
-mechanics): each alert at time `t` dilates into `[t, t + dilation]`; dilated
-intervals separated by at most `merge_gap` are merged; merged intervals
-shorter than `min_event_length` are dropped; surviving events separated by
-at most `cooldown` are further merged (an alert during the cooldown window
-after an event is treated as part of that event, not a new one).
-"""
-
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from itertools import product
 
-from fabrid.config.protocol import PROTOCOL_PATH, read_yaml_mapping
+from fabrid.domain.values import DurationSeconds, EventRatePerClientHour, EventTimestamp, Probability
+from fabrid.protocol.models import EventGate
+from fabrid.protocol.specification import PROTOCOL
 
 _SECONDS_PER_HOUR = 3600.0
 
 
 @dataclass(frozen=True, slots=True)
-class EventizationParameters:
-    dilation_seconds: float
-    merge_gap_seconds: float
-    min_event_length_seconds: float
-    cooldown_seconds: float
-
-    def __post_init__(self) -> None:
-        for name, value in (
-            ("dilation_seconds", self.dilation_seconds),
-            ("merge_gap_seconds", self.merge_gap_seconds),
-            ("min_event_length_seconds", self.min_event_length_seconds),
-            ("cooldown_seconds", self.cooldown_seconds),
-        ):
-            if value < 0:
-                raise ValueError(f"{name} must be non-negative, got {value}")
+class EventizationRule:
+    dilation: DurationSeconds
+    merge_gap: DurationSeconds
+    minimum_event_length: DurationSeconds
+    cooldown: DurationSeconds
 
 
 @dataclass(frozen=True, slots=True)
 class AlertEvent:
-    start_seconds: float
-    end_seconds: float
+    start: EventTimestamp
+    end: EventTimestamp
 
     def __post_init__(self) -> None:
-        if self.end_seconds < self.start_seconds:
-            raise ValueError(
-                f"end_seconds ({self.end_seconds}) must be >= start_seconds ({self.start_seconds})"
-            )
+        if self.end.value < self.start.value:
+            raise ValueError("alert event end must not precede its start")
 
-    def duration_seconds(self) -> float:
-        return self.end_seconds - self.start_seconds
+    @property
+    def duration(self) -> DurationSeconds:
+        return DurationSeconds(self.end.value - self.start.value)
+
+
+def primary_eventization_rule(event_gate: EventGate = PROTOCOL.event_gate) -> EventizationRule:
+    return EventizationRule(
+        dilation=event_gate.dilation,
+        merge_gap=event_gate.merge_gap,
+        minimum_event_length=event_gate.minimum_event_length,
+        cooldown=event_gate.cooldown,
+    )
+
+
+def sensitivity_eventization_rules(
+    event_gate: EventGate = PROTOCOL.event_gate,
+) -> tuple[EventizationRule, ...]:
+    return tuple(
+        EventizationRule(
+            dilation=dilation,
+            merge_gap=merge_gap,
+            minimum_event_length=minimum_event_length,
+            cooldown=cooldown,
+        )
+        for dilation, merge_gap, minimum_event_length, cooldown in product(
+            event_gate.sensitivity.dilation,
+            event_gate.sensitivity.merge_gap,
+            event_gate.sensitivity.minimum_event_length,
+            event_gate.sensitivity.cooldown,
+        )
+    )
+
+
+def _merge_with_gap(
+    events: tuple[AlertEvent, ...],
+    maximum_gap: DurationSeconds,
+) -> tuple[AlertEvent, ...]:
+    merged: list[AlertEvent] = []
+    for event in events:
+        if merged and event.start.value <= merged[-1].end.value + maximum_gap.value:
+            previous = merged[-1]
+            merged[-1] = AlertEvent(
+                start=previous.start,
+                end=EventTimestamp(max(previous.end.value, event.end.value)),
+            )
+        else:
+            merged.append(event)
+    return tuple(merged)
 
 
 def eventize_alerts(
-    alert_timestamps: Sequence[float], parameters: EventizationParameters
+    alert_timestamps: tuple[EventTimestamp, ...],
+    rule: EventizationRule,
 ) -> tuple[AlertEvent, ...]:
     if not alert_timestamps:
         return ()
-
-    sorted_timestamps = sorted(alert_timestamps)
-    dilated = [(t, t + parameters.dilation_seconds) for t in sorted_timestamps]
-
-    merged: list[list[float]] = []
-    for start, end in dilated:
-        if merged and start <= merged[-1][1] + parameters.merge_gap_seconds:
-            merged[-1][1] = max(merged[-1][1], end)
-        else:
-            merged.append([start, end])
-
-    long_enough = [
-        interval
-        for interval in merged
-        if interval[1] - interval[0] >= parameters.min_event_length_seconds
-    ]
-
-    cooled: list[list[float]] = []
-    for start, end in long_enough:
-        if cooled and start <= cooled[-1][1] + parameters.cooldown_seconds:
-            cooled[-1][1] = max(cooled[-1][1], end)
-        else:
-            cooled.append([start, end])
-
-    return tuple(AlertEvent(start_seconds=s, end_seconds=e) for s, e in cooled)
-
-
-def events_per_hour(events: tuple[AlertEvent, ...], observation_duration_seconds: float) -> float:
-    if observation_duration_seconds <= 0:
-        raise ValueError(
-            f"observation_duration_seconds must be positive, got {observation_duration_seconds}"
+    dilated = tuple(
+        AlertEvent(
+            start=timestamp,
+            end=EventTimestamp(timestamp.value + rule.dilation.value),
         )
-    return len(events) / (observation_duration_seconds / _SECONDS_PER_HOUR)
+        for timestamp in sorted(alert_timestamps, key=lambda timestamp: timestamp.value)
+    )
+    merged = _merge_with_gap(dilated, rule.merge_gap)
+    long_enough = tuple(
+        event for event in merged if event.duration.value >= rule.minimum_event_length.value
+    )
+    return _merge_with_gap(long_enough, rule.cooldown)
+
+
+def events_per_hour(
+    events: tuple[AlertEvent, ...],
+    observation_duration: DurationSeconds,
+) -> EventRatePerClientHour:
+    if observation_duration.value <= 0.0:
+        raise ValueError("observation duration must be positive")
+    return EventRatePerClientHour(
+        len(events) / (observation_duration.value / _SECONDS_PER_HOUR)
+    )
 
 
 def alarm_duty_fraction(
-    events: tuple[AlertEvent, ...], observation_duration_seconds: float
-) -> float:
-    if observation_duration_seconds <= 0:
-        raise ValueError(
-            f"observation_duration_seconds must be positive, got {observation_duration_seconds}"
-        )
-    total_event_seconds = sum(event.duration_seconds() for event in events)
-    return total_event_seconds / observation_duration_seconds
-
-
-@dataclass(frozen=True, slots=True)
-class EventSensitivityGrid:
-    """The 3^4=81-combination sensitivity grid (roadmap section 83) evaluated at the primary
-    event budget.
-    """
-
-    dilation_seconds: tuple[float, ...]
-    merge_gap_seconds: tuple[float, ...]
-    min_event_length_seconds: tuple[float, ...]
-    cooldown_seconds: tuple[float, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class EventGateConfig:
-    parameters: EventizationParameters
-    max_alarm_duty: float
-    event_budgets_per_client_hour: tuple[float, ...]
-    sensitivity_grid: EventSensitivityGrid
-
-    def __post_init__(self) -> None:
-        if not (0.0 <= self.max_alarm_duty <= 1.0):
-            raise ValueError(f"max_alarm_duty must be in [0, 1], got {self.max_alarm_duty}")
-        if not self.event_budgets_per_client_hour:
-            raise ValueError("event_budgets_per_client_hour must contain at least one value")
-
-
-def load_event_gate_config(path: Path = PROTOCOL_PATH) -> EventGateConfig:
-    payload = read_yaml_mapping(path)
-    event_gate_raw = payload["event_gate"]
-    sensitivity_raw = event_gate_raw["sensitivity_grid"]
-    return EventGateConfig(
-        parameters=EventizationParameters(
-            dilation_seconds=float(event_gate_raw["dilation_seconds"]),
-            merge_gap_seconds=float(event_gate_raw["merge_gap_seconds"]),
-            min_event_length_seconds=float(event_gate_raw["min_event_length_seconds"]),
-            cooldown_seconds=float(event_gate_raw["cooldown_seconds"]),
-        ),
-        max_alarm_duty=float(event_gate_raw["max_alarm_duty"]),
-        event_budgets_per_client_hour=tuple(
-            float(v) for v in event_gate_raw["event_budgets_per_client_hour"]
-        ),
-        sensitivity_grid=EventSensitivityGrid(
-            dilation_seconds=tuple(float(v) for v in sensitivity_raw["dilation_seconds"]),
-            merge_gap_seconds=tuple(float(v) for v in sensitivity_raw["merge_gap_seconds"]),
-            min_event_length_seconds=tuple(
-                float(v) for v in sensitivity_raw["min_event_length_seconds"]
-            ),
-            cooldown_seconds=tuple(float(v) for v in sensitivity_raw["cooldown_seconds"]),
-        ),
-    )
+    events: tuple[AlertEvent, ...],
+    observation_duration: DurationSeconds,
+) -> Probability:
+    if observation_duration.value <= 0.0:
+        raise ValueError("observation duration must be positive")
+    total_event_seconds = sum(event.duration.value for event in events)
+    if total_event_seconds > observation_duration.value:
+        raise ValueError("event duration exceeds the observation interval")
+    return Probability(total_event_seconds / observation_duration.value)
