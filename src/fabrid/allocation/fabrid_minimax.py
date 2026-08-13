@@ -1,165 +1,221 @@
-"""FABRID_MINIMAX: choose one candidate rate per eligible client maximizing the worst-off client.
-
-Two-stage optimization: first maximize the minimum per-client utility `z`
-(via an auxiliary continuous variable appended after the one-hot binary
-block), then, holding `z` fixed at its optimum, maximize mean utility.
-Deterministic tie-breaking continues with budget minimization and
-lexicographic alpha minimization, mirroring FABRID_MACRO's later stages.
-"""
-
 from __future__ import annotations
-
-from collections.abc import Mapping
 
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint
 
+from fabrid.allocation.contracts import (
+    Allocation,
+    AllocationDecision,
+    ClientUtilityCurves,
+    FederationWeights,
+)
 from fabrid.allocation.formulation import (
     budget_constraint,
     lexicographic_weights,
     one_hot_constraint,
     pad_constraint_columns,
 )
-from fabrid.config.protocol import SolverSettings
-from fabrid.evaluation.record_level import ClientId
-from fabrid.optimization.milp import solve_milp
-from fabrid.schemas.allocation import (
-    Allocation,
-    AllocationDecision,
-    AllocationPolicy,
-    ClientUtilityCurve,
-)
+from fabrid.allocation.solver import solve_milp
+from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.values import FalsePositiveBudget, RowCount
+from fabrid.protocol.models import SolverSettings
 
 _Z_TOLERANCE_FLOOR = 1e-9
 _UTILITY_TOLERANCE_FLOOR = 1e-9
 _BUDGET_TOLERANCE_FLOOR = 1e-12
 
 
-def _shared_client_grid(
-    client_ids: list[ClientId], utility_curves: Mapping[ClientId, ClientUtilityCurve]
-) -> tuple[float, ...]:
-    shared_grid = utility_curves[client_ids[0]].alpha_grid
-    for client_id in client_ids:
-        if utility_curves[client_id].alpha_grid != shared_grid:
-            raise ValueError("all clients must share the same candidate target-rate grid")
-    return shared_grid
-
-
 def _per_client_utility_floor_constraint(
-    utility: np.ndarray, n_clients: int, n_candidates: int, n_vars: int, z_index: int
+    utility: np.ndarray,
+    client_count: RowCount,
+    candidate_count: RowCount,
+    variable_count: RowCount,
+    minimum_utility_index: int,
 ) -> LinearConstraint:
-    """utility_k(selected) - z >= 0 for every client k."""
-    rows = np.zeros((n_clients, n_vars))
-    for client_index in range(n_clients):
-        start = client_index * n_candidates
-        rows[client_index, start : start + n_candidates] = utility[start : start + n_candidates]
-        rows[client_index, z_index] = -1.0
+    rows = np.zeros((client_count.value, variable_count.value))
+    for client_index in range(client_count.value):
+        start = client_index * candidate_count.value
+        rows[
+            client_index,
+            start : start + candidate_count.value,
+        ] = utility[start : start + candidate_count.value]
+        rows[client_index, minimum_utility_index] = -1.0
     return LinearConstraint(rows, lb=0.0, ub=np.inf)
 
 
-def _padded_row(row: np.ndarray, n_vars: int) -> np.ndarray:
-    padded = np.zeros(n_vars)
+def _padded_row(row: np.ndarray, variable_count: RowCount) -> np.ndarray:
+    padded = np.zeros(variable_count.value)
     padded[: row.shape[0]] = row
     return padded.reshape(1, -1)
 
 
 def allocate_fabrid_minimax(
-    utility_curves: Mapping[ClientId, ClientUtilityCurve],
-    weight: Mapping[ClientId, float],
-    remaining_budget: float,
+    utility_curves: ClientUtilityCurves,
+    weights: FederationWeights,
+    remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
 ) -> Allocation:
-    if not utility_curves:
-        raise ValueError("allocate_fabrid_minimax requires at least one eligible client")
-    if utility_curves.keys() != weight.keys():
-        raise ValueError("utility_curves and weight must share the same client set")
+    curve_client_ids = {curve.client_id for curve in utility_curves.clients}
+    weight_client_ids = {client.client_id for client in weights.clients}
+    if curve_client_ids != weight_client_ids:
+        raise ValueError("utility curves and federation weights must share clients")
 
-    client_ids = sorted(utility_curves.keys())
-    shared_grid = _shared_client_grid(client_ids, utility_curves)
-    n_clients = len(client_ids)
-    n_candidates = len(shared_grid)
-    n_binary = n_clients * n_candidates
-    n_vars = n_binary + 1
-    z_index = n_binary
+    curves = tuple(
+        sorted(utility_curves.clients, key=lambda curve: curve.client_id.value)
+    )
+    client_count = RowCount(len(curves))
+    candidate_count = RowCount(len(curves[0].points))
+    binary_variable_count = RowCount(client_count.value * candidate_count.value)
+    variable_count = RowCount(binary_variable_count.value + 1)
+    minimum_utility_index = binary_variable_count.value
 
-    utility = np.array([utility_curves[c].utility for c in client_ids], dtype=np.float64).reshape(
-        -1
+    utility = np.array(
+        [
+            point.utility.value
+            for curve in curves
+            for point in curve.points
+        ],
+        dtype=np.float64,
     )
     cost = np.array(
-        [[weight[c] * alpha for alpha in shared_grid] for c in client_ids], dtype=np.float64
-    ).reshape(-1)
-
-    one_hot_binary_only = one_hot_constraint(n_clients, n_candidates)
-    budget_binary_only = budget_constraint(cost, remaining_budget)
-    one_hot_matrix = np.zeros((n_clients, n_binary))
-    for client_index in range(n_clients):
-        start = client_index * n_candidates
-        one_hot_matrix[client_index, start : start + n_candidates] = 1.0
-    utility_floor_per_client = _per_client_utility_floor_constraint(
-        utility, n_clients, n_candidates, n_vars, z_index
+        [
+            weights.for_client(curve.client_id).value * point.target_rate.value
+            for curve in curves
+            for point in curve.points
+        ],
+        dtype=np.float64,
     )
-    constraints = [
-        pad_constraint_columns(one_hot_binary_only, one_hot_matrix, extra_columns=1),
-        pad_constraint_columns(budget_binary_only, cost.reshape(1, -1), extra_columns=1),
+
+    one_hot_binary = one_hot_constraint(client_count, candidate_count)
+    budget_binary = budget_constraint(cost, remaining_budget)
+    one_hot_matrix = np.zeros(
+        (client_count.value, binary_variable_count.value)
+    )
+    for client_index in range(client_count.value):
+        start = client_index * candidate_count.value
+        one_hot_matrix[
+            client_index,
+            start : start + candidate_count.value,
+        ] = 1.0
+
+    utility_floor_per_client = _per_client_utility_floor_constraint(
+        utility,
+        client_count,
+        candidate_count,
+        variable_count,
+        minimum_utility_index,
+    )
+    constraints = (
+        pad_constraint_columns(one_hot_binary, one_hot_matrix, RowCount(1)),
+        pad_constraint_columns(
+            budget_binary,
+            cost.reshape(1, -1),
+            RowCount(1),
+        ),
         utility_floor_per_client,
-    ]
+    )
 
-    integrality = np.concatenate([np.ones(n_binary), np.zeros(1)])
-    bounds = Bounds(np.zeros(n_vars), np.ones(n_vars))
+    integrality = np.concatenate(
+        [np.ones(binary_variable_count.value), np.zeros(1)]
+    )
+    bounds = Bounds(np.zeros(variable_count.value), np.ones(variable_count.value))
 
-    # A prior stage's reported objective is only known to within its own accepted mip_gap, so a
-    # later stage's floor/ceiling around that objective can never be tighter than that gap without
-    # risking spurious infeasibility (see decisions.md D007).
-    z_tolerance = max(_Z_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
-    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
-    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+    z_tolerance = max(_Z_TOLERANCE_FLOOR, settings.accepted_gap.value)
+    utility_tolerance = max(
+        _UTILITY_TOLERANCE_FLOOR,
+        settings.accepted_gap.value,
+    )
+    budget_tolerance = max(
+        _BUDGET_TOLERANCE_FLOOR,
+        settings.accepted_gap.value,
+    )
 
-    # Stage 1: maximize z (worst-client utility).
-    stage1_objective = np.zeros(n_vars)
-    stage1_objective[z_index] = -1.0
-    stage1 = solve_milp(stage1_objective, constraints, integrality, bounds, settings)
-    optimal_z = -stage1.objective_value
+    stage_one_objective = np.zeros(variable_count.value)
+    stage_one_objective[minimum_utility_index] = -1.0
+    stage_one = solve_milp(
+        stage_one_objective,
+        constraints,
+        integrality,
+        bounds,
+        settings,
+    )
+    optimal_minimum_utility = -stage_one.objective.value
 
-    z_floor_row = np.zeros((1, n_vars))
-    z_floor_row[0, z_index] = 1.0
-    z_floor = LinearConstraint(z_floor_row, lb=optimal_z - z_tolerance, ub=np.inf)
-    constraints_with_z = [*constraints, z_floor]
+    minimum_utility_floor_row = np.zeros((1, variable_count.value))
+    minimum_utility_floor_row[0, minimum_utility_index] = 1.0
+    minimum_utility_floor = LinearConstraint(
+        minimum_utility_floor_row,
+        lb=optimal_minimum_utility - z_tolerance,
+        ub=np.inf,
+    )
+    constraints_with_minimum = (*constraints, minimum_utility_floor)
 
-    # Stage 2: among worst-client-optimal solutions, maximize mean utility.
-    stage2_objective = np.zeros(n_vars)
-    stage2_objective[:n_binary] = -utility / n_clients
-    stage2 = solve_milp(stage2_objective, constraints_with_z, integrality, bounds, settings)
-    optimal_mean_utility = -stage2.objective_value
+    stage_two_objective = np.zeros(variable_count.value)
+    stage_two_objective[: binary_variable_count.value] = (
+        -utility / client_count.value
+    )
+    stage_two = solve_milp(
+        stage_two_objective,
+        constraints_with_minimum,
+        integrality,
+        bounds,
+        settings,
+    )
+    optimal_mean_utility = -stage_two.objective.value
 
-    utility_floor_mean = LinearConstraint(
-        _padded_row(utility / n_clients, n_vars),
+    mean_utility_floor = LinearConstraint(
+        _padded_row(utility / client_count.value, variable_count),
         lb=optimal_mean_utility - utility_tolerance,
         ub=np.inf,
     )
-    constraints_with_utility = [*constraints_with_z, utility_floor_mean]
+    constraints_with_utility = (*constraints_with_minimum, mean_utility_floor)
 
-    # Stage 3: minimize total weighted budget consumption.
-    stage3_objective = np.zeros(n_vars)
-    stage3_objective[:n_binary] = cost
-    stage3 = solve_milp(stage3_objective, constraints_with_utility, integrality, bounds, settings)
-    optimal_cost = stage3.objective_value
+    stage_three_objective = np.zeros(variable_count.value)
+    stage_three_objective[: binary_variable_count.value] = cost
+    stage_three = solve_milp(
+        stage_three_objective,
+        constraints_with_utility,
+        integrality,
+        bounds,
+        settings,
+    )
+    optimal_cost = stage_three.objective.value
 
     cost_ceiling = LinearConstraint(
-        _padded_row(cost, n_vars), lb=-np.inf, ub=optimal_cost + budget_tolerance
+        _padded_row(cost, variable_count),
+        lb=-np.inf,
+        ub=optimal_cost + budget_tolerance,
     )
-    constraints_final = [*constraints_with_utility, cost_ceiling]
+    constraints_final = (*constraints_with_utility, cost_ceiling)
 
-    # Stage 4: lexicographically minimize the selected alpha vector by client order.
-    alpha_flat = np.array([alpha for _ in client_ids for alpha in shared_grid], dtype=np.float64)
-    stage4_objective = np.zeros(n_vars)
-    stage4_objective[:n_binary] = alpha_flat * lexicographic_weights(n_clients, n_candidates)
-    stage4 = solve_milp(stage4_objective, constraints_final, integrality, bounds, settings)
+    target_rates = np.array(
+        [point.target_rate.value for curve in curves for point in curve.points],
+        dtype=np.float64,
+    )
+    stage_four_objective = np.zeros(variable_count.value)
+    stage_four_objective[: binary_variable_count.value] = (
+        target_rates * lexicographic_weights(client_count, candidate_count)
+    )
+    stage_four = solve_milp(
+        stage_four_objective,
+        constraints_final,
+        integrality,
+        bounds,
+        settings,
+    )
 
-    selection = np.round(stage4.x[:n_binary]).astype(np.int64).reshape(n_clients, n_candidates)
-    decisions = {
-        client_id: AllocationDecision(
-            client_id=client_id, alpha_selected=shared_grid[int(np.argmax(selection[i]))]
-        )
-        for i, client_id in enumerate(client_ids)
-    }
-    return Allocation(policy=AllocationPolicy.FABRID_MINIMAX, decisions=decisions)
+    selection = np.round(stage_four.variables[: binary_variable_count.value]).astype(
+        np.int64
+    ).reshape(client_count.value, candidate_count.value)
+    return Allocation(
+        policy=AllocationPolicy.FABRID_MINIMAX,
+        decisions=tuple(
+            AllocationDecision(
+                client_id=curve.client_id,
+                target_rate=curve.points[
+                    int(np.argmax(selection[index]))
+                ].target_rate,
+            )
+            for index, curve in enumerate(curves)
+        ),
+    )
