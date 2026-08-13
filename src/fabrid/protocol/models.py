@@ -12,11 +12,16 @@ from fabrid.domain.enums import (
     ThresholdTiePolicy,
 )
 from fabrid.domain.values import (
+    BatchSize,
     BudgetUsageRatio,
     DetectorSeed,
     DurationSeconds,
     EventRatePerClientHour,
     FalsePositiveBudget,
+    FederatedRoundCount,
+    LayerWidth,
+    LearningRate,
+    LocalEpochCount,
     PercentagePoints,
     Probability,
     RowCount,
@@ -32,9 +37,23 @@ class ScoreContract:
 
 
 @dataclass(frozen=True, slots=True)
+class DetectorHyperparameters:
+    hidden_layers: tuple[LayerWidth, ...]
+    learning_rate: LearningRate
+    local_epochs: LocalEpochCount
+    rounds: FederatedRoundCount
+    batch_size: BatchSize
+
+    def __post_init__(self) -> None:
+        if not self.hidden_layers:
+            raise ValueError("detector requires at least one hidden layer")
+
+
+@dataclass(frozen=True, slots=True)
 class DetectorProtocol:
     seeds: tuple[DetectorSeed, ...]
     retraining_policy: RetrainingPolicy
+    hyperparameters: DetectorHyperparameters
 
     def __post_init__(self) -> None:
         if not self.seeds:
