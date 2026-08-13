@@ -6,8 +6,8 @@ from scipy.optimize import Bounds, LinearConstraint
 from fabrid.allocation.contracts import (
     Allocation,
     AllocationDecision,
+    AllocationWeights,
     ClientUtilityCurves,
-    FederationWeights,
 )
 from fabrid.allocation.formulation import (
     budget_constraint,
@@ -51,14 +51,14 @@ def _padded_row(row: np.ndarray, variable_count: RowCount) -> np.ndarray:
 
 def allocate_fabrid_minimax(
     utility_curves: ClientUtilityCurves,
-    weights: FederationWeights,
+    weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
 ) -> Allocation:
     curve_client_ids = {curve.client_id for curve in utility_curves.clients}
     weight_client_ids = {client.client_id for client in weights.clients}
     if curve_client_ids != weight_client_ids:
-        raise ValueError("utility curves and federation weights must share clients")
+        raise ValueError("utility curves and allocation weights must share clients")
 
     curves = tuple(
         sorted(utility_curves.clients, key=lambda curve: curve.client_id.value)
@@ -70,11 +70,7 @@ def allocate_fabrid_minimax(
     minimum_utility_index = binary_variable_count.value
 
     utility = np.array(
-        [
-            point.utility.value
-            for curve in curves
-            for point in curve.points
-        ],
+        [point.utility.value for curve in curves for point in curve.points],
         dtype=np.float64,
     )
     cost = np.array(
@@ -88,9 +84,7 @@ def allocate_fabrid_minimax(
 
     one_hot_binary = one_hot_constraint(client_count, candidate_count)
     budget_binary = budget_constraint(cost, remaining_budget)
-    one_hot_matrix = np.zeros(
-        (client_count.value, binary_variable_count.value)
-    )
+    one_hot_matrix = np.zeros((client_count.value, binary_variable_count.value))
     for client_index in range(client_count.value):
         start = client_index * candidate_count.value
         one_hot_matrix[
@@ -121,14 +115,8 @@ def allocate_fabrid_minimax(
     bounds = Bounds(np.zeros(variable_count.value), np.ones(variable_count.value))
 
     z_tolerance = max(_Z_TOLERANCE_FLOOR, settings.accepted_gap.value)
-    utility_tolerance = max(
-        _UTILITY_TOLERANCE_FLOOR,
-        settings.accepted_gap.value,
-    )
-    budget_tolerance = max(
-        _BUDGET_TOLERANCE_FLOOR,
-        settings.accepted_gap.value,
-    )
+    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accepted_gap.value)
+    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accepted_gap.value)
 
     stage_one_objective = np.zeros(variable_count.value)
     stage_one_objective[minimum_utility_index] = -1.0
@@ -151,9 +139,7 @@ def allocate_fabrid_minimax(
     constraints_with_minimum = (*constraints, minimum_utility_floor)
 
     stage_two_objective = np.zeros(variable_count.value)
-    stage_two_objective[: binary_variable_count.value] = (
-        -utility / client_count.value
-    )
+    stage_two_objective[: binary_variable_count.value] = -utility / client_count.value
     stage_two = solve_milp(
         stage_two_objective,
         constraints_with_minimum,
@@ -212,9 +198,7 @@ def allocate_fabrid_minimax(
         decisions=tuple(
             AllocationDecision(
                 client_id=curve.client_id,
-                target_rate=curve.points[
-                    int(np.argmax(selection[index]))
-                ].target_rate,
+                target_rate=curve.points[int(np.argmax(selection[index]))].target_rate,
             )
             for index, curve in enumerate(curves)
         ),
