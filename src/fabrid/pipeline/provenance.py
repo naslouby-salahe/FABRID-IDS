@@ -18,14 +18,23 @@ from fabrid.pipeline.scoring import StoredFederationScores
 from fabrid.pipeline.training import TrainedDetectorSeed
 
 
-def resolve_git_commit() -> GitCommit:
+def _run_git(*arguments: str) -> str:
     completed = subprocess.run(
-        ("git", "rev-parse", "HEAD"),
+        ("git", *arguments),
         check=True,
         capture_output=True,
         text=True,
     )
-    return GitCommit(completed.stdout.strip())
+    return completed.stdout.strip()
+
+
+def resolve_git_commit() -> GitCommit:
+    dirty_paths = _run_git("status", "--porcelain", "--untracked-files=all")
+    if dirty_paths:
+        raise RuntimeError(
+            "scientific campaign requires a clean Git worktree; commit or remove all changes first"
+        )
+    return GitCommit(_run_git("rev-parse", "HEAD"))
 
 
 def build_evaluation_provenance(
