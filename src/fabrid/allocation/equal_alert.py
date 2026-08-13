@@ -1,62 +1,76 @@
-"""EQ_ALERT: conditional baseline, valid only under defensibly unequal client weights.
-
-Under equal-client weighting EQ_ALERT is mathematically identical to EQ_FPR
-and must not be used as a separately reported baseline; this module raises
-rather than silently degenerating into EQ_FPR.
-"""
-
 from __future__ import annotations
 
-from collections.abc import Mapping
-
-from fabrid.evaluation.record_level import ClientId
-from fabrid.schemas.allocation import Allocation, AllocationDecision, AllocationPolicy
+from fabrid.allocation.contracts import (
+    Allocation,
+    AllocationDecision,
+    FederationWeights,
+)
+from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.values import FalsePositiveBudget, TargetFalsePositiveRate
 
 _WEIGHT_EQUALITY_TOLERANCE = 1e-12
 _BISECTION_ITERATIONS = 100
 
 
 def _max_constant_budget_share(
-    weight: Mapping[ClientId, float], budget: float, alpha_max: float
+    weights: FederationWeights,
+    budget: FalsePositiveBudget,
+    maximum_target_rate: TargetFalsePositiveRate,
 ) -> float:
-    """Largest c such that sum_k min(c, alpha_max * w_k) <= budget."""
+    def total_cost(constant_share: float) -> float:
+        return sum(
+            min(
+                constant_share,
+                maximum_target_rate.value * client.weight.value,
+            )
+            for client in weights.clients
+        )
 
-    def total_cost(c: float) -> float:
-        return sum(min(c, alpha_max * w) for w in weight.values())
-
-    upper = alpha_max * max(weight.values())
-    if total_cost(upper) <= budget:
+    upper = maximum_target_rate.value * max(
+        client.weight.value for client in weights.clients
+    )
+    if total_cost(upper) <= budget.value:
         return upper
-    low, high = 0.0, upper
+
+    low = 0.0
+    high = upper
     for _ in range(_BISECTION_ITERATIONS):
-        mid = (low + high) / 2
-        if total_cost(mid) <= budget:
-            low = mid
+        midpoint = (low + high) / 2.0
+        if total_cost(midpoint) <= budget.value:
+            low = midpoint
         else:
-            high = mid
+            high = midpoint
     return low
 
 
 def allocate_equal_alert(
-    weight: Mapping[ClientId, float], budget: float, alpha_max: float
+    weights: FederationWeights,
+    budget: FalsePositiveBudget,
+    maximum_target_rate: TargetFalsePositiveRate,
 ) -> Allocation:
-    if not weight:
-        raise ValueError("allocate_equal_alert requires at least one client")
-    if budget < 0:
-        raise ValueError(f"budget must be non-negative, got {budget}")
-
-    values = list(weight.values())
+    values = tuple(client.weight.value for client in weights.clients)
     if max(values) - min(values) < _WEIGHT_EQUALITY_TOLERANCE:
         raise ValueError(
-            "EQ_ALERT is identical to EQ_FPR under equal-client weighting and must not be used "
-            "as a separate baseline; this call received (near-)equal weights"
+            "EQ_ALERT is identical to EQ_FPR under equal-client weighting"
         )
 
-    constant_share = _max_constant_budget_share(weight, budget, alpha_max)
-    decisions = {
-        client_id: AllocationDecision(
-            client_id=client_id, alpha_selected=min(constant_share / w, alpha_max)
-        )
-        for client_id, w in weight.items()
-    }
-    return Allocation(policy=AllocationPolicy.EQ_ALERT, decisions=decisions)
+    constant_share = _max_constant_budget_share(
+        weights,
+        budget,
+        maximum_target_rate,
+    )
+    return Allocation(
+        policy=AllocationPolicy.EQ_ALERT,
+        decisions=tuple(
+            AllocationDecision(
+                client_id=client.client_id,
+                target_rate=TargetFalsePositiveRate(
+                    min(
+                        constant_share / client.weight.value,
+                        maximum_target_rate.value,
+                    )
+                ),
+            )
+            for client in weights.clients
+        ),
+    )
