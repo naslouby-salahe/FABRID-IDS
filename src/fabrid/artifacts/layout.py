@@ -69,35 +69,37 @@ class ArtifactLayout:
             / f"{split.value}.parquet"
         )
 
-    def allocation_path(self, coordinate: AllocationCoordinate) -> Path:
-        experiment = coordinate.experiment
+    def experiment_root(self, coordinate: ExperimentCoordinate) -> Path:
         return (
-            self.campaign_root(experiment.campaign_id)
+            self.campaign_root(coordinate.campaign_id)
+            / "experiments"
+            / coordinate.experiment_id.value
+            / coordinate.variant_id.value
+            / coordinate.dataset_id.value
+            / f"seed-{coordinate.detector_seed.value:03d}"
+            / coordinate.budget_id.value
+            / coordinate.weight_mode.value
+        )
+
+    def allocation_path(self, coordinate: AllocationCoordinate) -> Path:
+        return (
+            self.experiment_root(coordinate.experiment)
             / "allocations"
-            / experiment.experiment_id.value
-            / f"seed-{experiment.detector_seed.value:03d}"
-            / experiment.budget_id.value
             / f"{coordinate.policy.value}.json"
         )
 
     def result_path(self, coordinate: ExperimentCoordinate) -> Path:
-        return (
-            self.campaign_root(coordinate.campaign_id)
-            / "results"
-            / f"{coordinate.experiment_id.value}.parquet"
-        )
+        return self.experiment_root(coordinate) / "results.parquet"
+
+    def evaluation_summary_path(self, coordinate: ExperimentCoordinate) -> Path:
+        return self.experiment_root(coordinate) / "evaluation.json"
 
     def analysis_path(
         self,
         coordinate: ExperimentCoordinate,
         name: ArtifactName,
     ) -> Path:
-        return (
-            self.campaign_root(coordinate.campaign_id)
-            / "analysis"
-            / coordinate.experiment_id.value
-            / f"{name.value}.parquet"
-        )
+        return self.experiment_root(coordinate) / "analysis" / f"{name.value}.parquet"
 
     def publication_dir(
         self,
@@ -106,11 +108,7 @@ class ArtifactLayout:
     ) -> Path:
         if kind not in {ArtifactKind.TABLE, ArtifactKind.FIGURE}:
             raise ValueError(f"publication directory does not support {kind.value}")
-        return (
-            self.campaign_root(coordinate.campaign_id)
-            / "publication"
-            / f"{kind.value}s"
-        )
+        return self.experiment_root(coordinate) / "publication" / f"{kind.value}s"
 
     def audit_dir(self, campaign_id: CampaignId) -> Path:
         return self.campaign_root(campaign_id) / "audit"
