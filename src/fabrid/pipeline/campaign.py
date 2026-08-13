@@ -99,6 +99,7 @@ def run_matched_budget_campaign(
     paths: PipelinePaths,
     protocol: FabridProtocol = PROTOCOL,
 ) -> MatchedBudgetCampaign:
+    git_commit = resolve_git_commit()
     layout = paths.artifacts
     protocol_snapshot = persist_protocol_snapshot(campaign_id, protocol, layout)
     prepared = prepare_nbaiot_federation(paths, protocol)
@@ -109,7 +110,6 @@ def run_matched_budget_campaign(
         split_manifest=prepared.split_manifest,
         layout=layout,
     )
-    git_commit = resolve_git_commit()
 
     evaluations: list[SeedBudgetEvaluation] = []
     artifacts: list[MaterializedSeedBudget] = []
