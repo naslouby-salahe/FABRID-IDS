@@ -28,14 +28,14 @@ def test_ci_brackets_mean_for_consistent_positive_differences() -> None:
 
 def test_bootstrap_is_deterministic_for_analysis_seed() -> None:
     differences = _differences(1.0, 2.0, 3.0, -1.0, 0.5)
-    arguments = {
-        "paired_differences": differences,
-        "resamples": RowCount(1_000),
-        "seed": AnalysisSeed(42),
-        "confidence": Probability(0.95),
-    }
+    resamples = RowCount(1_000)
+    seed = AnalysisSeed(42)
+    confidence = Probability(0.95)
 
-    assert paired_bootstrap_ci(**arguments) == paired_bootstrap_ci(**arguments)
+    first = paired_bootstrap_ci(differences, resamples, seed, confidence)
+    second = paired_bootstrap_ci(differences, resamples, seed, confidence)
+
+    assert first == second
 
 
 def test_empty_paired_differences_are_rejected() -> None:
