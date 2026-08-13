@@ -117,6 +117,7 @@ class StatisticsProtocol:
     significance: Probability
     holm_family_size: RowCount
     bootstrap_resamples: RowCount
+    bootstrap_confidence: Probability
 
 
 @dataclass(frozen=True, slots=True)
