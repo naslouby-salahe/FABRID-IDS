@@ -10,6 +10,21 @@ class DatasetId(StrEnum):
     CICIOMT = "ciciomt"
 
 
+class DatasetEligibilityStatus(StrEnum):
+    ELIGIBLE = "eligible"
+    INELIGIBLE = "ineligible"
+
+
+class ReplicationEvidenceLevel(StrEnum):
+    CONFIRMATORY = "confirmatory"
+    SUPPORTIVE = "supportive"
+
+
+class ClientPartitionKind(StrEnum):
+    PHYSICAL_DEVICE = "physical_device"
+    EMULATED_DEVICE = "emulated_device"
+
+
 class SourceSplit(StrEnum):
     TRAIN = "train"
     TEST = "test"
