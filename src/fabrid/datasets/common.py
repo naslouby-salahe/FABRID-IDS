@@ -4,7 +4,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fabrid.domain.identifiers import AttackSubtypeId, ClientId
+from fabrid.domain.identifiers import (
+    AttackSubtypeId,
+    ClientId,
+    SourceFileId,
+)
 from fabrid.domain.values import FeatureCount, RowCount
 
 
@@ -34,12 +38,14 @@ class FeatureMatrix:
 @dataclass(frozen=True, slots=True)
 class AttackFeatureBlock:
     subtype: AttackSubtypeId
+    source_file: SourceFileId
     features: FeatureMatrix
 
 
 @dataclass(frozen=True, slots=True)
 class DeviceDataset:
     client_id: ClientId
+    benign_source_file: SourceFileId
     benign: FeatureMatrix
     attacks: tuple[AttackFeatureBlock, ...]
 
@@ -53,8 +59,8 @@ class DeviceDataset:
         ):
             raise ValueError("benign and attack feature matrices must share feature width")
 
-    def attack(self, subtype: AttackSubtypeId) -> FeatureMatrix:
+    def attack(self, subtype: AttackSubtypeId) -> AttackFeatureBlock:
         for block in self.attacks:
             if block.subtype == subtype:
-                return block.features
+                return block
         raise KeyError(subtype.value)
