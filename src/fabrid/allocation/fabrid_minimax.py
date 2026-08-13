@@ -15,8 +15,8 @@ from fabrid.allocation.formulation import (
     one_hot_constraint,
     pad_constraint_columns,
 )
-from fabrid.allocation.solver import solve_milp
-from fabrid.domain.enums import AllocationPolicy
+from fabrid.allocation.solver import OptimizedAllocation, SolverEvidence, solve_milp
+from fabrid.domain.enums import AllocationPolicy, SolverStage, SolverStatus
 from fabrid.domain.values import FalsePositiveBudget, RowCount
 from fabrid.protocol.models import SolverSettings
 
@@ -54,7 +54,7 @@ def allocate_fabrid_minimax(
     weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
-) -> Allocation:
+) -> OptimizedAllocation:
     curve_client_ids = {curve.client_id for curve in utility_curves.clients}
     weight_client_ids = {client.client_id for client in weights.clients}
     if curve_client_ids != weight_client_ids:
@@ -121,6 +121,7 @@ def allocate_fabrid_minimax(
     stage_one_objective = np.zeros(variable_count.value)
     stage_one_objective[minimum_utility_index] = -1.0
     stage_one = solve_milp(
+        SolverStage.MINIMAX_WORST_CLIENT,
         stage_one_objective,
         constraints,
         integrality,
@@ -141,6 +142,7 @@ def allocate_fabrid_minimax(
     stage_two_objective = np.zeros(variable_count.value)
     stage_two_objective[: binary_variable_count.value] = -utility / client_count.value
     stage_two = solve_milp(
+        SolverStage.MINIMAX_MEAN_UTILITY,
         stage_two_objective,
         constraints_with_minimum,
         integrality,
@@ -159,6 +161,7 @@ def allocate_fabrid_minimax(
     stage_three_objective = np.zeros(variable_count.value)
     stage_three_objective[: binary_variable_count.value] = cost
     stage_three = solve_milp(
+        SolverStage.MINIMAX_MINIMUM_BUDGET,
         stage_three_objective,
         constraints_with_utility,
         integrality,
@@ -183,6 +186,7 @@ def allocate_fabrid_minimax(
         target_rates * lexicographic_weights(client_count, candidate_count)
     )
     stage_four = solve_milp(
+        SolverStage.MINIMAX_TIE_BREAK,
         stage_four_objective,
         constraints_final,
         integrality,
@@ -193,7 +197,7 @@ def allocate_fabrid_minimax(
     selection = np.round(stage_four.variables[: binary_variable_count.value]).astype(
         np.int64
     ).reshape(client_count.value, candidate_count.value)
-    return Allocation(
+    allocation = Allocation(
         policy=AllocationPolicy.FABRID_MINIMAX,
         decisions=tuple(
             AllocationDecision(
@@ -201,5 +205,17 @@ def allocate_fabrid_minimax(
                 target_rate=curve.points[int(np.argmax(selection[index]))].target_rate,
             )
             for index, curve in enumerate(curves)
+        ),
+    )
+    return OptimizedAllocation(
+        allocation=allocation,
+        solver=SolverEvidence(
+            status=SolverStatus.OPTIMAL,
+            stages=(
+                stage_one.evidence,
+                stage_two.evidence,
+                stage_three.evidence,
+                stage_four.evidence,
+            ),
         ),
     )
