@@ -179,6 +179,30 @@ class TruePositiveRate:
 
 
 @dataclass(frozen=True, slots=True)
+class PooledRecall:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_unit_interval("pooled recall", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class MacroF1:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_unit_interval("macro F1", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class BalancedAccuracy:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_unit_interval("balanced accuracy", self.value)
+
+
+@dataclass(frozen=True, slots=True)
 class TargetFalsePositiveRate:
     value: float
 
