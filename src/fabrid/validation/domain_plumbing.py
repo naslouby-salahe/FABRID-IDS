@@ -72,3 +72,63 @@ def _namespace_forbidden(module: str) -> bool:
         module == namespace or module.startswith(f"{namespace}.")
         for namespace in _FORBIDDEN_NAMESPACES
     )
+
+
+def _finding(
+    kind: DomainPlumbingFindingKind,
+    path: Path,
+    node: ast.AST,
+    detail: str,
+) -> DomainPlumbingFinding:
+    return DomainPlumbingFinding(kind, path, node.lineno, detail)  # type: ignore[attr-defined]
+
+
+def _file_findings(path: Path) -> tuple[DomainPlumbingFinding, ...]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    findings: list[DomainPlumbingFinding] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and _namespace_forbidden(node.module or ""):
+            findings.append(_finding(
+                DomainPlumbingFindingKind.FORBIDDEN_NAMESPACE_IMPORT,
+                path, node, f"superseded namespace {node.module}",
+            ))
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if _namespace_forbidden(alias.name):
+                    findings.append(_finding(
+                        DomainPlumbingFindingKind.FORBIDDEN_NAMESPACE_IMPORT,
+                        path, node, f"superseded namespace {alias.name}",
+                    ))
+        if isinstance(node, ast.AnnAssign) and "dict" in _symbols(node.annotation):
+            findings.append(_finding(
+                DomainPlumbingFindingKind.DICTIONARY_ANNOTATION,
+                path, node, "dictionary-shaped annotation",
+            ))
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            annotations = tuple(
+                arg.annotation
+                for arg in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+            ) + (node.returns,)
+            if any("dict" in _symbols(annotation) for annotation in annotations):
+                findings.append(_finding(
+                    DomainPlumbingFindingKind.DICTIONARY_ANNOTATION,
+                    path, node, f"function {node.name} exposes dictionary plumbing",
+                ))
+        if isinstance(node, ast.ClassDef) and _is_dataclass(node):
+            fields = tuple(item for item in node.body if isinstance(item, ast.AnnAssign))
+            for field in fields:
+                target = field.target.id if isinstance(field.target, ast.Name) else ""
+                primitive = _symbols(field.annotation) & _PRIMITIVES
+                if primitive and not (len(fields) == 1 and target == "value"):
+                    findings.append(_finding(
+                        DomainPlumbingFindingKind.PRIMITIVE_DATACLASS_FIELD,
+                        path, field, f"field {target} uses raw {sorted(primitive)[0]}",
+                    ))
+    return tuple(findings)
+
+
+def audit_domain_plumbing(repository_root: Path) -> DomainPlumbingAudit:
+    findings: list[DomainPlumbingFinding] = []
+    for path in sorted((repository_root / "src" / "fabrid").rglob("*.py")):
+        findings.extend(_file_findings(path))
+    return DomainPlumbingAudit(tuple(findings))
