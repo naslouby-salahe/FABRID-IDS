@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from fabrid.domain.identifiers import CampaignId
-from fabrid.pipeline.campaign import run_matched_budget_campaign
+from fabrid.pipeline.campaign import run_fabrid_campaign
 from fabrid.pipeline.context import PipelinePaths
 
 app = typer.Typer(
@@ -15,8 +15,8 @@ app = typer.Typer(
 )
 
 
-@app.command("matched-budget")
-def run_matched_budget(
+@app.command("campaign")
+def run_campaign(
     campaign_id: str = typer.Argument(..., help="Unique campaign identifier."),
     raw_data_root: Path = typer.Option(
         ...,
@@ -35,7 +35,7 @@ def run_matched_budget(
         resolve_path=True,
     ),
 ) -> None:
-    run_matched_budget_campaign(
+    run_fabrid_campaign(
         campaign_id=CampaignId(campaign_id),
         paths=PipelinePaths(
             raw_data_root=raw_data_root,
