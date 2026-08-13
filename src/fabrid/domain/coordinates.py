@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fabrid.domain.enums import AllocationPolicy, DatasetId, ExperimentId, WeightMode
-from fabrid.domain.identifiers import BudgetId, CampaignId, ClientId
+from fabrid.domain.enums import (
+    AllocationPolicy,
+    BudgetId,
+    DatasetId,
+    ExperimentId,
+    WeightMode,
+)
+from fabrid.domain.identifiers import CampaignId, ClientId
 from fabrid.domain.values import DetectorSeed, FalsePositiveBudget
 
 
