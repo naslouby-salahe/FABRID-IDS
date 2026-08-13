@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.enums import AllocationPolicy, BudgetFeasibility
 from fabrid.domain.identifiers import ClientId
 from fabrid.domain.population import ClientPopulation
 from fabrid.domain.values import (
@@ -151,12 +151,14 @@ class Allocation:
         )
         return FalsePositiveBudget(cost)
 
-    def is_budget_feasible(
+    def budget_feasibility(
         self,
         weights: AllocationWeights,
         budget: FalsePositiveBudget,
-    ) -> bool:
-        return (
+    ) -> BudgetFeasibility:
+        if (
             self.total_weighted_cost(weights).value
             <= budget.value + _FEASIBILITY_TOLERANCE
-        )
+        ):
+            return BudgetFeasibility.FEASIBLE
+        return BudgetFeasibility.INFEASIBLE
