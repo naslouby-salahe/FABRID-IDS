@@ -38,6 +38,8 @@ class AllocationStabilityAnalysis:
     clients: tuple[ClientAllocationStability, ...]
 
     def __post_init__(self) -> None:
+        if not self.clients:
+            raise ValueError("allocation stability requires at least one client")
         client_ids = tuple(client.client_id for client in self.clients)
         if len(set(client_ids)) != len(client_ids):
             raise ValueError("allocation stability contains duplicate clients")
@@ -63,20 +65,24 @@ def summarize_client_stability(
     )
 
 
-def run_allocation_sensitivity(
-    resample_and_allocate: Callable[[AnalysisSeed], Allocation],
+def allocation_sensitivity_seeds(
     replicates: RowCount,
     seed: AnalysisSeed,
-) -> AllocationStabilityAnalysis:
+) -> tuple[AnalysisSeed, ...]:
     if replicates.value < 1:
         raise ValueError("allocation sensitivity requires at least one replicate")
-
     rng = np.random.default_rng(seed.value)
-    replicate_seeds = tuple(
+    return tuple(
         AnalysisSeed(int(value))
         for value in rng.integers(0, _MAX_RANDOM_SEED, size=replicates.value)
     )
-    allocations = tuple(resample_and_allocate(value) for value in replicate_seeds)
+
+
+def summarize_allocations(
+    allocations: tuple[Allocation, ...],
+) -> AllocationStabilityAnalysis:
+    if not allocations:
+        raise ValueError("allocation sensitivity requires completed replicates")
     first_client_ids = tuple(
         decision.client_id for decision in allocations[0].decisions
     )
@@ -84,16 +90,29 @@ def run_allocation_sensitivity(
         if tuple(decision.client_id for decision in allocation.decisions) != first_client_ids:
             raise ValueError("all sensitivity replicates must allocate the same ordered clients")
 
-    clients = tuple(
-        ClientAllocationStability(
-            client_id=client_id,
-            summary=summarize_client_stability(
-                tuple(
-                    allocation.decision(client_id).target_rate
-                    for allocation in allocations
-                )
-            ),
+    return AllocationStabilityAnalysis(
+        tuple(
+            ClientAllocationStability(
+                client_id=client_id,
+                summary=summarize_client_stability(
+                    tuple(
+                        allocation.decision(client_id).target_rate
+                        for allocation in allocations
+                    )
+                ),
+            )
+            for client_id in first_client_ids
         )
-        for client_id in first_client_ids
     )
-    return AllocationStabilityAnalysis(clients)
+
+
+def run_allocation_sensitivity(
+    resample_and_allocate: Callable[[AnalysisSeed], Allocation],
+    replicates: RowCount,
+    seed: AnalysisSeed,
+) -> AllocationStabilityAnalysis:
+    allocations = tuple(
+        resample_and_allocate(replicate_seed)
+        for replicate_seed in allocation_sensitivity_seeds(replicates, seed)
+    )
+    return summarize_allocations(allocations)
