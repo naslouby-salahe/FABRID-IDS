@@ -63,6 +63,17 @@ class SourceFileId:
 
 
 @dataclass(frozen=True, slots=True)
+class FailureReason:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_text("failure reason", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
 class BudgetId:
     value: str
 
