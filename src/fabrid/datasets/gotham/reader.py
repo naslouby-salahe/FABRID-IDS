@@ -11,6 +11,7 @@ from fabrid.datasets.cic_iot_diad.reader import (
     select_numeric_feature_columns,
 )
 from fabrid.datasets.common import AttackFeatureBlock, DeviceDataset, FeatureMatrix
+from fabrid.domain.enums import FeatureColumnStatus
 from fabrid.domain.identifiers import (
     AttackSubtypeId,
     ClientId,
@@ -59,12 +60,13 @@ def read_processed_csv(
 
     selection_exclusions = FeatureColumns(
         tuple(
-            dict.fromkeys(
-                (
+            sorted(
+                {
                     *excluded_features.values,
                     label_column,
                     timestamp_column,
-                )
+                },
+                key=lambda column: column.value,
             )
         )
     )
@@ -75,7 +77,11 @@ def read_processed_csv(
         device_column,
     )
     kept_columns = FeatureColumns(
-        tuple(report.column for report in reports if report.kept)
+        tuple(
+            report.column
+            for report in reports
+            if report.status is FeatureColumnStatus.KEPT
+        )
     )
     if not kept_columns.values:
         raise ValueError(f"no feature columns survived filtering for {path}")
