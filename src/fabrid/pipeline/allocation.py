@@ -5,17 +5,11 @@ from dataclasses import dataclass
 from fabrid.allocation.baselines.equal_alert import allocate_equal_alert
 from fabrid.allocation.contracts import (
     Allocation,
-    AllocationDecision,
     AllocationWeights,
     ClientBudgetWeight,
     FederationWeights,
 )
-from fabrid.allocation.frontier import (
-    FallbackClientFrontier,
-    FederationFrontier,
-    FederationFrontierInputs,
-    build_federation_frontier,
-)
+from fabrid.allocation.frontier import FederationFrontierInputs
 from fabrid.allocation.frontier_inputs import (
     FrontierScoreArtifacts,
     build_client_frontier_inputs,
@@ -24,6 +18,11 @@ from fabrid.allocation.policies.equal_fpr import allocate_equal_fpr
 from fabrid.allocation.policies.fabrid_macro import allocate_fabrid_macro
 from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.policies.greedy import allocate_greedy
+from fabrid.allocation.problem import (
+    AllocationProblem,
+    build_allocation_problem,
+    merge_full_allocation,
+)
 from fabrid.allocation.solver import (
     SolverEvidence,
     SolverInvalidError,
@@ -50,7 +49,6 @@ from fabrid.domain.values import (
     DetectorSeed,
     FalsePositiveBudget,
     Probability,
-    TargetFalsePositiveRate,
 )
 from fabrid.evaluation.evaluator import (
     ClientEvaluationArtifacts,
@@ -69,7 +67,6 @@ from fabrid.pipeline.context import PipelinePaths
 from fabrid.pipeline.score_loading import load_client_scores
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
 
-_BUDGET_TOLERANCE = 1.0e-12
 _WEIGHT_EQUALITY_TOLERANCE = 1.0e-12
 
 
@@ -106,26 +103,6 @@ class LoadedSeedScores:
         return FederationEvaluationArtifacts(
             tuple(client.evaluation for client in self.clients)
         )
-
-
-@dataclass(frozen=True, slots=True)
-class FallbackDecisions:
-    decisions: tuple[AllocationDecision, ...]
-
-    def target_for(self, client_id: ClientId) -> TargetFalsePositiveRate | None:
-        for decision in self.decisions:
-            if decision.client_id == client_id:
-                return decision.target_rate
-        return None
-
-
-@dataclass(frozen=True, slots=True)
-class AllocationProblem:
-    inputs: FederationFrontierInputs
-    frontier: FederationFrontier
-    weights: FederationWeights
-    fallback: FallbackDecisions
-    remaining_budget: FalsePositiveBudget
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,78 +182,22 @@ def build_frontier_inputs(
     )
 
 
-def _fallback_decisions(
-    frontier: FederationFrontier,
-    budget: FalsePositiveBudget,
-    maximum_target_rate: TargetFalsePositiveRate,
-) -> FallbackDecisions:
-    target_rate = TargetFalsePositiveRate(
-        min(budget.value, maximum_target_rate.value)
-    )
-    return FallbackDecisions(
-        tuple(
-            AllocationDecision(client_id=client.client_id, target_rate=target_rate)
-            for client in frontier.clients
-            if isinstance(client, FallbackClientFrontier)
-        )
-    )
-
-
-def _remaining_budget(
-    budget: FalsePositiveBudget,
-    fallback: FallbackDecisions,
-    full_weights: FederationWeights,
-) -> FalsePositiveBudget:
-    reserved = sum(
-        full_weights.for_client(decision.client_id).value * decision.target_rate.value
-        for decision in fallback.decisions
-    )
-    if reserved > budget.value + _BUDGET_TOLERANCE:
-        raise ValueError("fallback reservation exceeds federation budget")
-    return FalsePositiveBudget(max(0.0, budget.value - reserved))
-
-
-def build_allocation_problem(
+def allocation_problem_for_scores(
     scores: LoadedSeedScores,
     protocol: FabridProtocol,
     budget: FalsePositiveBudget,
     weights: FederationWeights | None = None,
 ) -> AllocationProblem:
-    resolved_weights = equal_client_weights(scores.population) if weights is None else weights
-    score_clients = set(scores.population.clients)
-    weight_clients = {client.client_id for client in resolved_weights.clients}
-    if score_clients != weight_clients:
-        raise ValueError("allocation weights and frozen score population must share clients")
-    inputs = build_frontier_inputs(scores, protocol)
-    frontier = build_federation_frontier(inputs, protocol.utility_eligibility)
-    fallback = _fallback_decisions(frontier, budget, protocol.alpha_grid.maximum)
-    return AllocationProblem(
-        inputs=inputs,
-        frontier=frontier,
-        weights=resolved_weights,
-        fallback=fallback,
-        remaining_budget=_remaining_budget(budget, fallback, resolved_weights),
+    resolved_weights = (
+        equal_client_weights(scores.population) if weights is None else weights
     )
-
-
-def merge_full_allocation(
-    policy: AllocationPolicy,
-    population: ClientPopulation,
-    fallback: FallbackDecisions,
-    eligible: Allocation | None,
-) -> Allocation:
-    decisions: list[AllocationDecision] = []
-    for client_id in population.clients:
-        fallback_target = fallback.target_for(client_id)
-        if fallback_target is not None:
-            decisions.append(AllocationDecision(client_id, fallback_target))
-        elif eligible is not None:
-            decisions.append(eligible.decision(client_id))
-        else:
-            raise ValueError(
-                f"client {client_id.value} has neither fallback nor eligible allocation"
-            )
-    return Allocation(policy=policy, decisions=tuple(decisions))
+    return build_allocation_problem(
+        inputs=build_frontier_inputs(scores, protocol),
+        weights=resolved_weights,
+        budget=budget,
+        eligibility=protocol.utility_eligibility,
+        maximum_target_rate=protocol.alpha_grid.maximum,
+    )
 
 
 def evaluate_policy(
@@ -440,7 +361,7 @@ def run_seed_budget(
         budget=budget_level.value,
         weight_mode=weight_mode,
     )
-    problem = build_allocation_problem(
+    problem = allocation_problem_for_scores(
         scores=scores,
         protocol=protocol,
         budget=budget_level.value,
