@@ -41,6 +41,17 @@ class AttackSubtypeId:
 
 
 @dataclass(frozen=True, slots=True)
+class ColumnName:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_text("column name", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
 class SampleId:
     value: str
 
