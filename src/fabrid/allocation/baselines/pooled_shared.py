@@ -68,20 +68,37 @@ def _client_fpr(client: ClientPooledValidation, threshold: Threshold) -> FalsePo
     return FalsePositiveRate(float(np.mean(scores > threshold.value)))
 
 
+def _attack_subtypes(client: ClientPooledValidation) -> tuple[AttackSubtypeId, ...]:
+    subtypes: set[AttackSubtypeId] = set()
+    for record in client.attack_validation.records:
+        if record.attack_subtype is None:
+            raise ValueError("attack validation record is missing attack subtype")
+        subtypes.add(record.attack_subtype)
+    return tuple(sorted(subtypes, key=lambda subtype: subtype.value))
+
+
 def _client_macro_recall(
     client: ClientPooledValidation,
     threshold: Threshold,
 ) -> MacroRecall:
-    grouped: dict[AttackSubtypeId, list[float]] = {}
-    for record in client.attack_validation.records:
-        if record.attack_subtype is None:
-            raise ValueError("attack validation record is missing attack subtype")
-        grouped.setdefault(record.attack_subtype, []).append(record.score.value)
-    if not grouped:
+    subtypes = _attack_subtypes(client)
+    if not subtypes:
         raise ValueError("client has no attack-validation subtypes")
     recalls = tuple(
-        float(np.mean(np.asarray(scores, dtype=np.float64) > threshold.value))
-        for scores in grouped.values()
+        float(
+            np.mean(
+                np.asarray(
+                    tuple(
+                        record.score.value
+                        for record in client.attack_validation.records
+                        if record.attack_subtype == subtype
+                    ),
+                    dtype=np.float64,
+                )
+                > threshold.value
+            )
+        )
+        for subtype in subtypes
     )
     return MacroRecall(sum(recalls) / len(recalls))
 
