@@ -3,6 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from fabrid.datasets.common import DeviceDataset
+from fabrid.datasets.manifests import (
+    ClientSplitManifest,
+    DatasetSplitManifest,
+    FeatureManifest,
+    build_feature_manifest_from_csv_header,
+)
 from fabrid.datasets.nbaiot.reader import read_device_directory
 from fabrid.datasets.nbaiot.specification import NBAIOT_PRIMARY_POPULATION
 from fabrid.datasets.splitting import (
@@ -30,7 +36,6 @@ from fabrid.domain.enums import DatasetId
 from fabrid.domain.identifiers import CampaignId, ClientId
 from fabrid.domain.values import DetectorSeed
 from fabrid.pipeline.context import PipelinePaths
-from fabrid.protocol.detector import DETECTOR_HYPERPARAMETERS
 from fabrid.protocol.models import FabridProtocol
 
 
@@ -44,6 +49,8 @@ class PreparedClient:
 @dataclass(frozen=True, slots=True)
 class PreparedFederation:
     clients: tuple[PreparedClient, ...]
+    feature_manifest: FeatureManifest
+    split_manifest: DatasetSplitManifest
 
     def __post_init__(self) -> None:
         if not self.clients:
@@ -51,6 +58,10 @@ class PreparedFederation:
         client_ids = tuple(client.dataset.client_id for client in self.clients)
         if len(set(client_ids)) != len(client_ids):
             raise ValueError("prepared federation contains duplicate clients")
+        if self.split_manifest.dataset_id is not DatasetId.NBAIOT:
+            raise ValueError("prepared N-BaIoT federation requires an N-BaIoT split manifest")
+        if {item.client_id for item in self.split_manifest.clients} != set(client_ids):
+            raise ValueError("prepared clients and split manifest must cover the same clients")
 
     def for_client(self, client_id: ClientId) -> PreparedClient:
         for client in self.clients:
@@ -85,8 +96,16 @@ def prepare_nbaiot_federation(
 ) -> PreparedFederation:
     dataset_root = paths.raw_dataset_root(DatasetId.NBAIOT)
     clients: list[PreparedClient] = []
+    feature_manifests: list[FeatureManifest] = []
+
     for client_id in NBAIOT_PRIMARY_POPULATION.clients:
-        dataset = read_device_directory(client_id, dataset_root / client_id.value)
+        device_root = dataset_root / client_id.value
+        dataset = read_device_directory(client_id, device_root)
+        feature_manifests.append(
+            build_feature_manifest_from_csv_header(
+                device_root / dataset.benign_source_file.value
+            )
+        )
         benign_boundaries = compute_benign_split_boundaries(
             dataset.benign.row_count,
             protocol.benign_splits,
@@ -115,13 +134,33 @@ def prepare_nbaiot_federation(
                 scaler=scaler,
             )
         )
-    return PreparedFederation(tuple(clients))
+
+    first_manifest = feature_manifests[0]
+    if any(manifest != first_manifest for manifest in feature_manifests[1:]):
+        raise ValueError("all primary N-BaIoT clients must share one feature manifest")
+
+    prepared_clients = tuple(clients)
+    return PreparedFederation(
+        clients=prepared_clients,
+        feature_manifest=first_manifest,
+        split_manifest=DatasetSplitManifest(
+            dataset_id=DatasetId.NBAIOT,
+            clients=tuple(
+                ClientSplitManifest(
+                    client_id=client.dataset.client_id,
+                    split_plan=client.split_plan,
+                )
+                for client in prepared_clients
+            ),
+        ),
+    )
 
 
 def train_detector_seed(
     campaign_id: CampaignId,
     detector_seed: DetectorSeed,
     prepared: PreparedFederation,
+    protocol: FabridProtocol,
     paths: PipelinePaths,
 ) -> TrainedDetectorSeed:
     training_data = FederatedTrainingData(
@@ -135,7 +174,7 @@ def train_detector_seed(
             for client in prepared.clients
         )
     )
-    hyperparameters = DETECTOR_HYPERPARAMETERS
+    hyperparameters = protocol.detector.hyperparameters
     model = train_federated_autoencoder(
         training_data,
         FederatedTrainingConfig(
