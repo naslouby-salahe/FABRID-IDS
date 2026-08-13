@@ -8,18 +8,18 @@ from fabrid.domain.enums import (
     AllocationPolicy,
     BudgetId,
     EvidenceAvailability,
+    ExperimentId,
+    ExperimentVariantId,
     MetricId,
     PrimaryContrastId,
 )
 from fabrid.domain.identifiers import FailureReason
-from fabrid.domain.values import AnalysisSeed, FalsePositiveBudget, Probability, RowCount
+from fabrid.domain.values import AnalysisSeed, FalsePositiveBudget, RowCount
 from fabrid.evaluation.results import (
     CompletedPolicyEvaluation,
     SeedBudgetEvaluation,
 )
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
-
-_BOOTSTRAP_CONFIDENCE = Probability(0.95)
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +72,19 @@ class PrimaryContrastFamily:
 class PrimaryInference:
     macro_recall: PrimaryContrastFamily
     worst_client_recall: PrimaryContrastFamily
+
+
+def _validate_primary_evaluations(
+    evaluations: tuple[SeedBudgetEvaluation, ...],
+) -> None:
+    if not evaluations:
+        raise ValueError("primary inference requires matched-budget evaluations")
+    for evaluation in evaluations:
+        experiment = evaluation.experiment
+        if experiment.experiment_id is not ExperimentId.MATCHED_BUDGET:
+            raise ValueError("primary inference may use only MATCHED_BUDGET evaluations")
+        if experiment.variant_id is not ExperimentVariantId.PRIMARY:
+            raise ValueError("primary inference may use only the PRIMARY experiment variant")
 
 
 def _budget_results(
@@ -133,7 +146,7 @@ def _budget_contrast(
             metric=metric,
             bootstrap_resamples=protocol.statistics.bootstrap_resamples,
             bootstrap_seed=analysis_seed,
-            bootstrap_confidence=_BOOTSTRAP_CONFIDENCE,
+            bootstrap_confidence=protocol.statistics.bootstrap_confidence,
         ),
     )
 
@@ -197,6 +210,7 @@ def analyze_primary_inference(
     evaluations: tuple[SeedBudgetEvaluation, ...],
     protocol: FabridProtocol,
 ) -> PrimaryInference:
+    _validate_primary_evaluations(evaluations)
     return PrimaryInference(
         macro_recall=_family(
             evaluations=evaluations,
