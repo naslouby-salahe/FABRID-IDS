@@ -9,15 +9,15 @@ from fabrid.artifacts.dataset_store import (
 from fabrid.artifacts.json_store import StoredJsonArtifact
 from fabrid.artifacts.protocol_store import persist_protocol_snapshot
 from fabrid.datasets.nbaiot.specification import NBAIOT_PRIMARY_POPULATION
-from fabrid.domain.enums import (
-    DatasetId,
-    ExperimentId,
-    ExperimentVariantId,
-)
+from fabrid.domain.enums import DatasetId, ExperimentId, ExperimentVariantId
 from fabrid.domain.identifiers import CampaignId
 from fabrid.evaluation.results import SeedBudgetEvaluation
 from fabrid.pipeline.allocation import load_seed_scores, run_seed_budget
 from fabrid.pipeline.context import PipelinePaths
+from fabrid.pipeline.generalization import (
+    run_attack_subtype_generalization_seed,
+    run_botnet_family_generalization_seed,
+)
 from fabrid.pipeline.materialization import (
     MaterializedSeedBudget,
     materialize_seed_budget,
@@ -30,19 +30,26 @@ from fabrid.protocol.specification import PROTOCOL
 
 
 @dataclass(frozen=True, slots=True)
-class MatchedBudgetCampaign:
-    campaign_id: CampaignId
-    protocol_snapshot: StoredJsonArtifact
-    dataset_manifests: StoredDatasetManifests
+class ExperimentExecution:
     evaluations: tuple[SeedBudgetEvaluation, ...]
     artifacts: tuple[MaterializedSeedBudget, ...]
 
 
-def run_matched_budget_campaign(
+@dataclass(frozen=True, slots=True)
+class FabridCampaign:
+    campaign_id: CampaignId
+    protocol_snapshot: StoredJsonArtifact
+    dataset_manifests: StoredDatasetManifests
+    matched_budget: ExperimentExecution
+    attack_subtype_disjoint: ExperimentExecution
+    botnet_family_disjoint: ExperimentExecution
+
+
+def run_fabrid_campaign(
     campaign_id: CampaignId,
     paths: PipelinePaths,
     protocol: FabridProtocol = PROTOCOL,
-) -> MatchedBudgetCampaign:
+) -> FabridCampaign:
     git_commit = resolve_git_commit()
     layout = paths.artifacts
     protocol_snapshot = persist_protocol_snapshot(campaign_id, protocol, layout)
@@ -55,8 +62,13 @@ def run_matched_budget_campaign(
         layout=layout,
     )
 
-    evaluations: list[SeedBudgetEvaluation] = []
-    artifacts: list[MaterializedSeedBudget] = []
+    primary_evaluations: list[SeedBudgetEvaluation] = []
+    primary_artifacts: list[MaterializedSeedBudget] = []
+    subtype_evaluations: list[SeedBudgetEvaluation] = []
+    subtype_artifacts: list[MaterializedSeedBudget] = []
+    family_evaluations: list[SeedBudgetEvaluation] = []
+    family_artifacts: list[MaterializedSeedBudget] = []
+
     for detector_seed in protocol.detector.seeds:
         trained = train_detector_seed(
             campaign_id=campaign_id,
@@ -91,13 +103,45 @@ def run_matched_budget_campaign(
                 protocol=protocol,
                 provenance=provenance,
             )
-            evaluations.append(run.evaluation)
-            artifacts.append(materialize_seed_budget(run, layout))
+            primary_evaluations.append(run.evaluation)
+            primary_artifacts.append(materialize_seed_budget(run, layout))
 
-    return MatchedBudgetCampaign(
+        subtype_execution = run_attack_subtype_generalization_seed(
+            campaign_id=campaign_id,
+            detector_seed=detector_seed,
+            scores=loaded_scores,
+            provenance=provenance,
+            protocol=protocol,
+            layout=layout,
+        )
+        subtype_evaluations.extend(subtype_execution.evaluations)
+        subtype_artifacts.extend(subtype_execution.artifacts)
+
+        family_execution = run_botnet_family_generalization_seed(
+            campaign_id=campaign_id,
+            detector_seed=detector_seed,
+            scores=loaded_scores,
+            provenance=provenance,
+            protocol=protocol,
+            layout=layout,
+        )
+        family_evaluations.extend(family_execution.evaluations)
+        family_artifacts.extend(family_execution.artifacts)
+
+    return FabridCampaign(
         campaign_id=campaign_id,
         protocol_snapshot=protocol_snapshot,
         dataset_manifests=dataset_manifests,
-        evaluations=tuple(evaluations),
-        artifacts=tuple(artifacts),
+        matched_budget=ExperimentExecution(
+            evaluations=tuple(primary_evaluations),
+            artifacts=tuple(primary_artifacts),
+        ),
+        attack_subtype_disjoint=ExperimentExecution(
+            evaluations=tuple(subtype_evaluations),
+            artifacts=tuple(subtype_artifacts),
+        ),
+        botnet_family_disjoint=ExperimentExecution(
+            evaluations=tuple(family_evaluations),
+            artifacts=tuple(family_artifacts),
+        ),
     )
