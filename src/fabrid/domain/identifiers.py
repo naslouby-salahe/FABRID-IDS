@@ -52,6 +52,17 @@ class ColumnName:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceLabel:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_text("source label", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
 class SampleId:
     value: str
 
