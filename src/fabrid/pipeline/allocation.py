@@ -37,6 +37,7 @@ from fabrid.domain.enums import (
     AllocationPolicy,
     DatasetId,
     ExperimentId,
+    ExperimentVariantId,
     SolverStatus,
     WeightMode,
 )
@@ -65,6 +66,8 @@ from fabrid.evaluation.results import (
 from fabrid.pipeline.context import PipelinePaths
 from fabrid.pipeline.score_loading import load_client_scores
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
+
+_BUDGET_TOLERANCE = 1.0e-12
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +112,8 @@ class FallbackDecisions:
 
 @dataclass(frozen=True, slots=True)
 class CompletedPolicyRun:
+    allocation: Allocation
+    solver: SolverEvidence
     result: PolicyEvaluationResult
 
 
@@ -124,6 +129,7 @@ PolicyRun = CompletedPolicyRun | ExcludedPolicyRun
 class SeedBudgetRun:
     evaluation: SeedBudgetEvaluation
     records: tuple[ClientResultRecord, ...]
+    policy_runs: tuple[PolicyRun, ...]
 
 
 def equal_client_weights(population: ClientPopulation) -> FederationWeights:
@@ -210,7 +216,7 @@ def _remaining_budget(
         full_weights.for_client(decision.client_id).value * decision.target_rate.value
         for decision in fallback.decisions
     )
-    if reserved > budget.value + 1e-12:
+    if reserved > budget.value + _BUDGET_TOLERANCE:
         raise ValueError("fallback reservation exceeds federation budget")
     return FalsePositiveBudget(max(0.0, budget.value - reserved))
 
@@ -251,16 +257,19 @@ def _evaluate_policy(
         raise ValueError(
             f"allocation {allocation.policy.value} violates the federation budget"
         )
+    result = evaluate_allocation(
+        coordinate=AllocationCoordinate(coordinate, allocation.policy),
+        allocation=allocation,
+        artifacts=scores.evaluation_artifacts,
+        weights=weights,
+        solver=solver,
+        provenance=provenance,
+        fallback_rate=fallback_rate,
+    )
     return CompletedPolicyRun(
-        evaluate_allocation(
-            coordinate=AllocationCoordinate(coordinate, allocation.policy),
-            allocation=allocation,
-            artifacts=scores.evaluation_artifacts,
-            weights=weights,
-            solver=solver,
-            provenance=provenance,
-            fallback_rate=fallback_rate,
-        )
+        allocation=allocation,
+        solver=solver,
+        result=result,
     )
 
 
@@ -385,6 +394,7 @@ def run_seed_budget(
     coordinate = ExperimentCoordinate(
         campaign_id=campaign_id,
         experiment_id=ExperimentId.MATCHED_BUDGET,
+        variant_id=ExperimentVariantId.PRIMARY,
         dataset_id=DatasetId.NBAIOT,
         detector_seed=detector_seed,
         budget_id=budget_level.budget_id,
@@ -467,4 +477,5 @@ def run_seed_budget(
             policies=tuple(policy_results),
         ),
         records=tuple(records),
+        policy_runs=runs,
     )
