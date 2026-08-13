@@ -44,6 +44,28 @@ class ClientUtilityCurve:
 
 
 @dataclass(frozen=True, slots=True)
+class ClientUtilityCurves:
+    clients: tuple[ClientUtilityCurve, ...]
+
+    def __post_init__(self) -> None:
+        if not self.clients:
+            raise ValueError("client utility curves must not be empty")
+        client_ids = tuple(curve.client_id for curve in self.clients)
+        if len(set(client_ids)) != len(client_ids):
+            raise ValueError("client utility curves contain duplicate clients")
+        shared_rates = tuple(point.target_rate for point in self.clients[0].points)
+        for curve in self.clients[1:]:
+            if tuple(point.target_rate for point in curve.points) != shared_rates:
+                raise ValueError("all clients must share the same target-rate grid")
+
+    def for_client(self, client_id: ClientId) -> ClientUtilityCurve:
+        for curve in self.clients:
+            if curve.client_id == client_id:
+                return curve
+        raise KeyError(client_id.value)
+
+
+@dataclass(frozen=True, slots=True)
 class ClientBudgetWeight:
     client_id: ClientId
     weight: ClientWeight
