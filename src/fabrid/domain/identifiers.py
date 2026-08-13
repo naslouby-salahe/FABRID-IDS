@@ -96,17 +96,6 @@ class FailureReason:
 
 
 @dataclass(frozen=True, slots=True)
-class BudgetId:
-    value: str
-
-    def __post_init__(self) -> None:
-        _require_identifier("budget id", self.value)
-
-    def __str__(self) -> str:
-        return self.value
-
-
-@dataclass(frozen=True, slots=True)
 class CampaignId:
     value: str
 
