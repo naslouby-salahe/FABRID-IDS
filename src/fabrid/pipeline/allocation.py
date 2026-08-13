@@ -117,6 +117,15 @@ class FallbackDecisions:
 
 
 @dataclass(frozen=True, slots=True)
+class AllocationProblem:
+    inputs: FederationFrontierInputs
+    frontier: FederationFrontier
+    weights: FederationWeights
+    fallback: FallbackDecisions
+    remaining_budget: FalsePositiveBudget
+
+
+@dataclass(frozen=True, slots=True)
 class CompletedPolicyRun:
     allocation: Allocation
     solver: SolverEvidence
@@ -181,18 +190,15 @@ def load_seed_scores(
     return LoadedSeedScores(tuple(clients))
 
 
-def _build_frontier(
+def build_frontier_inputs(
     scores: LoadedSeedScores,
     protocol: FabridProtocol,
-) -> FederationFrontier:
-    return build_federation_frontier(
-        FederationFrontierInputs(
-            tuple(
-                build_client_frontier_inputs(client.frontier, protocol.alpha_grid)
-                for client in scores.clients
-            )
-        ),
-        protocol.utility_eligibility,
+) -> FederationFrontierInputs:
+    return FederationFrontierInputs(
+        tuple(
+            build_client_frontier_inputs(client.frontier, protocol.alpha_grid)
+            for client in scores.clients
+        )
     )
 
 
@@ -227,7 +233,30 @@ def _remaining_budget(
     return FalsePositiveBudget(max(0.0, budget.value - reserved))
 
 
-def _merge_full_allocation(
+def build_allocation_problem(
+    scores: LoadedSeedScores,
+    protocol: FabridProtocol,
+    budget: FalsePositiveBudget,
+    weights: FederationWeights | None = None,
+) -> AllocationProblem:
+    resolved_weights = equal_client_weights(scores.population) if weights is None else weights
+    score_clients = set(scores.population.clients)
+    weight_clients = {client.client_id for client in resolved_weights.clients}
+    if score_clients != weight_clients:
+        raise ValueError("allocation weights and frozen score population must share clients")
+    inputs = build_frontier_inputs(scores, protocol)
+    frontier = build_federation_frontier(inputs, protocol.utility_eligibility)
+    fallback = _fallback_decisions(frontier, budget, protocol.alpha_grid.maximum)
+    return AllocationProblem(
+        inputs=inputs,
+        frontier=frontier,
+        weights=resolved_weights,
+        fallback=fallback,
+        remaining_budget=_remaining_budget(budget, fallback, resolved_weights),
+    )
+
+
+def merge_full_allocation(
     policy: AllocationPolicy,
     population: ClientPopulation,
     fallback: FallbackDecisions,
@@ -247,7 +276,7 @@ def _merge_full_allocation(
     return Allocation(policy=policy, decisions=tuple(decisions))
 
 
-def _evaluate_policy(
+def evaluate_policy(
     coordinate: ExperimentCoordinate,
     allocation: Allocation,
     scores: LoadedSeedScores,
@@ -282,37 +311,34 @@ def _evaluate_policy(
 def _run_greedy(
     coordinate: ExperimentCoordinate,
     scores: LoadedSeedScores,
-    frontier: FederationFrontier,
-    weights: FederationWeights,
-    fallback: FallbackDecisions,
-    remaining_budget: FalsePositiveBudget,
+    problem: AllocationProblem,
     protocol: FabridProtocol,
     provenance: EvaluationProvenance,
 ) -> CompletedPolicyRun:
-    eligible_population = frontier.eligible_population()
-    eligible_curves = frontier.eligible_curves()
+    eligible_population = problem.frontier.eligible_population()
+    eligible_curves = problem.frontier.eligible_curves()
     eligible_allocation = None
     if eligible_population is not None and eligible_curves is not None:
         eligible_allocation = allocate_greedy(
             eligible_curves,
-            weights.subset(eligible_population),
-            remaining_budget,
+            problem.weights.subset(eligible_population),
+            problem.remaining_budget,
             protocol.alpha_grid.maximum,
         )
-    full_allocation = _merge_full_allocation(
+    full_allocation = merge_full_allocation(
         AllocationPolicy.GREEDY,
         scores.population,
-        fallback,
+        problem.fallback,
         eligible_allocation,
     )
-    return _evaluate_policy(
+    return evaluate_policy(
         coordinate,
         full_allocation,
         scores,
-        weights,
+        problem.weights,
         not_applicable_solver_evidence(),
         provenance,
-        frontier.fallback_rate,
+        problem.frontier.fallback_rate,
     )
 
 
@@ -320,46 +346,43 @@ def _run_optimized(
     coordinate: ExperimentCoordinate,
     policy: AllocationPolicy,
     scores: LoadedSeedScores,
-    frontier: FederationFrontier,
-    weights: FederationWeights,
-    fallback: FallbackDecisions,
-    remaining_budget: FalsePositiveBudget,
+    problem: AllocationProblem,
     protocol: FabridProtocol,
     provenance: EvaluationProvenance,
 ) -> PolicyRun:
-    eligible_population = frontier.eligible_population()
-    eligible_curves = frontier.eligible_curves()
+    eligible_population = problem.frontier.eligible_population()
+    eligible_curves = problem.frontier.eligible_curves()
     if eligible_population is None or eligible_curves is None:
-        full_fallback = _merge_full_allocation(
+        full_fallback = merge_full_allocation(
             policy,
             scores.population,
-            fallback,
+            problem.fallback,
             eligible=None,
         )
-        return _evaluate_policy(
+        return evaluate_policy(
             coordinate,
             full_fallback,
             scores,
-            weights,
+            problem.weights,
             not_applicable_solver_evidence(),
             provenance,
-            frontier.fallback_rate,
+            problem.frontier.fallback_rate,
         )
 
-    eligible_weights = weights.subset(eligible_population)
+    eligible_weights = problem.weights.subset(eligible_population)
     try:
         optimized = (
             allocate_fabrid_macro(
                 eligible_curves,
                 eligible_weights,
-                remaining_budget,
+                problem.remaining_budget,
                 protocol.solver,
             )
             if policy is AllocationPolicy.FABRID_MACRO
             else allocate_fabrid_minimax(
                 eligible_curves,
                 eligible_weights,
-                remaining_budget,
+                problem.remaining_budget,
                 protocol.solver,
             )
         )
@@ -372,20 +395,20 @@ def _run_optimized(
             )
         )
 
-    full_allocation = _merge_full_allocation(
+    full_allocation = merge_full_allocation(
         policy,
         scores.population,
-        fallback,
+        problem.fallback,
         optimized.allocation,
     )
-    return _evaluate_policy(
+    return evaluate_policy(
         coordinate,
         full_allocation,
         scores,
-        weights,
+        problem.weights,
         optimized.solver,
         provenance,
-        frontier.fallback_rate,
+        problem.frontier.fallback_rate,
     )
 
 
@@ -398,6 +421,8 @@ def run_seed_budget(
     scores: LoadedSeedScores,
     protocol: FabridProtocol,
     provenance: EvaluationProvenance,
+    weights: FederationWeights | None = None,
+    weight_mode: WeightMode = WeightMode.EQUAL_CLIENT,
 ) -> SeedBudgetRun:
     coordinate = ExperimentCoordinate(
         campaign_id=campaign_id,
@@ -407,18 +432,16 @@ def run_seed_budget(
         detector_seed=detector_seed,
         budget_id=budget_level.budget_id,
         budget=budget_level.value,
-        weight_mode=WeightMode.EQUAL_CLIENT,
+        weight_mode=weight_mode,
     )
-    weights = equal_client_weights(scores.population)
-    frontier = _build_frontier(scores, protocol)
-    fallback = _fallback_decisions(
-        frontier,
-        budget_level.value,
-        protocol.alpha_grid.maximum,
+    problem = build_allocation_problem(
+        scores=scores,
+        protocol=protocol,
+        budget=budget_level.value,
+        weights=weights,
     )
-    remaining_budget = _remaining_budget(budget_level.value, fallback, weights)
 
-    equal_fpr = _evaluate_policy(
+    equal_fpr = evaluate_policy(
         coordinate,
         allocate_equal_fpr(
             scores.population,
@@ -426,18 +449,15 @@ def run_seed_budget(
             protocol.alpha_grid.maximum,
         ),
         scores,
-        weights,
+        problem.weights,
         not_applicable_solver_evidence(),
         provenance,
-        frontier.fallback_rate,
+        problem.frontier.fallback_rate,
     )
     greedy = _run_greedy(
         coordinate,
         scores,
-        frontier,
-        weights,
-        fallback,
-        remaining_budget,
+        problem,
         protocol,
         provenance,
     )
@@ -445,10 +465,7 @@ def run_seed_budget(
         coordinate,
         AllocationPolicy.FABRID_MACRO,
         scores,
-        frontier,
-        weights,
-        fallback,
-        remaining_budget,
+        problem,
         protocol,
         provenance,
     )
@@ -456,10 +473,7 @@ def run_seed_budget(
         coordinate,
         AllocationPolicy.FABRID_MINIMAX,
         scores,
-        frontier,
-        weights,
-        fallback,
-        remaining_budget,
+        problem,
         protocol,
         provenance,
     )
