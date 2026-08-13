@@ -133,6 +133,11 @@ class PercentagePoints:
 
 
 @dataclass(frozen=True, slots=True)
+class MetricDifference:
+    value: float
+
+
+@dataclass(frozen=True, slots=True)
 class FalseAlertCount:
     value: int
 
