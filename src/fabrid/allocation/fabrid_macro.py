@@ -1,123 +1,129 @@
-"""FABRID_MACRO: choose one candidate rate per eligible client maximizing mean utility.
-
-One-hot binary selection per client, subject to a shared weighted budget.
-Deterministic tie-breaking via a sequential-solve procedure: maximize mean
-utility, then minimize total budget consumption among optima, then
-lexicographically minimize the selected rate vector ordered by client ID.
-"""
-
 from __future__ import annotations
-
-from collections.abc import Mapping
 
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint
 
+from fabrid.allocation.contracts import (
+    Allocation,
+    AllocationDecision,
+    ClientUtilityCurves,
+    FederationWeights,
+)
 from fabrid.allocation.formulation import (
     budget_constraint,
     lexicographic_weights,
     one_hot_constraint,
 )
-from fabrid.config.protocol import SolverSettings
-from fabrid.evaluation.record_level import ClientId
-from fabrid.optimization.milp import solve_milp
-from fabrid.schemas.allocation import (
-    Allocation,
-    AllocationDecision,
-    AllocationPolicy,
-    ClientUtilityCurve,
-)
+from fabrid.allocation.solver import solve_milp
+from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.values import FalsePositiveBudget, RowCount
+from fabrid.protocol.models import SolverSettings
 
 _UTILITY_TOLERANCE_FLOOR = 1e-9
 _BUDGET_TOLERANCE_FLOOR = 1e-12
 
 
-def _shared_client_grid(
-    client_ids: list[ClientId], utility_curves: Mapping[ClientId, ClientUtilityCurve]
-) -> tuple[float, ...]:
-    shared_grid = utility_curves[client_ids[0]].alpha_grid
-    for client_id in client_ids:
-        if utility_curves[client_id].alpha_grid != shared_grid:
-            raise ValueError("all clients must share the same candidate target-rate grid")
-    return shared_grid
-
-
-def _flatten_utility_and_cost(
-    client_ids: list[ClientId],
-    utility_curves: Mapping[ClientId, ClientUtilityCurve],
-    weight: Mapping[ClientId, float],
-    shared_grid: tuple[float, ...],
-) -> tuple[np.ndarray, np.ndarray]:
-    utility = np.array([utility_curves[c].utility for c in client_ids], dtype=np.float64).reshape(
-        -1
-    )
-    cost = np.array(
-        [[weight[c] * alpha for alpha in shared_grid] for c in client_ids], dtype=np.float64
-    ).reshape(-1)
-    return utility, cost
-
-
 def allocate_fabrid_macro(
-    utility_curves: Mapping[ClientId, ClientUtilityCurve],
-    weight: Mapping[ClientId, float],
-    remaining_budget: float,
+    utility_curves: ClientUtilityCurves,
+    weights: FederationWeights,
+    remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
 ) -> Allocation:
-    """`remaining_budget` is `B_R`: the budget left after any fallback reservation."""
-    if not utility_curves:
-        raise ValueError("allocate_fabrid_macro requires at least one eligible client")
-    if utility_curves.keys() != weight.keys():
-        raise ValueError("utility_curves and weight must share the same client set")
+    curve_client_ids = {curve.client_id for curve in utility_curves.clients}
+    weight_client_ids = {client.client_id for client in weights.clients}
+    if curve_client_ids != weight_client_ids:
+        raise ValueError("utility curves and federation weights must share clients")
 
-    client_ids = sorted(utility_curves.keys())
-    shared_grid = _shared_client_grid(client_ids, utility_curves)
-    n_clients = len(client_ids)
-    n_candidates = len(shared_grid)
+    curves = tuple(
+        sorted(utility_curves.clients, key=lambda curve: curve.client_id.value)
+    )
+    client_count = RowCount(len(curves))
+    candidate_count = RowCount(len(curves[0].points))
 
-    utility, cost = _flatten_utility_and_cost(client_ids, utility_curves, weight, shared_grid)
+    utility = np.array(
+        [
+            point.utility.value
+            for curve in curves
+            for point in curve.points
+        ],
+        dtype=np.float64,
+    )
+    cost = np.array(
+        [
+            weights.for_client(curve.client_id).value * point.target_rate.value
+            for curve in curves
+            for point in curve.points
+        ],
+        dtype=np.float64,
+    )
 
-    one_hot = one_hot_constraint(n_clients, n_candidates)
+    one_hot = one_hot_constraint(client_count, candidate_count)
     budget = budget_constraint(cost, remaining_budget)
     bounds = Bounds(0.0, 1.0)
-    integrality = np.ones(n_clients * n_candidates)
+    integrality = np.ones(client_count.value * candidate_count.value)
 
-    # A prior stage's reported objective is only known to within its own accepted mip_gap, so a
-    # later stage's floor/ceiling around that objective can never be tighter than that gap without
-    # risking spurious infeasibility (see decisions.md D007).
-    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
-    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accept_mip_gap_leq)
+    utility_tolerance = max(
+        _UTILITY_TOLERANCE_FLOOR,
+        settings.accepted_gap.value,
+    )
+    budget_tolerance = max(
+        _BUDGET_TOLERANCE_FLOOR,
+        settings.accepted_gap.value,
+    )
 
-    # Stage 1: maximize mean utility (milp minimizes, so negate).
-    stage1 = solve_milp(-utility / n_clients, [one_hot, budget], integrality, bounds, settings)
-    optimal_mean_utility = -stage1.objective_value
+    stage_one = solve_milp(
+        -utility / client_count.value,
+        (one_hot, budget),
+        integrality,
+        bounds,
+        settings,
+    )
+    optimal_mean_utility = -stage_one.objective.value
 
-    # Stage 2: among near-optimal-utility solutions, minimize total budget consumption.
     utility_floor = LinearConstraint(
-        (utility / n_clients).reshape(1, -1),
+        (utility / client_count.value).reshape(1, -1),
         lb=optimal_mean_utility - utility_tolerance,
         ub=np.inf,
     )
-    stage2 = solve_milp(cost, [one_hot, budget, utility_floor], integrality, bounds, settings)
-    optimal_cost = stage2.objective_value
-
-    # Stage 3: lexicographically minimize the selected alpha vector by client order.
-    cost_ceiling = LinearConstraint(
-        cost.reshape(1, -1), lb=-np.inf, ub=optimal_cost + budget_tolerance
+    stage_two = solve_milp(
+        cost,
+        (one_hot, budget, utility_floor),
+        integrality,
+        bounds,
+        settings,
     )
-    alpha_flat = np.array([alpha for _ in client_ids for alpha in shared_grid], dtype=np.float64)
-    stage3 = solve_milp(
-        alpha_flat * lexicographic_weights(n_clients, n_candidates),
-        [one_hot, budget, utility_floor, cost_ceiling],
+    optimal_cost = stage_two.objective.value
+
+    cost_ceiling = LinearConstraint(
+        cost.reshape(1, -1),
+        lb=-np.inf,
+        ub=optimal_cost + budget_tolerance,
+    )
+    target_rates = np.array(
+        [point.target_rate.value for curve in curves for point in curve.points],
+        dtype=np.float64,
+    )
+    stage_three = solve_milp(
+        target_rates * lexicographic_weights(client_count, candidate_count),
+        (one_hot, budget, utility_floor, cost_ceiling),
         integrality,
         bounds,
         settings,
     )
 
-    selection = np.round(stage3.x).astype(np.int64).reshape(n_clients, n_candidates)
-    decisions = {
-        client_id: AllocationDecision(
-            client_id=client_id, alpha_selected=shared_grid[int(np.argmax(selection[i]))]
-        )
-        for i, client_id in enumerate(client_ids)
-    }
-    return Allocation(policy=AllocationPolicy.FABRID_MACRO, decisions=decisions)
+    selection = np.round(stage_three.variables).astype(np.int64).reshape(
+        client_count.value,
+        candidate_count.value,
+    )
+    return Allocation(
+        policy=AllocationPolicy.FABRID_MACRO,
+        decisions=tuple(
+            AllocationDecision(
+                client_id=curve.client_id,
+                target_rate=curve.points[
+                    int(np.argmax(selection[index]))
+                ].target_rate,
+            )
+            for index, curve in enumerate(curves)
+        ),
+    )
