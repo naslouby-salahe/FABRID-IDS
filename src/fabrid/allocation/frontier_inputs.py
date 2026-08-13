@@ -113,9 +113,14 @@ def frontier_score_population(
 
 
 def build_client_frontier_inputs(
-    population: FrontierScorePopulation,
+    source: FrontierScorePopulation | FrontierScoreArtifacts,
     alpha_grid: AlphaGrid,
 ) -> ClientFrontierInputs:
+    population = (
+        frontier_score_population(source)
+        if isinstance(source, FrontierScoreArtifacts)
+        else source
+    )
     candidates: list[CandidateConfusions] = []
     for target_rate in alpha_grid.values:
         threshold = calibrate_threshold(population.benign_frontier, target_rate)
