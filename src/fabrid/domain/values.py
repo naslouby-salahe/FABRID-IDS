@@ -37,6 +37,15 @@ class AnalysisSeed:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateIndex:
+    value: int
+
+    def __post_init__(self) -> None:
+        if self.value < 0:
+            raise ValueError(f"candidate index must be non-negative, got {self.value}")
+
+
+@dataclass(frozen=True, slots=True)
 class RowCount:
     value: int
 
@@ -171,11 +180,29 @@ class MetricDifference:
 
 
 @dataclass(frozen=True, slots=True)
+class UtilityDifference:
+    value: float
+
+
+@dataclass(frozen=True, slots=True)
 class UtilityDispersion:
     value: float
 
     def __post_init__(self) -> None:
         _require_non_negative("utility dispersion", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class IncrementalBudgetCost:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("incremental budget cost", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class MarginalEfficiency:
+    value: float
 
 
 @dataclass(frozen=True, slots=True)
