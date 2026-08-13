@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fabrid.analysis.persistence import StoredPrimaryInference, persist_primary_inference
+from fabrid.analysis.gates import analyze_practical_gates
+from fabrid.analysis.persistence import (
+    StoredPracticalGates,
+    StoredPrimaryInference,
+    persist_practical_gates,
+    persist_primary_inference,
+)
 from fabrid.analysis.primary import analyze_primary_inference
 from fabrid.artifacts.dataset_store import (
     StoredDatasetManifests,
@@ -46,6 +52,7 @@ class FabridCampaign:
     attack_subtype_disjoint: ExperimentExecution
     botnet_family_disjoint: ExperimentExecution
     primary_inference: StoredPrimaryInference
+    practical_gates: StoredPracticalGates
 
 
 def run_fabrid_campaign(
@@ -140,6 +147,15 @@ def run_fabrid_campaign(
         inference=analyze_primary_inference(matched_budget.evaluations, protocol),
         layout=layout,
     )
+    practical_gates = persist_practical_gates(
+        campaign_id=campaign_id,
+        analysis=analyze_practical_gates(
+            matched_budget.evaluations,
+            primary_inference.inference,
+            protocol,
+        ),
+        layout=layout,
+    )
 
     return FabridCampaign(
         campaign_id=campaign_id,
@@ -155,4 +171,5 @@ def run_fabrid_campaign(
             artifacts=tuple(family_artifacts),
         ),
         primary_inference=primary_inference,
+        practical_gates=practical_gates,
     )
