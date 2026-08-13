@@ -10,11 +10,16 @@ from fabrid.domain.enums import (
     ThresholdTiePolicy,
 )
 from fabrid.domain.values import (
+    BatchSize,
     BudgetUsageRatio,
     DetectorSeed,
     DurationSeconds,
     EventRatePerClientHour,
     FalsePositiveBudget,
+    FederatedRoundCount,
+    LayerWidth,
+    LearningRate,
+    LocalEpochCount,
     PercentagePoints,
     Probability,
     RowCount,
@@ -25,6 +30,7 @@ from fabrid.protocol.models import (
     AttackSplitFraction,
     BenignSplitFractions,
     BudgetComplianceGate,
+    DetectorHyperparameters,
     DetectorProtocol,
     EventGate,
     EventGateSensitivity,
@@ -46,6 +52,13 @@ PROTOCOL = FabridProtocol(
     detector=DetectorProtocol(
         seeds=tuple(DetectorSeed(seed) for seed in range(10)),
         retraining_policy=RetrainingPolicy.FROZEN_ACROSS_POLICIES,
+        hyperparameters=DetectorHyperparameters(
+            hidden_layers=(LayerWidth(64), LayerWidth(16)),
+            learning_rate=LearningRate(0.001),
+            local_epochs=LocalEpochCount(3),
+            rounds=FederatedRoundCount(10),
+            batch_size=BatchSize(64),
+        ),
     ),
     alpha_grid=build_alpha_grid(),
     budgets=tuple(
