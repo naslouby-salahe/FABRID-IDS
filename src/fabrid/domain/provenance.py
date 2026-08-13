@@ -14,7 +14,11 @@ class DetectorProvenance:
 
 @dataclass(frozen=True, slots=True)
 class ScoreProvenance:
-    score: ArtifactDigest
+    benign_frontier: ArtifactDigest
+    benign_final_cal: ArtifactDigest
+    benign_test: ArtifactDigest
+    attack_validation: ArtifactDigest
+    attack_test: ArtifactDigest
     split_manifest: ArtifactDigest
     protocol: ArtifactDigest
 
@@ -22,5 +26,5 @@ class ScoreProvenance:
 @dataclass(frozen=True, slots=True)
 class ExperimentProvenance:
     detector: DetectorProvenance
-    score: ScoreProvenance
+    scores: ScoreProvenance
     git_commit: GitCommit
