@@ -3,15 +3,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from fabrid.domain.enums import (
+    AttackFoldId,
+    BotnetFamily,
     BudgetId,
     DecisionOperator,
     ExperimentalUnit,
+    ExperimentVariantId,
     FallbackPolicy,
     OptimizationVariableKind,
     RetrainingPolicy,
     SolverBackend,
     ThresholdTiePolicy,
 )
+from fabrid.domain.identifiers import AttackSubtypeId
 from fabrid.domain.values import (
     BatchSize,
     BudgetUsageRatio,
@@ -164,6 +168,91 @@ class EventGate:
 
 
 @dataclass(frozen=True, slots=True)
+class AttackFold:
+    fold_id: AttackFoldId
+    subtypes: tuple[AttackSubtypeId, ...]
+
+    def __post_init__(self) -> None:
+        if not self.subtypes:
+            raise ValueError("attack fold must contain at least one subtype")
+        if len(set(self.subtypes)) != len(self.subtypes):
+            raise ValueError("attack fold contains duplicate subtypes")
+
+
+@dataclass(frozen=True, slots=True)
+class AttackFoldRotation:
+    variant_id: ExperimentVariantId
+    validation_fold: AttackFoldId
+    test_folds: tuple[AttackFoldId, ...]
+
+    def __post_init__(self) -> None:
+        if not self.test_folds:
+            raise ValueError("attack-fold rotation requires at least one test fold")
+        if self.validation_fold in self.test_folds:
+            raise ValueError("validation fold may not also be a test fold")
+        if len(set(self.test_folds)) != len(self.test_folds):
+            raise ValueError("attack-fold rotation contains duplicate test folds")
+
+
+@dataclass(frozen=True, slots=True)
+class BotnetFamilySubtypes:
+    family: BotnetFamily
+    subtypes: tuple[AttackSubtypeId, ...]
+
+    def __post_init__(self) -> None:
+        if not self.subtypes:
+            raise ValueError("botnet family must contain at least one subtype")
+        if len(set(self.subtypes)) != len(self.subtypes):
+            raise ValueError("botnet family contains duplicate subtypes")
+
+
+@dataclass(frozen=True, slots=True)
+class BotnetFamilyDirection:
+    variant_id: ExperimentVariantId
+    validation_family: BotnetFamily
+    test_family: BotnetFamily
+
+    def __post_init__(self) -> None:
+        if self.validation_family is self.test_family:
+            raise ValueError("botnet-family validation and test families must differ")
+
+
+@dataclass(frozen=True, slots=True)
+class GeneralizationProtocol:
+    folds: tuple[AttackFold, ...]
+    rotations: tuple[AttackFoldRotation, ...]
+    families: tuple[BotnetFamilySubtypes, ...]
+    family_directions: tuple[BotnetFamilyDirection, ...]
+    botnet_eligible_client_count: RowCount
+
+    def __post_init__(self) -> None:
+        fold_ids = tuple(fold.fold_id for fold in self.folds)
+        rotation_ids = tuple(rotation.variant_id for rotation in self.rotations)
+        family_ids = tuple(family.family for family in self.families)
+        direction_ids = tuple(direction.variant_id for direction in self.family_directions)
+        if len(set(fold_ids)) != len(fold_ids):
+            raise ValueError("generalization protocol contains duplicate fold identities")
+        if len(set(rotation_ids)) != len(rotation_ids):
+            raise ValueError("generalization protocol contains duplicate rotation identities")
+        if len(set(family_ids)) != len(family_ids):
+            raise ValueError("generalization protocol contains duplicate botnet families")
+        if len(set(direction_ids)) != len(direction_ids):
+            raise ValueError("generalization protocol contains duplicate family directions")
+
+    def fold(self, fold_id: AttackFoldId) -> AttackFold:
+        for fold in self.folds:
+            if fold.fold_id is fold_id:
+                return fold
+        raise KeyError(fold_id.value)
+
+    def family(self, family: BotnetFamily) -> BotnetFamilySubtypes:
+        for entry in self.families:
+            if entry.family is family:
+                return entry
+        raise KeyError(family.value)
+
+
+@dataclass(frozen=True, slots=True)
 class AlphaGrid:
     values: tuple[TargetFalsePositiveRate, ...]
 
@@ -195,6 +284,7 @@ class FabridProtocol:
     solver: SolverSettings
     statistics: StatisticsProtocol
     practical_gates: PracticalGates
+    generalization: GeneralizationProtocol
     allocation_sensitivity_replicates: RowCount
     conservative_utility_confidence: Probability
     event_gate: EventGate
