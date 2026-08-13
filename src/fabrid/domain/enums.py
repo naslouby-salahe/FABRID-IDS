@@ -15,6 +15,12 @@ class SourceSplit(StrEnum):
     TEST = "test"
 
 
+class FeatureColumnStatus(StrEnum):
+    KEPT = "kept"
+    EXCLUDED = "excluded"
+    PARSE_REJECTED = "parse_rejected"
+
+
 class WeightMode(StrEnum):
     EQUAL_CLIENT = "equal_client"
     DATASET_COUNT_PROXY = "dataset_count_proxy"
