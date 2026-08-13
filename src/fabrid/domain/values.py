@@ -46,6 +46,39 @@ class RowCount:
 
 
 @dataclass(frozen=True, slots=True)
+class ClientCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("client count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class CandidateCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("candidate count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class ByteCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        if self.value < 0:
+            raise ValueError(f"byte count must be non-negative, got {self.value}")
+
+
+@dataclass(frozen=True, slots=True)
+class BitCount:
+    value: int
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("bit count", self.value)
+
+
+@dataclass(frozen=True, slots=True)
 class FeatureCount:
     value: int
 

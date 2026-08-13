@@ -85,6 +85,17 @@ class SourceFileId:
 
 
 @dataclass(frozen=True, slots=True)
+class TensorParameterName:
+    value: str
+
+    def __post_init__(self) -> None:
+        _require_text("tensor parameter name", self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
 class FailureReason:
     value: str
 
