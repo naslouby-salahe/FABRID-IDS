@@ -119,6 +119,7 @@ PROTOCOL = FabridProtocol(
         significance=Probability(0.05),
         holm_family_size=RowCount(5),
         bootstrap_resamples=RowCount(50_000),
+        bootstrap_confidence=Probability(0.95),
     ),
     practical_gates=PracticalGates(
         fabrid_macro=FabridMacroGate(
