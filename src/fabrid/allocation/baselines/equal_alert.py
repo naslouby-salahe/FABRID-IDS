@@ -5,7 +5,7 @@ from fabrid.allocation.contracts import (
     AllocationDecision,
     FederationWeights,
 )
-from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.enums import AllocationPolicy, BudgetFeasibility
 from fabrid.domain.values import FalsePositiveBudget, TargetFalsePositiveRate
 
 _BUDGET_TOLERANCE = 1.0e-12
@@ -53,6 +53,9 @@ def allocate_equal_alert(
         for client in weights.clients
     )
     allocation = Allocation(policy=AllocationPolicy.EQ_ALERT, decisions=decisions)
-    if not allocation.is_budget_feasible(weights.allocation_weights, budget):
+    if (
+        allocation.budget_feasibility(weights.allocation_weights, budget)
+        is BudgetFeasibility.INFEASIBLE
+    ):
         raise ValueError("equal-alert allocation violates federation budget")
     return allocation
