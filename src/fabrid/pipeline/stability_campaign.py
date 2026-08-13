@@ -15,3 +15,18 @@ from fabrid.pipeline.stability_store import (
 )
 from fabrid.protocol.models import FabridProtocol
 from fabrid.protocol.specification import PROTOCOL
+
+
+def run_campaign_allocation_stability(
+    campaign_id: CampaignId,
+    paths: PipelinePaths,
+    protocol: FabridProtocol = PROTOCOL,
+) -> StoredCampaignAllocationStability:
+    cells: list[SeedBudgetAllocationStability] = []
+    for detector_seed in protocol.detector.seeds:
+        scores = load_seed_scores(
+            campaign_id=campaign_id,
+            detector_seed=detector_seed,
+            population=NBAIOT_PRIMARY_POPULATION,
+            paths=paths,
+        )
