@@ -9,8 +9,8 @@ from fabrid.domain.coordinates import (
     ExperimentCoordinate,
     ScoreCoordinate,
 )
-from fabrid.domain.enums import ArtifactKind, AttackSplit, BenignSplit
-from fabrid.domain.identifiers import ArtifactName
+from fabrid.domain.enums import ArtifactKind, AttackSplit, BenignSplit, DatasetId
+from fabrid.domain.identifiers import ArtifactName, CampaignId
 
 ScoreSplit = BenignSplit | AttackSplit
 
@@ -19,18 +19,22 @@ ScoreSplit = BenignSplit | AttackSplit
 class ArtifactLayout:
     root: Path
 
-    def campaign_root(self, coordinate: ExperimentCoordinate) -> Path:
-        return self.root / coordinate.campaign_id.value
+    def campaign_root(self, campaign_id: CampaignId) -> Path:
+        return self.root / campaign_id.value
 
-    def protocol_path(self, coordinate: ExperimentCoordinate) -> Path:
-        return self.campaign_root(coordinate) / "protocol.json"
+    def protocol_path(self, campaign_id: CampaignId) -> Path:
+        return self.campaign_root(campaign_id) / "protocol.json"
 
-    def dataset_root(self, coordinate: ExperimentCoordinate) -> Path:
-        return self.campaign_root(coordinate) / "datasets" / coordinate.dataset_id.value
+    def dataset_root(self, campaign_id: CampaignId, dataset_id: DatasetId) -> Path:
+        return self.campaign_root(campaign_id) / "datasets" / dataset_id.value
 
-    def detector_root(self, coordinate: DetectorCoordinate, campaign_root: Path) -> Path:
+    def detector_root(
+        self,
+        campaign_id: CampaignId,
+        coordinate: DetectorCoordinate,
+    ) -> Path:
         return (
-            campaign_root
+            self.campaign_root(campaign_id)
             / "detectors"
             / coordinate.dataset_id.value
             / f"seed-{coordinate.detector_seed.value:03d}"
@@ -38,12 +42,12 @@ class ArtifactLayout:
 
     def score_path(
         self,
+        campaign_id: CampaignId,
         coordinate: ScoreCoordinate,
         split: ScoreSplit,
-        campaign_root: Path,
     ) -> Path:
         return (
-            campaign_root
+            self.campaign_root(campaign_id)
             / "scores"
             / coordinate.dataset_id.value
             / f"seed-{coordinate.detector_seed.value:03d}"
@@ -54,7 +58,7 @@ class ArtifactLayout:
     def allocation_path(self, coordinate: AllocationCoordinate) -> Path:
         experiment = coordinate.experiment
         return (
-            self.campaign_root(experiment)
+            self.campaign_root(experiment.campaign_id)
             / "allocations"
             / experiment.experiment_id.value
             / f"seed-{experiment.detector_seed.value:03d}"
@@ -64,7 +68,7 @@ class ArtifactLayout:
 
     def result_path(self, coordinate: ExperimentCoordinate) -> Path:
         return (
-            self.campaign_root(coordinate)
+            self.campaign_root(coordinate.campaign_id)
             / "results"
             / f"{coordinate.experiment_id.value}.parquet"
         )
@@ -75,7 +79,7 @@ class ArtifactLayout:
         name: ArtifactName,
     ) -> Path:
         return (
-            self.campaign_root(coordinate)
+            self.campaign_root(coordinate.campaign_id)
             / "analysis"
             / coordinate.experiment_id.value
             / f"{name.value}.parquet"
@@ -88,7 +92,11 @@ class ArtifactLayout:
     ) -> Path:
         if kind not in {ArtifactKind.TABLE, ArtifactKind.FIGURE}:
             raise ValueError(f"publication directory does not support {kind.value}")
-        return self.campaign_root(coordinate) / "publication" / f"{kind.value}s"
+        return (
+            self.campaign_root(coordinate.campaign_id)
+            / "publication"
+            / f"{kind.value}s"
+        )
 
-    def audit_dir(self, coordinate: ExperimentCoordinate) -> Path:
-        return self.campaign_root(coordinate) / "audit"
+    def audit_dir(self, campaign_id: CampaignId) -> Path:
+        return self.campaign_root(campaign_id) / "audit"
