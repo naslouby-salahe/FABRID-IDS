@@ -21,3 +21,15 @@ class NbaiotDevice(StrEnum):
 NBAIOT_PRIMARY_POPULATION = ClientPopulation(
     tuple(ClientId(device.value) for device in NbaiotDevice)
 )
+
+NBAIOT_DUAL_BOTNET_FAMILY_POPULATION = ClientPopulation(
+    tuple(
+        ClientId(device.value)
+        for device in NbaiotDevice
+        if device
+        not in {
+            NbaiotDevice.ENNIO_DOORBELL,
+            NbaiotDevice.SAMSUNG_SNH_1011_WEBCAM,
+        }
+    )
+)
