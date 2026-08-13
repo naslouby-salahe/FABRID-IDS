@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fabrid.allocation.conservative import build_conservative_utility_curve
 from fabrid.allocation.contracts import Allocation, ClientUtilityCurves
-from fabrid.allocation.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.frontier import client_eligibility
+from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.solver import SolverInvalidError
 from fabrid.domain.coordinates import ExperimentCoordinate
 from fabrid.domain.enums import (
