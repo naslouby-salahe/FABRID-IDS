@@ -6,20 +6,20 @@ from pathlib import Path
 import numpy as np
 import torch
 from pydantic import BaseModel, ConfigDict
-from safetensors.torch import load_file, save_file
 
 from fabrid.artifacts.digests import digest_file
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
 from fabrid.detector.preprocessing import ClientScaler, FeatureScaler, FederatedScalers
-from fabrid.domain.identifiers import ArtifactDigest, ClientId
+from fabrid.detector.state import TensorParameter, TensorState
+from fabrid.domain.identifiers import ArtifactDigest, ClientId, TensorParameterName
 from fabrid.domain.values import FeatureCount, LayerWidth
 
 _MODEL_FILENAME = "model.safetensors"
 _ARCHITECTURE_FILENAME = "architecture.json"
 _SCALER_DIRECTORY = "scalers"
 _SCALER_SUFFIX = ".safetensors"
-_SCALER_MEAN_KEY = "mean"
-_SCALER_STANDARD_DEVIATION_KEY = "standard_deviation"
+_SCALER_MEAN_KEY = TensorParameterName("mean")
+_SCALER_STANDARD_DEVIATION_KEY = TensorParameterName("standard_deviation")
 
 
 class _ArchitecturePayload(BaseModel):
@@ -61,20 +61,23 @@ def _architecture_payload(architecture: AutoencoderArchitecture) -> _Architectur
     )
 
 
-def _state_dict_for_storage(model: Autoencoder) -> dict[str, torch.Tensor]:
-    return {
-        name: tensor.detach().cpu().contiguous()
-        for name, tensor in model.state_dict().items()
-    }
+def _numpy_tensor(values: np.ndarray) -> torch.Tensor:
+    return torch.from_numpy(np.ascontiguousarray(values))
 
 
-def _scaler_tensors(scaler: FeatureScaler) -> dict[str, torch.Tensor]:
-    return {
-        _SCALER_MEAN_KEY: torch.from_numpy(np.ascontiguousarray(scaler.mean)),
-        _SCALER_STANDARD_DEVIATION_KEY: torch.from_numpy(
-            np.ascontiguousarray(scaler.standard_deviation)
-        ),
-    }
+def _scaler_state(scaler: FeatureScaler) -> TensorState:
+    return TensorState(
+        (
+            TensorParameter(
+                name=_SCALER_MEAN_KEY,
+                tensor=_numpy_tensor(scaler.mean),
+            ),
+            TensorParameter(
+                name=_SCALER_STANDARD_DEVIATION_KEY,
+                tensor=_numpy_tensor(scaler.standard_deviation),
+            ),
+        )
+    )
 
 
 def save_detector_state(
@@ -85,7 +88,7 @@ def save_detector_state(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model_path = output_dir / _MODEL_FILENAME
-    save_file(_state_dict_for_storage(model), model_path)
+    TensorState.from_module(model).write_safetensors(model_path)
 
     architecture_path = output_dir / _ARCHITECTURE_FILENAME
     architecture_path.write_text(
@@ -98,7 +101,7 @@ def save_detector_state(
     scaler_artifacts: list[ClientScalerArtifact] = []
     for client in scalers.clients:
         scaler_path = scaler_directory / f"{client.client_id.value}{_SCALER_SUFFIX}"
-        save_file(_scaler_tensors(client.scaler), scaler_path)
+        _scaler_state(client.scaler).write_safetensors(scaler_path)
         scaler_artifacts.append(
             ClientScalerArtifact(
                 client_id=client.client_id,
@@ -119,25 +122,21 @@ def load_detector_state(output_dir: Path) -> PersistedDetector:
     )
     architecture = AutoencoderArchitecture(
         feature_count=FeatureCount(architecture_payload.feature_count),
-        hidden_layers=tuple(
-            LayerWidth(width) for width in architecture_payload.hidden_layers
-        ),
+        hidden_layers=tuple(LayerWidth(width) for width in architecture_payload.hidden_layers),
     )
     model = Autoencoder(architecture)
-    model.load_state_dict(load_file(output_dir / _MODEL_FILENAME))
+    TensorState.read_safetensors(output_dir / _MODEL_FILENAME).load_into(model)
 
     scaler_directory = output_dir / _SCALER_DIRECTORY
     client_scalers: list[ClientScaler] = []
     for scaler_path in sorted(scaler_directory.glob(f"*{_SCALER_SUFFIX}")):
-        tensors = load_file(scaler_path)
+        tensors = TensorState.read_safetensors(scaler_path)
         client_scalers.append(
             ClientScaler(
                 client_id=ClientId(scaler_path.name.removesuffix(_SCALER_SUFFIX)),
                 scaler=FeatureScaler(
-                    mean=tensors[_SCALER_MEAN_KEY].numpy().copy(),
-                    standard_deviation=tensors[_SCALER_STANDARD_DEVIATION_KEY]
-                    .numpy()
-                    .copy(),
+                    mean=tensors.tensor(_SCALER_MEAN_KEY).numpy().copy(),
+                    standard_deviation=tensors.tensor(_SCALER_STANDARD_DEVIATION_KEY).numpy().copy(),
                 ),
             )
         )
