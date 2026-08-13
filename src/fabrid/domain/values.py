@@ -150,6 +150,14 @@ class Probability:
 
 
 @dataclass(frozen=True, slots=True)
+class DetectionUtility:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_unit_interval("detection utility", self.value)
+
+
+@dataclass(frozen=True, slots=True)
 class FalsePositiveRate:
     value: float
 
