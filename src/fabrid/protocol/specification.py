@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fabrid.domain.enums import (
+    BudgetId,
     DecisionOperator,
     ExperimentalUnit,
     FallbackPolicy,
@@ -30,6 +31,7 @@ from fabrid.protocol.models import (
     AttackSplitFraction,
     BenignSplitFractions,
     BudgetComplianceGate,
+    BudgetLevel,
     DetectorHyperparameters,
     DetectorProtocol,
     EventGate,
@@ -61,9 +63,27 @@ PROTOCOL = FabridProtocol(
         ),
     ),
     alpha_grid=build_alpha_grid(),
-    budgets=tuple(
-        FalsePositiveBudget(value)
-        for value in (0.001, 0.0025, 0.005, 0.010, 0.020)
+    budgets=(
+        BudgetLevel(
+            BudgetId.FALSE_POSITIVE_0P001,
+            FalsePositiveBudget(0.001),
+        ),
+        BudgetLevel(
+            BudgetId.FALSE_POSITIVE_0P0025,
+            FalsePositiveBudget(0.0025),
+        ),
+        BudgetLevel(
+            BudgetId.FALSE_POSITIVE_0P005,
+            FalsePositiveBudget(0.005),
+        ),
+        BudgetLevel(
+            BudgetId.FALSE_POSITIVE_0P010,
+            FalsePositiveBudget(0.010),
+        ),
+        BudgetLevel(
+            BudgetId.FALSE_POSITIVE_0P020,
+            FalsePositiveBudget(0.020),
+        ),
     ),
     benign_splits=BenignSplitFractions(
         train_end=Probability(0.50),
