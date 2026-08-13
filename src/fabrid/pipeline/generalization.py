@@ -62,7 +62,7 @@ def _filter_attack_artifact(
     return filtered
 
 
-def _restrict_scores(
+def restrict_generalization_scores(
     scores: LoadedSeedScores,
     population: ClientPopulation,
     validation_subtypes: tuple[AttackSubtypeId, ...],
@@ -149,7 +149,7 @@ def run_attack_subtype_generalization_seed(
     evaluations: list[SeedBudgetEvaluation] = []
     artifacts: list[MaterializedSeedBudget] = []
     for rotation in protocol.generalization.rotations:
-        restricted = _restrict_scores(
+        restricted = restrict_generalization_scores(
             scores=scores,
             population=NBAIOT_PRIMARY_POPULATION,
             validation_subtypes=protocol.generalization.fold(
@@ -193,7 +193,7 @@ def run_botnet_family_generalization_seed(
     evaluations: list[SeedBudgetEvaluation] = []
     artifacts: list[MaterializedSeedBudget] = []
     for direction in protocol.generalization.family_directions:
-        restricted = _restrict_scores(
+        restricted = restrict_generalization_scores(
             scores=scores,
             population=population,
             validation_subtypes=protocol.generalization.family(
