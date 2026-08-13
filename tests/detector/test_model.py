@@ -4,33 +4,37 @@ import numpy as np
 import pytest
 import torch
 
+from fabrid.datasets.common import FeatureMatrix
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture, reconstruction_error_scores
+from fabrid.domain.values import FeatureCount, LayerWidth
 
 
 def test_forward_pass_shape() -> None:
-    architecture = AutoencoderArchitecture(n_features=10, hidden_dims=(6, 3))
-    model = Autoencoder(architecture)
-    inputs = torch.randn(4, 10)
-    output = model(inputs)
+    architecture = AutoencoderArchitecture(
+        feature_count=FeatureCount(10),
+        hidden_layers=(LayerWidth(6), LayerWidth(3)),
+    )
+    output = Autoencoder(architecture)(torch.randn(4, 10))
     assert output.shape == (4, 10)
 
 
-def test_reconstruction_error_is_nonnegative_and_higher_for_novel_inputs() -> None:
+def test_reconstruction_error_is_nonnegative() -> None:
     torch.manual_seed(0)
-    architecture = AutoencoderArchitecture(n_features=5, hidden_dims=(3,))
-    model = Autoencoder(architecture)
-
+    architecture = AutoencoderArchitecture(
+        feature_count=FeatureCount(5),
+        hidden_layers=(LayerWidth(3),),
+    )
     rng = np.random.default_rng(0)
-    normal_like = rng.normal(0, 0.01, size=(20, 5)).astype(np.float64)
-    scores = reconstruction_error_scores(model, normal_like)
-    assert np.all(scores >= 0)
-    assert scores.shape == (20,)
+    features = FeatureMatrix(rng.normal(0, 0.01, size=(20, 5)).astype(np.float64))
+    scores = reconstruction_error_scores(Autoencoder(architecture), features)
+    assert np.all(scores.values >= 0)
+    assert scores.row_count.value == 20
 
 
 def test_invalid_architecture_rejected() -> None:
     with pytest.raises(ValueError):
-        AutoencoderArchitecture(n_features=0, hidden_dims=(3,))
+        FeatureCount(0)
     with pytest.raises(ValueError):
-        AutoencoderArchitecture(n_features=5, hidden_dims=())
+        AutoencoderArchitecture(feature_count=FeatureCount(5), hidden_layers=())
     with pytest.raises(ValueError):
-        AutoencoderArchitecture(n_features=5, hidden_dims=(0,))
+        LayerWidth(0)
