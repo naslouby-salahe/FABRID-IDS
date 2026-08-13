@@ -12,6 +12,7 @@ from fabrid.allocation.frontier_inputs import (
     AttackSubtypeScores,
     FrontierScorePopulation,
     build_client_frontier_inputs,
+    frontier_score_population,
 )
 from fabrid.allocation.problem import build_allocation_problem, merge_full_allocation
 from fabrid.domain.coordinates import ExperimentCoordinate
@@ -53,9 +54,9 @@ def _test_population(scores: LoadedSeedScores, client_index: int) -> FrontierSco
         )
         for subtype in subtypes
     )
-    benign = client.frontier.benign_frontier.scores
+    base = frontier_score_population(client.frontier)
     return FrontierScorePopulation(
         client_id=client.client_id,
-        benign_frontier=benign,
+        benign_frontier=base.benign_frontier,
         attack_validation=attack_test,
     )
