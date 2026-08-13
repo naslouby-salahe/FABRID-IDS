@@ -34,6 +34,10 @@ from fabrid.pipeline.materialization import (
 from fabrid.pipeline.provenance import build_evaluation_provenance, resolve_git_commit
 from fabrid.pipeline.scoring import materialize_detector_scores
 from fabrid.pipeline.training import prepare_nbaiot_federation, train_detector_seed
+from fabrid.pipeline.weight_sensitivity import (
+    nbaiot_dataset_count_reference_weights,
+    run_weight_sensitivity_seed,
+)
 from fabrid.protocol.models import FabridProtocol
 from fabrid.protocol.specification import PROTOCOL
 
@@ -51,6 +55,7 @@ class FabridCampaign:
     dataset_manifests: StoredDatasetManifests
     matched_budget: ExperimentExecution
     conservative_minimax: ExperimentExecution
+    weight_sensitivity: ExperimentExecution
     attack_subtype_disjoint: ExperimentExecution
     botnet_family_disjoint: ExperimentExecution
     primary_inference: StoredPrimaryInference
@@ -66,6 +71,7 @@ def run_fabrid_campaign(
     layout = paths.artifacts
     protocol_snapshot = persist_protocol_snapshot(campaign_id, protocol, layout)
     prepared = prepare_nbaiot_federation(paths, protocol)
+    dataset_count_reference_weights = nbaiot_dataset_count_reference_weights(prepared)
     dataset_manifests = persist_dataset_manifests(
         campaign_id=campaign_id,
         dataset_id=DatasetId.NBAIOT,
@@ -78,6 +84,8 @@ def run_fabrid_campaign(
     primary_artifacts: list[MaterializedSeedBudget] = []
     conservative_evaluations: list[SeedBudgetEvaluation] = []
     conservative_artifacts: list[MaterializedSeedBudget] = []
+    weight_evaluations: list[SeedBudgetEvaluation] = []
+    weight_artifacts: list[MaterializedSeedBudget] = []
     subtype_evaluations: list[SeedBudgetEvaluation] = []
     subtype_artifacts: list[MaterializedSeedBudget] = []
     family_evaluations: list[SeedBudgetEvaluation] = []
@@ -133,6 +141,18 @@ def run_fabrid_campaign(
                 materialize_seed_budget(conservative_run, layout)
             )
 
+        weight_execution = run_weight_sensitivity_seed(
+            campaign_id=campaign_id,
+            detector_seed=detector_seed,
+            scores=loaded_scores,
+            provenance=provenance,
+            reference_weights=dataset_count_reference_weights,
+            protocol=protocol,
+            layout=layout,
+        )
+        weight_evaluations.extend(weight_execution.evaluations)
+        weight_artifacts.extend(weight_execution.artifacts)
+
         subtype_execution = run_attack_subtype_generalization_seed(
             campaign_id=campaign_id,
             detector_seed=detector_seed,
@@ -182,6 +202,10 @@ def run_fabrid_campaign(
         conservative_minimax=ExperimentExecution(
             evaluations=tuple(conservative_evaluations),
             artifacts=tuple(conservative_artifacts),
+        ),
+        weight_sensitivity=ExperimentExecution(
+            evaluations=tuple(weight_evaluations),
+            artifacts=tuple(weight_artifacts),
         ),
         attack_subtype_disjoint=ExperimentExecution(
             evaluations=tuple(subtype_evaluations),
