@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from typing import Protocol
 
 from fabrid.artifacts.layout import ScoreSplit
 from fabrid.domain.coordinates import ScoreCoordinate
 from fabrid.domain.enums import Label
 from fabrid.domain.identifiers import ArtifactDigest, AttackSubtypeId, SampleId, SourceFileId
 from fabrid.domain.values import AnomalyScore, EventTimestamp, SourceRowIndex
+
+
+class DigestAccumulator(Protocol):
+    def update(self, data: bytes) -> object: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +74,7 @@ class ScorePartitionArtifact:
         return ArtifactDigest(digest.hexdigest())
 
     @staticmethod
-    def _update_digest(digest: hashlib._Hash, value: str) -> None:
+    def _update_digest(digest: DigestAccumulator, value: str) -> None:
         encoded = value.encode("utf-8")
         digest.update(len(encoded).to_bytes(8, byteorder="big", signed=False))
         digest.update(encoded)
