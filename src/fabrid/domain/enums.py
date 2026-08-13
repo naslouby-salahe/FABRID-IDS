@@ -90,6 +90,11 @@ class GateStatus(StrEnum):
     FAIL = "fail"
 
 
+class BudgetFeasibility(StrEnum):
+    FEASIBLE = "feasible"
+    INFEASIBLE = "infeasible"
+
+
 class SolverStatus(StrEnum):
     OPTIMAL = "optimal"
     SOLVER_INVALID = "solver_invalid"
