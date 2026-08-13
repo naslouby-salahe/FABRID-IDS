@@ -107,6 +107,7 @@ class FabridMinimaxGate:
 @dataclass(frozen=True, slots=True)
 class BudgetComplianceGate:
     maximum_median_usage: BudgetUsageRatio
+    seed_usage_limit: BudgetUsageRatio
     minimum_seed_fraction_below_limit: Probability
 
 
