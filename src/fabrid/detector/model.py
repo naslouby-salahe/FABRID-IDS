@@ -7,7 +7,8 @@ import torch
 from torch import nn
 
 from fabrid.datasets.common import FeatureMatrix
-from fabrid.domain.values import AnomalyScore, FeatureCount, LayerWidth, RowCount
+from fabrid.domain.scores import ScoreVector
+from fabrid.domain.values import FeatureCount, LayerWidth
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,24 +19,6 @@ class AutoencoderArchitecture:
     def __post_init__(self) -> None:
         if not self.hidden_layers:
             raise ValueError("autoencoder requires at least one hidden layer")
-
-
-@dataclass(frozen=True, slots=True)
-class ScoreVector:
-    values: np.ndarray
-
-    def __post_init__(self) -> None:
-        if self.values.ndim != 1:
-            raise ValueError("score vector must be one-dimensional")
-        if not np.isfinite(self.values).all():
-            raise ValueError("score vector must contain only finite values")
-
-    @property
-    def row_count(self) -> RowCount:
-        return RowCount(self.values.shape[0])
-
-    def at(self, index: int) -> AnomalyScore:
-        return AnomalyScore(float(self.values[index]))
 
 
 class Autoencoder(nn.Module):
