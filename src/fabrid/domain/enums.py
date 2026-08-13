@@ -37,6 +37,23 @@ class AllocationPolicy(StrEnum):
     TEST_ORACLE = "test_oracle"
 
 
+class MetricId(StrEnum):
+    MACRO_RECALL = "macro_recall"
+    WORST_CLIENT_RECALL = "worst_client_recall"
+    FEDERATION_FPR = "federation_fpr"
+    BUDGET_USAGE_RATIO = "budget_usage_ratio"
+
+
+class HypothesisDecision(StrEnum):
+    REJECT = "reject"
+    RETAIN = "retain"
+
+
+class GateStatus(StrEnum):
+    PASS = "pass"
+    FAIL = "fail"
+
+
 class SolverStatus(StrEnum):
     OPTIMAL = "optimal"
     SOLVER_INVALID = "solver_invalid"
