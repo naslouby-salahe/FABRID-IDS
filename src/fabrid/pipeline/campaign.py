@@ -57,6 +57,7 @@ def _materialize_seed_budget(
     run: SeedBudgetRun,
     paths: PipelinePaths,
 ) -> MaterializedSeedBudget:
+    layout = paths.artifacts
     allocation_artifacts: list[StoredPolicyAllocation] = []
     for policy_run in run.policy_runs:
         if not isinstance(policy_run, CompletedPolicyRun):
@@ -74,7 +75,7 @@ def _materialize_seed_budget(
                         allocation=policy_run.allocation,
                         solver=policy_run.solver,
                     ),
-                    paths,
+                    layout,
                 ),
             )
         )
@@ -83,9 +84,12 @@ def _materialize_seed_budget(
         coordinate=run.evaluation.experiment,
         result_table=write_result_records(
             run.records,
-            paths.artifacts.result_path(run.evaluation.experiment),
+            layout.result_path(run.evaluation.experiment),
         ),
-        evaluation_summary=persist_seed_budget_evaluation(run.evaluation, paths),
+        evaluation_summary=persist_seed_budget_evaluation(
+            run.evaluation,
+            layout,
+        ),
         allocations=tuple(allocation_artifacts),
     )
 
@@ -95,14 +99,15 @@ def run_matched_budget_campaign(
     paths: PipelinePaths,
     protocol: FabridProtocol = PROTOCOL,
 ) -> MatchedBudgetCampaign:
-    protocol_snapshot = persist_protocol_snapshot(campaign_id, protocol, paths)
+    layout = paths.artifacts
+    protocol_snapshot = persist_protocol_snapshot(campaign_id, protocol, layout)
     prepared = prepare_nbaiot_federation(paths, protocol)
     dataset_manifests = persist_dataset_manifests(
         campaign_id=campaign_id,
         dataset_id=DatasetId.NBAIOT,
         feature_manifest=prepared.feature_manifest,
         split_manifest=prepared.split_manifest,
-        paths=paths,
+        layout=layout,
     )
     git_commit = resolve_git_commit()
 
