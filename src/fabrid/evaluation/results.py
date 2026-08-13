@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from fabrid.allocation.solver import SolverEvidence
 from fabrid.domain.coordinates import AllocationCoordinate, ExperimentCoordinate
 from fabrid.domain.enums import AllocationPolicy, SolverStatus
 from fabrid.domain.identifiers import AttackSubtypeId, ClientId, FailureReason
@@ -14,9 +15,6 @@ from fabrid.domain.values import (
     MacroRecall,
     Probability,
     RowCount,
-    SolverGap,
-    SolverObjective,
-    SolverRuntimeMilliseconds,
     TargetFalsePositiveRate,
     Threshold,
     TruePositiveRate,
@@ -54,14 +52,6 @@ class CalibrationOutcome:
 
 
 @dataclass(frozen=True, slots=True)
-class SolverOutcome:
-    status: SolverStatus
-    objective: SolverObjective | None
-    gap: SolverGap | None
-    runtime: SolverRuntimeMilliseconds | None
-
-
-@dataclass(frozen=True, slots=True)
 class ClientResultRecord:
     allocation: AllocationCoordinate
     client_id: ClientId
@@ -72,7 +62,7 @@ class ClientResultRecord:
     attack_subtype: AttackSubtypeId | None
     confusion: ConfusionCounts
     metrics: DetectionMetrics
-    solver: SolverOutcome
+    solver: SolverEvidence
     provenance: ExperimentProvenance
 
 
