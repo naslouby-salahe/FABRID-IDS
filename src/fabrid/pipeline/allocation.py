@@ -36,6 +36,7 @@ from fabrid.domain.coordinates import (
 )
 from fabrid.domain.enums import (
     AllocationPolicy,
+    BudgetFeasibility,
     DatasetId,
     ExperimentId,
     ExperimentVariantId,
@@ -287,9 +288,12 @@ def evaluate_policy(
     provenance: EvaluationProvenance,
     fallback_rate: Probability,
 ) -> CompletedPolicyRun:
-    if not allocation.is_budget_feasible(
-        weights.allocation_weights,
-        coordinate.budget,
+    if (
+        allocation.budget_feasibility(
+            weights.allocation_weights,
+            coordinate.budget,
+        )
+        is BudgetFeasibility.INFEASIBLE
     ):
         raise ValueError(
             f"allocation {allocation.policy.value} violates the federation budget"
