@@ -7,6 +7,7 @@ from fabrid.domain.enums import (
     BudgetId,
     DatasetId,
     ExperimentId,
+    ExperimentVariantId,
     WeightMode,
 )
 from fabrid.domain.identifiers import CampaignId, ClientId
@@ -30,6 +31,7 @@ class ScoreCoordinate:
 class ExperimentCoordinate:
     campaign_id: CampaignId
     experiment_id: ExperimentId
+    variant_id: ExperimentVariantId
     dataset_id: DatasetId
     detector_seed: DetectorSeed
     budget_id: BudgetId
