@@ -30,3 +30,6 @@ class ScientificContractAudit:
     @property
     def passes(self) -> bool:
         return not self.findings
+
+
+_PRIMITIVES = frozenset(("bool", "float", "int", "str"))
