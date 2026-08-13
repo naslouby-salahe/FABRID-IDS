@@ -21,6 +21,7 @@ from fabrid.domain.enums import DatasetId, ExperimentId, ExperimentVariantId
 from fabrid.domain.identifiers import CampaignId
 from fabrid.evaluation.results import SeedBudgetEvaluation
 from fabrid.pipeline.allocation import load_seed_scores, run_seed_budget
+from fabrid.pipeline.conservative_minimax import run_conservative_minimax_seed_budget
 from fabrid.pipeline.context import PipelinePaths
 from fabrid.pipeline.generalization import (
     run_attack_subtype_generalization_seed,
@@ -49,6 +50,7 @@ class FabridCampaign:
     protocol_snapshot: StoredJsonArtifact
     dataset_manifests: StoredDatasetManifests
     matched_budget: ExperimentExecution
+    conservative_minimax: ExperimentExecution
     attack_subtype_disjoint: ExperimentExecution
     botnet_family_disjoint: ExperimentExecution
     primary_inference: StoredPrimaryInference
@@ -74,6 +76,8 @@ def run_fabrid_campaign(
 
     primary_evaluations: list[SeedBudgetEvaluation] = []
     primary_artifacts: list[MaterializedSeedBudget] = []
+    conservative_evaluations: list[SeedBudgetEvaluation] = []
+    conservative_artifacts: list[MaterializedSeedBudget] = []
     subtype_evaluations: list[SeedBudgetEvaluation] = []
     subtype_artifacts: list[MaterializedSeedBudget] = []
     family_evaluations: list[SeedBudgetEvaluation] = []
@@ -103,7 +107,7 @@ def run_fabrid_campaign(
         )
 
         for budget_level in protocol.budgets:
-            run = run_seed_budget(
+            primary_run = run_seed_budget(
                 campaign_id=campaign_id,
                 experiment_id=ExperimentId.MATCHED_BUDGET,
                 variant_id=ExperimentVariantId.PRIMARY,
@@ -113,8 +117,21 @@ def run_fabrid_campaign(
                 protocol=protocol,
                 provenance=provenance,
             )
-            primary_evaluations.append(run.evaluation)
-            primary_artifacts.append(materialize_seed_budget(run, layout))
+            primary_evaluations.append(primary_run.evaluation)
+            primary_artifacts.append(materialize_seed_budget(primary_run, layout))
+
+            conservative_run = run_conservative_minimax_seed_budget(
+                campaign_id=campaign_id,
+                detector_seed=detector_seed,
+                budget_level=budget_level,
+                scores=loaded_scores,
+                protocol=protocol,
+                provenance=provenance,
+            )
+            conservative_evaluations.append(conservative_run.evaluation)
+            conservative_artifacts.append(
+                materialize_seed_budget(conservative_run, layout)
+            )
 
         subtype_execution = run_attack_subtype_generalization_seed(
             campaign_id=campaign_id,
@@ -162,6 +179,10 @@ def run_fabrid_campaign(
         protocol_snapshot=protocol_snapshot,
         dataset_manifests=dataset_manifests,
         matched_budget=matched_budget,
+        conservative_minimax=ExperimentExecution(
+            evaluations=tuple(conservative_evaluations),
+            artifacts=tuple(conservative_artifacts),
+        ),
         attack_subtype_disjoint=ExperimentExecution(
             evaluations=tuple(subtype_evaluations),
             artifacts=tuple(subtype_artifacts),
