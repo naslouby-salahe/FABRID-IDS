@@ -92,6 +92,7 @@ PROTOCOL = FabridProtocol(
         ),
         budget_compliance=BudgetComplianceGate(
             maximum_median_usage=BudgetUsageRatio(1.05),
+            seed_usage_limit=BudgetUsageRatio(1.10),
             minimum_seed_fraction_below_limit=Probability(0.9),
         ),
     ),
