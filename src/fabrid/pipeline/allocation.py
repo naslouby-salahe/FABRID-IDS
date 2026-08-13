@@ -88,6 +88,12 @@ class LoadedSeedScores:
         if len(set(client_ids)) != len(client_ids):
             raise ValueError("loaded seed scores contain duplicate clients")
 
+    def for_client(self, client_id: ClientId) -> LoadedClientScores:
+        for client in self.clients:
+            if client.client_id == client_id:
+                return client
+        raise KeyError(client_id.value)
+
     @property
     def population(self) -> ClientPopulation:
         return ClientPopulation(tuple(client.client_id for client in self.clients))
