@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from fabrid.datasets.common import AttackFeatureBlock, DeviceDataset, FeatureMatrix
-from fabrid.domain.identifiers import AttackSubtypeId, ClientId
+from fabrid.domain.identifiers import AttackSubtypeId, ClientId, SourceFileId
 
 _BENIGN_FILENAME = "benign_traffic.csv"
 _BASHLITE_DIRNAME = "gafgyt_attacks"
@@ -55,6 +55,9 @@ def _read_attack_family(
             blocks.append(
                 AttackFeatureBlock(
                     subtype=file.subtype,
+                    source_file=SourceFileId(
+                        f"{family_dir.name}/{file.filename}.csv"
+                    ),
                     features=_read_feature_csv(path),
                 )
             )
@@ -74,6 +77,7 @@ def read_device_directory(client_id: ClientId, device_dir: Path) -> DeviceDatase
     )
     return DeviceDataset(
         client_id=client_id,
+        benign_source_file=SourceFileId(_BENIGN_FILENAME),
         benign=_read_feature_csv(benign_path),
         attacks=attacks,
     )
