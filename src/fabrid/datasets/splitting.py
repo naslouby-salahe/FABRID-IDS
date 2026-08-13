@@ -4,6 +4,7 @@ import math
 from dataclasses import dataclass
 
 from fabrid.domain.enums import AttackSplit, BenignSplit
+from fabrid.domain.identifiers import AttackSubtypeId
 from fabrid.domain.values import RowCount, SourceRowIndex
 from fabrid.protocol.models import AttackSplitFraction, BenignSplitFractions
 
@@ -93,6 +94,29 @@ class AttackSplitBoundary:
             validation=self.validation_end,
             test=RowCount(self.total_rows.value - self.validation_end.value),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class AttackSubtypeBoundary:
+    subtype: AttackSubtypeId
+    boundary: AttackSplitBoundary
+
+
+@dataclass(frozen=True, slots=True)
+class DeviceSplitPlan:
+    benign: BenignSplitBoundaries
+    attacks: tuple[AttackSubtypeBoundary, ...]
+
+    def __post_init__(self) -> None:
+        subtypes = tuple(item.subtype for item in self.attacks)
+        if len(set(subtypes)) != len(subtypes):
+            raise ValueError("device split plan contains duplicate attack subtypes")
+
+    def attack_boundary(self, subtype: AttackSubtypeId) -> AttackSplitBoundary:
+        for item in self.attacks:
+            if item.subtype == subtype:
+                return item.boundary
+        raise KeyError(subtype.value)
 
 
 def compute_benign_split_boundaries(
