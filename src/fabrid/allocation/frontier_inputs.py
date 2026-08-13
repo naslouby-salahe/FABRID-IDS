@@ -12,7 +12,7 @@ from fabrid.allocation.frontier import (
 )
 from fabrid.artifacts.score import ScorePartitionArtifact
 from fabrid.calibration.order_statistic import alerts_above_threshold, calibrate_threshold
-from fabrid.domain.enums import AttackSplit, BenignSplit, Label
+from fabrid.domain.enums import AttackSplit, BenignSplit
 from fabrid.domain.identifiers import AttackSubtypeId, ClientId
 from fabrid.domain.scores import ScoreVector
 from fabrid.domain.values import RowCount
@@ -23,6 +23,24 @@ from fabrid.protocol.models import AlphaGrid
 class AttackSubtypeScores:
     subtype: AttackSubtypeId
     scores: ScoreVector
+
+
+@dataclass(frozen=True, slots=True)
+class FrontierScorePopulation:
+    client_id: ClientId
+    benign_frontier: ScoreVector
+    attack_validation: tuple[AttackSubtypeScores, ...]
+
+    def __post_init__(self) -> None:
+        if self.benign_frontier.row_count.value == 0:
+            raise ValueError("frontier score population requires benign frontier scores")
+        if not self.attack_validation:
+            raise ValueError("frontier score population requires attack-validation scores")
+        subtype_ids = tuple(entry.subtype for entry in self.attack_validation)
+        if len(set(subtype_ids)) != len(subtype_ids):
+            raise ValueError("frontier score population contains duplicate attack subtypes")
+        if any(entry.scores.row_count.value == 0 for entry in self.attack_validation):
+            raise ValueError("frontier score population contains an empty attack subtype")
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,34 +84,43 @@ def _attack_subtype_scores(
             key=lambda subtype: subtype.value,
         )
     )
-    result: list[AttackSubtypeScores] = []
-    for subtype in subtypes:
-        scores = np.fromiter(
-            (
-                record.score.value
-                for record in artifact.records
-                if record.attack_subtype == subtype
+    return tuple(
+        AttackSubtypeScores(
+            subtype=subtype,
+            scores=ScoreVector(
+                np.fromiter(
+                    (
+                        record.score.value
+                        for record in artifact.records
+                        if record.attack_subtype == subtype
+                    ),
+                    dtype=np.float64,
+                )
             ),
-            dtype=np.float64,
         )
-        result.append(AttackSubtypeScores(subtype=subtype, scores=ScoreVector(scores)))
-    return tuple(result)
+        for subtype in subtypes
+    )
+
+
+def frontier_score_population(
+    artifacts: FrontierScoreArtifacts,
+) -> FrontierScorePopulation:
+    return FrontierScorePopulation(
+        client_id=artifacts.client_id,
+        benign_frontier=_score_vector(artifacts.benign_frontier),
+        attack_validation=_attack_subtype_scores(artifacts.attack_validation),
+    )
 
 
 def build_client_frontier_inputs(
-    artifacts: FrontierScoreArtifacts,
+    population: FrontierScorePopulation,
     alpha_grid: AlphaGrid,
 ) -> ClientFrontierInputs:
-    benign_scores = _score_vector(artifacts.benign_frontier)
-    attack_scores = _attack_subtype_scores(artifacts.attack_validation)
-    if not attack_scores:
-        raise ValueError("attack-validation artifact contains no attack subtype scores")
-
     candidates: list[CandidateConfusions] = []
     for target_rate in alpha_grid.values:
-        threshold = calibrate_threshold(benign_scores, target_rate)
+        threshold = calibrate_threshold(population.benign_frontier, target_rate)
         subtype_confusions: list[SubtypeConfusion] = []
-        for subtype in attack_scores:
+        for subtype in population.attack_validation:
             alerts = alerts_above_threshold(subtype.scores, threshold)
             true_positive_count = int(np.count_nonzero(alerts.values))
             subtype_confusions.append(
@@ -115,7 +142,7 @@ def build_client_frontier_inputs(
         )
 
     return ClientFrontierInputs(
-        client_id=artifacts.client_id,
-        benign_frontier_scores=benign_scores,
+        client_id=population.client_id,
+        benign_frontier_scores=population.benign_frontier,
         candidates=tuple(candidates),
     )
