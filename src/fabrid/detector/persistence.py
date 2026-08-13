@@ -1,47 +1,75 @@
-"""Detector model/scaler weight persistence (TRAIN-002): the frozen global model and every
-client's TRAIN-only feature scaler for one seed, hashed for provenance, separate from the
-`ScoreArtifact`s that record only the model's *output* on that seed.
-"""
-
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import torch
+from pydantic import BaseModel, ConfigDict
 
-from fabrid.data.preprocessing import FeatureScaler
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
-from fabrid.evaluation.record_level import ClientId
+from fabrid.detector.preprocessing import ClientScaler, FeatureScaler, FederatedScalers
+from fabrid.domain.identifiers import ArtifactDigest, ClientId
+from fabrid.domain.values import FeatureCount, LayerWidth
 
 _MODEL_FILENAME = "model_state_dict.pt"
 _ARCHITECTURE_FILENAME = "architecture.json"
-_SCALERS_FILENAME = "scalers.npz"
+_SCALER_DIRECTORY = "scalers"
+
+
+class _ArchitecturePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    feature_count: int
+    hidden_layers: tuple[int, ...]
 
 
 @dataclass(frozen=True, slots=True)
-class DetectorStateHashes:
-    model_sha256: str
-    scalers_sha256: str
+class ClientScalerArtifact:
+    client_id: ClientId
+    digest: ArtifactDigest
 
 
-def _sha256_of_file(path: Path) -> str:
+@dataclass(frozen=True, slots=True)
+class DetectorArtifactSet:
+    model: ArtifactDigest
+    architecture: ArtifactDigest
+    scalers: tuple[ClientScalerArtifact, ...]
+
+    def scaler_digest(self, client_id: ClientId) -> ArtifactDigest:
+        for scaler in self.scalers:
+            if scaler.client_id == client_id:
+                return scaler.digest
+        raise KeyError(client_id.value)
+
+
+@dataclass(frozen=True, slots=True)
+class PersistedDetector:
+    model: Autoencoder
+    scalers: FederatedScalers
+
+
+def _digest_file(path: Path) -> ArtifactDigest:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1 << 20), b""):
             digest.update(chunk)
-    return digest.hexdigest()
+    return ArtifactDigest(digest.hexdigest())
+
+
+def _architecture_payload(architecture: AutoencoderArchitecture) -> _ArchitecturePayload:
+    return _ArchitecturePayload(
+        feature_count=architecture.feature_count.value,
+        hidden_layers=tuple(layer.value for layer in architecture.hidden_layers),
+    )
 
 
 def save_detector_state(
     output_dir: Path,
     model: Autoencoder,
-    architecture: AutoencoderArchitecture,
-    scaler_by_client: Mapping[ClientId, FeatureScaler],
-) -> DetectorStateHashes:
+    scalers: FederatedScalers,
+) -> DetectorArtifactSet:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model_path = output_dir / _MODEL_FILENAME
@@ -49,40 +77,63 @@ def save_detector_state(
 
     architecture_path = output_dir / _ARCHITECTURE_FILENAME
     architecture_path.write_text(
-        f'{{"n_features": {architecture.n_features}, '
-        f'"hidden_dims": {list(architecture.hidden_dims)}}}',
+        _architecture_payload(model.architecture).model_dump_json(indent=2) + "\n",
         encoding="utf-8",
     )
 
-    scalers_path = output_dir / _SCALERS_FILENAME
-    scaler_arrays: dict[str, np.ndarray] = {}
-    for client_id, scaler in scaler_by_client.items():
-        scaler_arrays[f"{client_id}__mean"] = scaler.mean
-        scaler_arrays[f"{client_id}__std"] = scaler.std
-    # numpy-stubs' savez overloads don't resolve cleanly against **dict unpacking with dynamic
-    # (non-literal) keyword names; this is a documented stub gap, not an application error.
-    np.savez(scalers_path, **scaler_arrays)  # pyright: ignore[reportArgumentType]
+    scaler_directory = output_dir / _SCALER_DIRECTORY
+    scaler_directory.mkdir(parents=True, exist_ok=True)
+    scaler_artifacts: list[ClientScalerArtifact] = []
+    for client in scalers.clients:
+        scaler_path = scaler_directory / f"{client.client_id.value}.npz"
+        np.savez(
+            scaler_path,
+            mean=client.scaler.mean,
+            standard_deviation=client.scaler.standard_deviation,
+        )
+        scaler_artifacts.append(
+            ClientScalerArtifact(
+                client_id=client.client_id,
+                digest=_digest_file(scaler_path),
+            )
+        )
 
-    return DetectorStateHashes(
-        model_sha256=_sha256_of_file(model_path),
-        scalers_sha256=_sha256_of_file(scalers_path),
+    return DetectorArtifactSet(
+        model=_digest_file(model_path),
+        architecture=_digest_file(architecture_path),
+        scalers=tuple(scaler_artifacts),
     )
 
 
-def load_detector_state(
-    output_dir: Path, architecture: AutoencoderArchitecture
-) -> tuple[Autoencoder, dict[ClientId, FeatureScaler]]:
+def load_detector_state(output_dir: Path) -> PersistedDetector:
+    architecture_payload = _ArchitecturePayload.model_validate_json(
+        (output_dir / _ARCHITECTURE_FILENAME).read_text(encoding="utf-8")
+    )
+    architecture = AutoencoderArchitecture(
+        feature_count=FeatureCount(architecture_payload.feature_count),
+        hidden_layers=tuple(
+            LayerWidth(width) for width in architecture_payload.hidden_layers
+        ),
+    )
     model = Autoencoder(architecture)
     state_dict = torch.load(output_dir / _MODEL_FILENAME, weights_only=True)
     model.load_state_dict(state_dict)
 
-    scaler_by_client: dict[ClientId, FeatureScaler] = {}
-    with np.load(output_dir / _SCALERS_FILENAME) as archive:
-        client_ids = {key.rsplit("__", 1)[0] for key in archive}
-        for client_id_str in client_ids:
-            scaler_by_client[ClientId(client_id_str)] = FeatureScaler(
-                mean=archive[f"{client_id_str}__mean"],
-                std=archive[f"{client_id_str}__std"],
+    scaler_directory = output_dir / _SCALER_DIRECTORY
+    client_scalers: list[ClientScaler] = []
+    for scaler_path in sorted(scaler_directory.glob("*.npz")):
+        with np.load(scaler_path) as archive:
+            client_scalers.append(
+                ClientScaler(
+                    client_id=ClientId(scaler_path.stem),
+                    scaler=FeatureScaler(
+                        mean=archive["mean"],
+                        standard_deviation=archive["standard_deviation"],
+                    ),
+                )
             )
 
-    return model, scaler_by_client
+    return PersistedDetector(
+        model=model,
+        scalers=FederatedScalers(tuple(client_scalers)),
+    )
