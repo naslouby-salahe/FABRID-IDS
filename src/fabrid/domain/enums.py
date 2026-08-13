@@ -52,6 +52,11 @@ class FallbackPolicy(StrEnum):
     EQUAL_FPR_AT_BUDGET = "equal_fpr_at_budget"
 
 
+class EligibilityStatus(StrEnum):
+    ELIGIBLE = "eligible"
+    FALLBACK = "fallback"
+
+
 class RetrainingPolicy(StrEnum):
     FROZEN_ACROSS_POLICIES = "frozen_across_policies"
 
