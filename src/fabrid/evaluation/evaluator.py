@@ -15,6 +15,7 @@ from fabrid.calibration.order_statistic import alerts_above_threshold
 from fabrid.domain.coordinates import AllocationCoordinate
 from fabrid.domain.enums import AttackSplit, BenignSplit
 from fabrid.domain.identifiers import AttackSubtypeId, ClientId
+from fabrid.domain.population import ClientPopulation
 from fabrid.domain.provenance import ExperimentProvenance
 from fabrid.domain.scores import ScoreVector
 from fabrid.domain.values import (
@@ -110,6 +111,17 @@ class EvaluationProvenance:
             if client.client_id == client_id:
                 return client.provenance
         raise KeyError(client_id.value)
+
+    def subset(self, population: ClientPopulation) -> EvaluationProvenance:
+        return EvaluationProvenance(
+            tuple(
+                ClientExperimentProvenance(
+                    client_id=client_id,
+                    provenance=self.for_client(client_id),
+                )
+                for client_id in population.clients
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
