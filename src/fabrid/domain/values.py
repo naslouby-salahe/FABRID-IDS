@@ -171,6 +171,14 @@ class MetricDifference:
 
 
 @dataclass(frozen=True, slots=True)
+class UtilityDispersion:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("utility dispersion", self.value)
+
+
+@dataclass(frozen=True, slots=True)
 class FalseAlertCount:
     value: int
 
