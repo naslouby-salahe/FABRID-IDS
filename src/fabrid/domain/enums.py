@@ -27,6 +27,14 @@ class WeightMode(StrEnum):
     OPERATIONAL_RATE = "operational_rate"
 
 
+class BudgetId(StrEnum):
+    FALSE_POSITIVE_0P001 = "false_positive_0p001"
+    FALSE_POSITIVE_0P0025 = "false_positive_0p0025"
+    FALSE_POSITIVE_0P005 = "false_positive_0p005"
+    FALSE_POSITIVE_0P010 = "false_positive_0p010"
+    FALSE_POSITIVE_0P020 = "false_positive_0p020"
+
+
 class AllocationPolicy(StrEnum):
     EQ_FPR = "eq_fpr"
     EQ_ALERT = "eq_alert"
