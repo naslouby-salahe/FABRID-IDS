@@ -12,7 +12,14 @@ from fabrid.allocation.contracts import (
 )
 from fabrid.domain.enums import AllocationPolicy
 from fabrid.domain.identifiers import ClientId
-from fabrid.domain.values import FalsePositiveBudget, TargetFalsePositiveRate
+from fabrid.domain.values import (
+    CandidateIndex,
+    FalsePositiveBudget,
+    IncrementalBudgetCost,
+    MarginalEfficiency,
+    TargetFalsePositiveRate,
+    UtilityDifference,
+)
 
 _BUDGET_TOLERANCE = 1e-12
 
@@ -20,26 +27,26 @@ _BUDGET_TOLERANCE = 1e-12
 @dataclass(frozen=True, slots=True)
 class _Position:
     client_id: ClientId
-    point_index: int
+    point_index: CandidateIndex
 
 
 @dataclass(frozen=True, slots=True)
 class _Increment:
     client_id: ClientId
-    next_index: int
+    next_index: CandidateIndex
     resulting_rate: TargetFalsePositiveRate
-    delta_utility: float
-    incremental_cost: float
-    efficiency: float
+    delta_utility: UtilityDifference
+    incremental_cost: IncrementalBudgetCost
+    efficiency: MarginalEfficiency
 
 
 def _best_increment(increments: tuple[_Increment, ...]) -> _Increment:
     return min(
         increments,
         key=lambda increment: (
-            -increment.efficiency,
-            -increment.delta_utility,
-            increment.incremental_cost,
+            -increment.efficiency.value,
+            -increment.delta_utility.value,
+            increment.incremental_cost.value,
             increment.client_id.value,
             increment.resulting_rate.value,
         ),
@@ -48,31 +55,36 @@ def _best_increment(increments: tuple[_Increment, ...]) -> _Increment:
 
 def _feasible_increment(
     curve: ClientUtilityCurve,
-    index: int,
+    index: CandidateIndex,
     weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     maximum_target_rate: TargetFalsePositiveRate,
 ) -> _Increment | None:
-    if index + 1 >= len(curve.points):
+    next_index = CandidateIndex(index.value + 1)
+    if next_index.value >= len(curve.points):
         return None
 
-    current_point = curve.points[index]
-    next_point = curve.points[index + 1]
+    current_point = curve.points[index.value]
+    next_point = curve.points[next_index.value]
     if next_point.target_rate.value > maximum_target_rate.value + _BUDGET_TOLERANCE:
         return None
 
     delta_rate = next_point.target_rate.value - current_point.target_rate.value
-    incremental_cost = weights.for_client(curve.client_id).value * delta_rate
-    if incremental_cost > remaining_budget.value + _BUDGET_TOLERANCE:
+    incremental_cost = IncrementalBudgetCost(
+        weights.for_client(curve.client_id).value * delta_rate
+    )
+    if incremental_cost.value > remaining_budget.value + _BUDGET_TOLERANCE:
         return None
 
-    delta_utility = next_point.utility.value - current_point.utility.value
-    efficiency = (
-        math.inf if incremental_cost == 0.0 else delta_utility / incremental_cost
+    delta_utility = UtilityDifference(next_point.utility.value - current_point.utility.value)
+    efficiency = MarginalEfficiency(
+        math.inf
+        if incremental_cost.value == 0.0
+        else delta_utility.value / incremental_cost.value
     )
     return _Increment(
         client_id=curve.client_id,
-        next_index=index + 1,
+        next_index=next_index,
         resulting_rate=next_point.target_rate,
         delta_utility=delta_utility,
         incremental_cost=incremental_cost,
@@ -92,7 +104,7 @@ def allocate_greedy(
         raise ValueError("utility curves and allocation weights must share clients")
 
     positions = [
-        _Position(client_id=curve.client_id, point_index=0)
+        _Position(client_id=curve.client_id, point_index=CandidateIndex(0))
         for curve in utility_curves.clients
     ]
     remaining_budget = budget
@@ -128,7 +140,7 @@ def allocate_greedy(
             for position in positions
         ]
         remaining_budget = FalsePositiveBudget(
-            max(0.0, remaining_budget.value - chosen.incremental_cost)
+            max(0.0, remaining_budget.value - chosen.incremental_cost.value)
         )
 
     return Allocation(
@@ -137,7 +149,7 @@ def allocate_greedy(
             AllocationDecision(
                 client_id=position.client_id,
                 target_rate=utility_curves.for_client(position.client_id)
-                .points[position.point_index]
+                .points[position.point_index.value]
                 .target_rate,
             )
             for position in positions
