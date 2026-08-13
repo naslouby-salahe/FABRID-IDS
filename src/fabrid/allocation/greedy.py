@@ -1,140 +1,145 @@
-"""GREEDY baseline: iterative marginal-utility-efficiency budget allocation.
-
-Starting from alpha_k = 0 for every client, repeatedly grants the single
-feasible next-grid-point increment with the largest marginal utility per unit
-weighted budget, until no client can afford its next increment.
-"""
-
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
 from dataclasses import dataclass
 
-from fabrid.evaluation.record_level import ClientId
-from fabrid.schemas.allocation import (
+from fabrid.allocation.contracts import (
     Allocation,
     AllocationDecision,
-    AllocationPolicy,
     ClientUtilityCurve,
+    ClientUtilityCurves,
+    FederationWeights,
 )
+from fabrid.domain.enums import AllocationPolicy
+from fabrid.domain.identifiers import ClientId
+from fabrid.domain.values import FalsePositiveBudget, TargetFalsePositiveRate
 
 _BUDGET_TOLERANCE = 1e-12
+
+
+@dataclass(frozen=True, slots=True)
+class _Position:
+    client_id: ClientId
+    point_index: int
 
 
 @dataclass(frozen=True, slots=True)
 class _Increment:
     client_id: ClientId
     next_index: int
-    resulting_alpha: float
+    resulting_rate: TargetFalsePositiveRate
     delta_utility: float
     incremental_cost: float
     efficiency: float
 
 
-def _best_increment(increments: list[_Increment]) -> _Increment:
-    # Tie order: largest efficiency; then larger delta_utility; then lower
-    # incremental cost; then lower client_id; then lower resulting alpha.
-    # Expressed as a min-key by negating the two "prefer largest" fields.
+def _best_increment(increments: tuple[_Increment, ...]) -> _Increment:
     return min(
         increments,
-        key=lambda inc: (
-            -inc.efficiency,
-            -inc.delta_utility,
-            inc.incremental_cost,
-            inc.client_id,
-            inc.resulting_alpha,
+        key=lambda increment: (
+            -increment.efficiency,
+            -increment.delta_utility,
+            increment.incremental_cost,
+            increment.client_id.value,
+            increment.resulting_rate.value,
         ),
     )
 
 
 def _feasible_increment(
-    client_id: ClientId,
     curve: ClientUtilityCurve,
     index: int,
-    client_weight: float,
-    remaining_budget: float,
-    alpha_max: float,
+    weights: FederationWeights,
+    remaining_budget: FalsePositiveBudget,
+    maximum_target_rate: TargetFalsePositiveRate,
 ) -> _Increment | None:
-    if index + 1 >= len(curve.alpha_grid):
+    if index + 1 >= len(curve.points):
         return None
-    next_alpha = curve.alpha_grid[index + 1]
-    if next_alpha > alpha_max + _BUDGET_TOLERANCE:
+
+    current_point = curve.points[index]
+    next_point = curve.points[index + 1]
+    if next_point.target_rate.value > maximum_target_rate.value + _BUDGET_TOLERANCE:
         return None
-    delta_alpha = next_alpha - curve.alpha_grid[index]
-    incremental_cost = client_weight * delta_alpha
-    if incremental_cost > remaining_budget + _BUDGET_TOLERANCE:
+
+    delta_rate = next_point.target_rate.value - current_point.target_rate.value
+    incremental_cost = weights.for_client(curve.client_id).value * delta_rate
+    if incremental_cost > remaining_budget.value + _BUDGET_TOLERANCE:
         return None
-    delta_utility = curve.utility_at_index(index + 1) - curve.utility_at_index(index)
-    efficiency = math.inf if incremental_cost == 0 else delta_utility / incremental_cost
+
+    delta_utility = next_point.utility.value - current_point.utility.value
+    efficiency = (
+        math.inf if incremental_cost == 0.0 else delta_utility / incremental_cost
+    )
     return _Increment(
-        client_id=client_id,
+        client_id=curve.client_id,
         next_index=index + 1,
-        resulting_alpha=next_alpha,
+        resulting_rate=next_point.target_rate,
         delta_utility=delta_utility,
         incremental_cost=incremental_cost,
         efficiency=efficiency,
     )
 
 
-def _validate_inputs(
-    utility_curves: Mapping[ClientId, ClientUtilityCurve],
-    weight: Mapping[ClientId, float],
-    budget: float,
-) -> None:
-    if not utility_curves:
-        raise ValueError("allocate_greedy requires at least one client")
-    if utility_curves.keys() != weight.keys():
-        raise ValueError("utility_curves and weight must share the same client set")
-    if budget < 0:
-        raise ValueError(f"budget must be non-negative, got {budget}")
-
-    shared_grid = next(iter(utility_curves.values())).alpha_grid
-    for curve in utility_curves.values():
-        if curve.alpha_grid != shared_grid:
-            raise ValueError("all clients must share the same candidate target-rate grid")
-
-
 def allocate_greedy(
-    utility_curves: Mapping[ClientId, ClientUtilityCurve],
-    weight: Mapping[ClientId, float],
-    budget: float,
-    alpha_max: float,
+    utility_curves: ClientUtilityCurves,
+    weights: FederationWeights,
+    budget: FalsePositiveBudget,
+    maximum_target_rate: TargetFalsePositiveRate,
 ) -> Allocation:
-    _validate_inputs(utility_curves, weight, budget)
+    curve_clients = {curve.client_id for curve in utility_curves.clients}
+    weight_clients = {client.client_id for client in weights.clients}
+    if curve_clients != weight_clients:
+        raise ValueError("utility curves and federation weights must share clients")
 
-    current_index: dict[ClientId, int] = dict.fromkeys(utility_curves, 0)
+    positions = [
+        _Position(client_id=curve.client_id, point_index=0)
+        for curve in utility_curves.clients
+    ]
     remaining_budget = budget
 
     while True:
-        increments = [
+        increments = tuple(
             increment
-            for client_id, curve in utility_curves.items()
+            for position in positions
             if (
                 increment := _feasible_increment(
-                    client_id,
-                    curve,
-                    current_index[client_id],
-                    weight[client_id],
-                    remaining_budget,
-                    alpha_max,
+                    curve=utility_curves.for_client(position.client_id),
+                    index=position.point_index,
+                    weights=weights,
+                    remaining_budget=remaining_budget,
+                    maximum_target_rate=maximum_target_rate,
                 )
             )
             is not None
-        ]
-
+        )
         if not increments:
             break
 
         chosen = _best_increment(increments)
-        current_index[chosen.client_id] = chosen.next_index
-        remaining_budget -= chosen.incremental_cost
-
-    decisions = {
-        client_id: AllocationDecision(
-            client_id=client_id,
-            alpha_selected=utility_curves[client_id].alpha_grid[index],
+        positions = [
+            _Position(
+                client_id=position.client_id,
+                point_index=(
+                    chosen.next_index
+                    if position.client_id == chosen.client_id
+                    else position.point_index
+                ),
+            )
+            for position in positions
+        ]
+        remaining_budget = FalsePositiveBudget(
+            max(0.0, remaining_budget.value - chosen.incremental_cost)
         )
-        for client_id, index in current_index.items()
-    }
-    return Allocation(policy=AllocationPolicy.GREEDY, decisions=decisions)
+
+    return Allocation(
+        policy=AllocationPolicy.GREEDY,
+        decisions=tuple(
+            AllocationDecision(
+                client_id=position.client_id,
+                target_rate=utility_curves.for_client(position.client_id)
+                .points[position.point_index]
+                .target_rate,
+            )
+            for position in positions
+        ),
+    )
