@@ -232,6 +232,22 @@ class BudgetUsageRatio:
 
 
 @dataclass(frozen=True, slots=True)
+class BudgetViolationRatio:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("budget-violation ratio", self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class CoefficientOfVariation:
+    value: float
+
+    def __post_init__(self) -> None:
+        _require_non_negative("coefficient of variation", self.value)
+
+
+@dataclass(frozen=True, slots=True)
 class SolverObjective:
     value: float
 
