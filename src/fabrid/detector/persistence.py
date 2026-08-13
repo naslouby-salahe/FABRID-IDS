@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import torch
 from pydantic import BaseModel, ConfigDict
+from safetensors.torch import load_file, save_file
 
+from fabrid.artifacts.digests import digest_file
 from fabrid.detector.model import Autoencoder, AutoencoderArchitecture
 from fabrid.detector.preprocessing import ClientScaler, FeatureScaler, FederatedScalers
 from fabrid.domain.identifiers import ArtifactDigest, ClientId
 from fabrid.domain.values import FeatureCount, LayerWidth
 
-_MODEL_FILENAME = "model_state_dict.pt"
+_MODEL_FILENAME = "model.safetensors"
 _ARCHITECTURE_FILENAME = "architecture.json"
 _SCALER_DIRECTORY = "scalers"
+_SCALER_SUFFIX = ".safetensors"
+_SCALER_MEAN_KEY = "mean"
+_SCALER_STANDARD_DEVIATION_KEY = "standard_deviation"
 
 
 class _ArchitecturePayload(BaseModel):
@@ -50,19 +54,27 @@ class PersistedDetector:
     scalers: FederatedScalers
 
 
-def _digest_file(path: Path) -> ArtifactDigest:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
-    return ArtifactDigest(digest.hexdigest())
-
-
 def _architecture_payload(architecture: AutoencoderArchitecture) -> _ArchitecturePayload:
     return _ArchitecturePayload(
         feature_count=architecture.feature_count.value,
         hidden_layers=tuple(layer.value for layer in architecture.hidden_layers),
     )
+
+
+def _state_dict_for_storage(model: Autoencoder) -> dict[str, torch.Tensor]:
+    return {
+        name: tensor.detach().cpu().contiguous()
+        for name, tensor in model.state_dict().items()
+    }
+
+
+def _scaler_tensors(scaler: FeatureScaler) -> dict[str, torch.Tensor]:
+    return {
+        _SCALER_MEAN_KEY: torch.from_numpy(np.ascontiguousarray(scaler.mean)),
+        _SCALER_STANDARD_DEVIATION_KEY: torch.from_numpy(
+            np.ascontiguousarray(scaler.standard_deviation)
+        ),
+    }
 
 
 def save_detector_state(
@@ -73,7 +85,7 @@ def save_detector_state(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model_path = output_dir / _MODEL_FILENAME
-    torch.save(model.state_dict(), model_path)
+    save_file(_state_dict_for_storage(model), model_path)
 
     architecture_path = output_dir / _ARCHITECTURE_FILENAME
     architecture_path.write_text(
@@ -85,22 +97,18 @@ def save_detector_state(
     scaler_directory.mkdir(parents=True, exist_ok=True)
     scaler_artifacts: list[ClientScalerArtifact] = []
     for client in scalers.clients:
-        scaler_path = scaler_directory / f"{client.client_id.value}.npz"
-        np.savez(
-            scaler_path,
-            mean=client.scaler.mean,
-            standard_deviation=client.scaler.standard_deviation,
-        )
+        scaler_path = scaler_directory / f"{client.client_id.value}{_SCALER_SUFFIX}"
+        save_file(_scaler_tensors(client.scaler), scaler_path)
         scaler_artifacts.append(
             ClientScalerArtifact(
                 client_id=client.client_id,
-                digest=_digest_file(scaler_path),
+                digest=digest_file(scaler_path),
             )
         )
 
     return DetectorArtifactSet(
-        model=_digest_file(model_path),
-        architecture=_digest_file(architecture_path),
+        model=digest_file(model_path),
+        architecture=digest_file(architecture_path),
         scalers=tuple(scaler_artifacts),
     )
 
@@ -116,22 +124,23 @@ def load_detector_state(output_dir: Path) -> PersistedDetector:
         ),
     )
     model = Autoencoder(architecture)
-    state_dict = torch.load(output_dir / _MODEL_FILENAME, weights_only=True)
-    model.load_state_dict(state_dict)
+    model.load_state_dict(load_file(output_dir / _MODEL_FILENAME))
 
     scaler_directory = output_dir / _SCALER_DIRECTORY
     client_scalers: list[ClientScaler] = []
-    for scaler_path in sorted(scaler_directory.glob("*.npz")):
-        with np.load(scaler_path) as archive:
-            client_scalers.append(
-                ClientScaler(
-                    client_id=ClientId(scaler_path.stem),
-                    scaler=FeatureScaler(
-                        mean=archive["mean"],
-                        standard_deviation=archive["standard_deviation"],
-                    ),
-                )
+    for scaler_path in sorted(scaler_directory.glob(f"*{_SCALER_SUFFIX}")):
+        tensors = load_file(scaler_path)
+        client_scalers.append(
+            ClientScaler(
+                client_id=ClientId(scaler_path.name.removesuffix(_SCALER_SUFFIX)),
+                scaler=FeatureScaler(
+                    mean=tensors[_SCALER_MEAN_KEY].numpy().copy(),
+                    standard_deviation=tensors[_SCALER_STANDARD_DEVIATION_KEY]
+                    .numpy()
+                    .copy(),
+                ),
             )
+        )
 
     return PersistedDetector(
         model=model,
