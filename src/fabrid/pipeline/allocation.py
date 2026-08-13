@@ -9,6 +9,7 @@ from fabrid.allocation.contracts import (
     ClientBudgetWeight,
     FederationWeights,
 )
+from fabrid.allocation.equal_alert import allocate_equal_alert
 from fabrid.allocation.equal_fpr import allocate_equal_fpr
 from fabrid.allocation.fabrid_macro import allocate_fabrid_macro
 from fabrid.allocation.fabrid_minimax import allocate_fabrid_minimax
@@ -68,6 +69,7 @@ from fabrid.pipeline.score_loading import load_client_scores
 from fabrid.protocol.models import BudgetLevel, FabridProtocol
 
 _BUDGET_TOLERANCE = 1.0e-12
+_WEIGHT_EQUALITY_TOLERANCE = 1.0e-12
 
 
 @dataclass(frozen=True, slots=True)
@@ -454,36 +456,54 @@ def run_seed_budget(
         provenance,
         problem.frontier.fallback_rate,
     )
-    greedy = _run_greedy(
-        coordinate,
-        scores,
-        problem,
-        protocol,
-        provenance,
-    )
-    fabrid_macro = _run_optimized(
-        coordinate,
-        AllocationPolicy.FABRID_MACRO,
-        scores,
-        problem,
-        protocol,
-        provenance,
-    )
-    fabrid_minimax = _run_optimized(
-        coordinate,
-        AllocationPolicy.FABRID_MINIMAX,
-        scores,
-        problem,
-        protocol,
-        provenance,
+    runs: list[PolicyRun] = [equal_fpr]
+
+    weight_values = tuple(client.weight.value for client in problem.weights.clients)
+    if max(weight_values) - min(weight_values) >= _WEIGHT_EQUALITY_TOLERANCE:
+        runs.append(
+            evaluate_policy(
+                coordinate,
+                allocate_equal_alert(
+                    problem.weights,
+                    budget_level.value,
+                    protocol.alpha_grid.maximum,
+                ),
+                scores,
+                problem.weights,
+                not_applicable_solver_evidence(),
+                provenance,
+                problem.frontier.fallback_rate,
+            )
+        )
+
+    runs.extend(
+        (
+            _run_greedy(
+                coordinate,
+                scores,
+                problem,
+                protocol,
+                provenance,
+            ),
+            _run_optimized(
+                coordinate,
+                AllocationPolicy.FABRID_MACRO,
+                scores,
+                problem,
+                protocol,
+                provenance,
+            ),
+            _run_optimized(
+                coordinate,
+                AllocationPolicy.FABRID_MINIMAX,
+                scores,
+                problem,
+                protocol,
+                provenance,
+            ),
+        )
     )
 
-    runs: tuple[PolicyRun, ...] = (
-        equal_fpr,
-        greedy,
-        fabrid_macro,
-        fabrid_minimax,
-    )
     policy_results: list[PolicyEvaluation] = []
     records: list[ClientResultRecord] = []
     for run in runs:
@@ -499,5 +519,5 @@ def run_seed_budget(
             policies=tuple(policy_results),
         ),
         records=tuple(records),
-        policy_runs=runs,
+        policy_runs=tuple(runs),
     )
