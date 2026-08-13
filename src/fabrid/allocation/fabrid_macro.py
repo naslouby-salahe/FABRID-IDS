@@ -6,8 +6,8 @@ from scipy.optimize import Bounds, LinearConstraint
 from fabrid.allocation.contracts import (
     Allocation,
     AllocationDecision,
+    AllocationWeights,
     ClientUtilityCurves,
-    FederationWeights,
 )
 from fabrid.allocation.formulation import (
     budget_constraint,
@@ -25,14 +25,14 @@ _BUDGET_TOLERANCE_FLOOR = 1e-12
 
 def allocate_fabrid_macro(
     utility_curves: ClientUtilityCurves,
-    weights: FederationWeights,
+    weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     settings: SolverSettings,
 ) -> Allocation:
     curve_client_ids = {curve.client_id for curve in utility_curves.clients}
     weight_client_ids = {client.client_id for client in weights.clients}
     if curve_client_ids != weight_client_ids:
-        raise ValueError("utility curves and federation weights must share clients")
+        raise ValueError("utility curves and allocation weights must share clients")
 
     curves = tuple(
         sorted(utility_curves.clients, key=lambda curve: curve.client_id.value)
@@ -41,11 +41,7 @@ def allocate_fabrid_macro(
     candidate_count = RowCount(len(curves[0].points))
 
     utility = np.array(
-        [
-            point.utility.value
-            for curve in curves
-            for point in curve.points
-        ],
+        [point.utility.value for curve in curves for point in curve.points],
         dtype=np.float64,
     )
     cost = np.array(
@@ -62,14 +58,8 @@ def allocate_fabrid_macro(
     bounds = Bounds(0.0, 1.0)
     integrality = np.ones(client_count.value * candidate_count.value)
 
-    utility_tolerance = max(
-        _UTILITY_TOLERANCE_FLOOR,
-        settings.accepted_gap.value,
-    )
-    budget_tolerance = max(
-        _BUDGET_TOLERANCE_FLOOR,
-        settings.accepted_gap.value,
-    )
+    utility_tolerance = max(_UTILITY_TOLERANCE_FLOOR, settings.accepted_gap.value)
+    budget_tolerance = max(_BUDGET_TOLERANCE_FLOOR, settings.accepted_gap.value)
 
     stage_one = solve_milp(
         -utility / client_count.value,
@@ -120,9 +110,7 @@ def allocate_fabrid_macro(
         decisions=tuple(
             AllocationDecision(
                 client_id=curve.client_id,
-                target_rate=curve.points[
-                    int(np.argmax(selection[index]))
-                ].target_rate,
+                target_rate=curve.points[int(np.argmax(selection[index]))].target_rate,
             )
             for index, curve in enumerate(curves)
         ),
