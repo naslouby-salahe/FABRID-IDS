@@ -34,6 +34,18 @@ class FeatureMatrix:
     def feature_count(self) -> FeatureCount:
         return FeatureCount(self.values.shape[1])
 
+    def prefix(self, row_count: RowCount) -> FeatureMatrix:
+        if row_count.value > self.row_count.value:
+            raise ValueError("requested prefix exceeds feature matrix row count")
+        return FeatureMatrix(self.values[: row_count.value])
+
+    def between(self, start: RowCount, end: RowCount) -> FeatureMatrix:
+        if start.value > end.value:
+            raise ValueError("feature matrix range start may not exceed end")
+        if end.value > self.row_count.value:
+            raise ValueError("feature matrix range exceeds row count")
+        return FeatureMatrix(self.values[start.value : end.value])
+
 
 @dataclass(frozen=True, slots=True)
 class AttackFeatureBlock:
