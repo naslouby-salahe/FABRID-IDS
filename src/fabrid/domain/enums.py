@@ -154,6 +154,33 @@ class ExperimentId(StrEnum):
     EVENT_LEVEL = "event_level"
 
 
+class ExperimentVariantId(StrEnum):
+    PRIMARY = "primary"
+    ATTACK_SUBTYPE_FOLD_0 = "attack_subtype_fold_0"
+    ATTACK_SUBTYPE_FOLD_1 = "attack_subtype_fold_1"
+    ATTACK_SUBTYPE_FOLD_2 = "attack_subtype_fold_2"
+    BOTNET_BASHLITE_TO_MIRAI = "botnet_bashlite_to_mirai"
+    BOTNET_MIRAI_TO_BASHLITE = "botnet_mirai_to_bashlite"
+    WEIGHT_GAMMA_0 = "weight_gamma_0"
+    WEIGHT_GAMMA_0P5 = "weight_gamma_0p5"
+    WEIGHT_GAMMA_1 = "weight_gamma_1"
+    WEIGHT_GAMMA_1P5 = "weight_gamma_1p5"
+    CONSERVATIVE_MINIMAX = "conservative_minimax"
+    EXTERNAL_PRIMARY = "external_primary"
+    EVENT_PRIMARY = "event_primary"
+
+
+class AttackFoldId(StrEnum):
+    FOLD_0 = "fold_0"
+    FOLD_1 = "fold_1"
+    FOLD_2 = "fold_2"
+
+
+class BotnetFamily(StrEnum):
+    BASHLITE = "bashlite"
+    MIRAI = "mirai"
+
+
 class AuditStatus(StrEnum):
     PASS = "pass"
     FAIL = "fail"
