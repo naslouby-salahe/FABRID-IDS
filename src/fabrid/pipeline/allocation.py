@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from fabrid.allocation.baselines.equal_alert import allocate_equal_alert
 from fabrid.allocation.contracts import (
     Allocation,
     AllocationDecision,
@@ -9,10 +10,6 @@ from fabrid.allocation.contracts import (
     ClientBudgetWeight,
     FederationWeights,
 )
-from fabrid.allocation.equal_alert import allocate_equal_alert
-from fabrid.allocation.equal_fpr import allocate_equal_fpr
-from fabrid.allocation.fabrid_macro import allocate_fabrid_macro
-from fabrid.allocation.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.frontier import (
     FallbackClientFrontier,
     FederationFrontier,
@@ -23,7 +20,10 @@ from fabrid.allocation.frontier_inputs import (
     FrontierScoreArtifacts,
     build_client_frontier_inputs,
 )
-from fabrid.allocation.greedy import allocate_greedy
+from fabrid.allocation.policies.equal_fpr import allocate_equal_fpr
+from fabrid.allocation.policies.fabrid_macro import allocate_fabrid_macro
+from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
+from fabrid.allocation.policies.greedy import allocate_greedy
 from fabrid.allocation.solver import (
     SolverEvidence,
     SolverInvalidError,
