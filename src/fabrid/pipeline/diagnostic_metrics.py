@@ -21,3 +21,21 @@ from fabrid.evaluation.metrics import (
 from fabrid.pipeline.allocation import LoadedSeedScores
 from fabrid.pipeline.diagnostics import DiagnosticPolicyEvidence
 from fabrid.protocol.models import BudgetLevel
+
+
+def _vector(values: tuple[float, ...]) -> ScoreVector:
+    return ScoreVector(np.asarray(values, dtype=np.float64))
+
+
+def _subtypes(scores: LoadedSeedScores, client_index: int) -> tuple[AttackSubtypeId, ...]:
+    records = scores.clients[client_index].evaluation.attack_test.records
+    return tuple(
+        sorted(
+            {
+                record.attack_subtype
+                for record in records
+                if record.attack_subtype is not None
+            },
+            key=lambda subtype: subtype.value,
+        )
+    )
