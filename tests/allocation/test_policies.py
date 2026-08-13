@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import pytest
 
 from fabrid.allocation.baselines.equal_alert import allocate_equal_alert
@@ -15,6 +17,7 @@ from fabrid.allocation.policies.equal_fpr import allocate_equal_fpr
 from fabrid.allocation.policies.fabrid_macro import allocate_fabrid_macro
 from fabrid.allocation.policies.fabrid_minimax import allocate_fabrid_minimax
 from fabrid.allocation.policies.greedy import allocate_greedy
+from fabrid.allocation.solver import OptimizedAllocation
 from fabrid.domain.enums import AllocationPolicy, BudgetFeasibility, SolverStatus
 from fabrid.domain.identifiers import ClientId
 from fabrid.domain.population import ClientPopulation
@@ -24,7 +27,13 @@ from fabrid.domain.values import (
     FalsePositiveBudget,
     TargetFalsePositiveRate,
 )
+from fabrid.protocol.models import SolverSettings
 from fabrid.protocol.specification import PROTOCOL
+
+FabridAllocator = Callable[
+    [ClientUtilityCurves, AllocationWeights, FalsePositiveBudget, SolverSettings],
+    OptimizedAllocation,
+]
 
 
 def _curve(client_id: ClientId, utilities: tuple[float, ...]) -> ClientUtilityCurve:
@@ -118,7 +127,7 @@ def test_greedy_prefers_higher_incremental_utility() -> None:
     ),
 )
 def test_fabrid_optimizers_return_budget_feasible_optimal_allocations(
-    allocator,
+    allocator: FabridAllocator,
     policy: AllocationPolicy,
 ) -> None:
     curves = ClientUtilityCurves(
@@ -139,4 +148,7 @@ def test_fabrid_optimizers_return_budget_feasible_optimal_allocations(
 
     assert optimized.allocation.policy is policy
     assert optimized.solver.status is SolverStatus.OPTIMAL
-    assert optimized.allocation.budget_feasibility(weights, budget) is BudgetFeasibility.FEASIBLE
+    assert (
+        optimized.allocation.budget_feasibility(weights, budget)
+        is BudgetFeasibility.FEASIBLE
+    )
