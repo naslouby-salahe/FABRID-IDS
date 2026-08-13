@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint, milp
 
+from fabrid.allocation.contracts import Allocation
+from fabrid.domain.enums import SolverStage, SolverStatus
 from fabrid.domain.identifiers import FailureReason
 from fabrid.domain.values import SolverGap, SolverObjective, SolverRuntimeMilliseconds
 from fabrid.protocol.models import SolverSettings
@@ -21,14 +23,70 @@ class SolverInvalidError(Exception):
 
 
 @dataclass(frozen=True, slots=True)
-class MilpSolution:
-    variables: np.ndarray
+class SolverStageEvidence:
+    stage: SolverStage
     objective: SolverObjective
     gap: SolverGap
     runtime: SolverRuntimeMilliseconds
 
 
+@dataclass(frozen=True, slots=True)
+class SolverEvidence:
+    status: SolverStatus
+    stages: tuple[SolverStageEvidence, ...]
+
+    def __post_init__(self) -> None:
+        if self.status is SolverStatus.OPTIMAL and not self.stages:
+            raise ValueError("optimal solver evidence requires at least one solver stage")
+        if self.status is not SolverStatus.OPTIMAL and self.stages:
+            raise ValueError("non-optimal solver evidence may not carry accepted solver stages")
+        stage_ids = tuple(stage.stage for stage in self.stages)
+        if len(set(stage_ids)) != len(stage_ids):
+            raise ValueError("solver evidence contains duplicate stages")
+
+    @property
+    def final_objective(self) -> SolverObjective | None:
+        return None if not self.stages else self.stages[-1].objective
+
+    @property
+    def final_gap(self) -> SolverGap | None:
+        return None if not self.stages else self.stages[-1].gap
+
+    @property
+    def total_runtime(self) -> SolverRuntimeMilliseconds | None:
+        if not self.stages:
+            return None
+        return SolverRuntimeMilliseconds(
+            sum(stage.runtime.value for stage in self.stages)
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class OptimizedAllocation:
+    allocation: Allocation
+    solver: SolverEvidence
+
+    def __post_init__(self) -> None:
+        if self.solver.status is not SolverStatus.OPTIMAL:
+            raise ValueError("optimized allocation requires optimal solver evidence")
+
+
+@dataclass(frozen=True, slots=True)
+class MilpSolution:
+    variables: np.ndarray
+    evidence: SolverStageEvidence
+
+    @property
+    def objective(self) -> SolverObjective:
+        return self.evidence.objective
+
+
+def not_applicable_solver_evidence() -> SolverEvidence:
+    return SolverEvidence(status=SolverStatus.NOT_APPLICABLE, stages=())
+
+
 def solve_milp(
+    stage: SolverStage,
     minimize_coefficients: np.ndarray,
     constraints: tuple[LinearConstraint, ...],
     integrality: np.ndarray,
@@ -70,7 +128,10 @@ def solve_milp(
 
     return MilpSolution(
         variables=np.asarray(result.x),
-        objective=SolverObjective(float(objective_value)),
-        gap=SolverGap(float(mip_gap)),
-        runtime=runtime,
+        evidence=SolverStageEvidence(
+            stage=stage,
+            objective=SolverObjective(float(objective_value)),
+            gap=SolverGap(float(mip_gap)),
+            runtime=runtime,
+        ),
     )
