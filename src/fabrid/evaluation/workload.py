@@ -1,60 +1,51 @@
-"""Communication-overhead accounting for the client-utility upload and server response.
-
-Logical (pre-serialization) byte counts per the fixed message layout: 207
-float32 utility values, a 128-bit client UUID, three count fields, an
-eligible-subtype count, flags, and a config hash for the client-to-server
-message; a single candidate-index byte plus identifying/integrity metadata
-for the server response.
-"""
-
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 
-_FLOAT32_BYTES = 4
-_UUID_BYTES = 16
-_UINT64_BYTES = 8
-_UINT32_BYTES = 4
-_UINT16_BYTES = 2
-_SHA256_BYTES = 32
+from fabrid.domain.values import BitCount, ByteCount, CandidateCount, ClientCount
+
+_FLOAT32_BYTES = ByteCount(4)
+_UUID_BYTES = ByteCount(16)
+_UINT64_BYTES = ByteCount(8)
+_UINT32_BYTES = ByteCount(4)
+_UINT16_BYTES = ByteCount(2)
+_SHA256_BYTES = ByteCount(32)
 
 
 @dataclass(frozen=True, slots=True)
 class ClientUploadPayload:
-    alpha_grid_size: int
+    candidate_count: CandidateCount
 
-    def __post_init__(self) -> None:
-        if self.alpha_grid_size < 1:
-            raise ValueError(f"alpha_grid_size must be positive, got {self.alpha_grid_size}")
+    @property
+    def utility_values_bytes(self) -> ByteCount:
+        return ByteCount(self.candidate_count.value * _FLOAT32_BYTES.value)
 
-    def utility_values_bytes(self) -> int:
-        return self.alpha_grid_size * _FLOAT32_BYTES
-
-    def total_bytes(self) -> int:
-        return (
-            self.utility_values_bytes()
-            + _UUID_BYTES
-            + _UINT64_BYTES  # nominal/predeployment count
-            + _UINT32_BYTES  # final-calibration count
-            + _UINT32_BYTES  # validation-attack count
-            + _UINT16_BYTES  # eligible-subtype count
-            + _UINT16_BYTES  # flags
-            + _SHA256_BYTES  # config sha256
+    @property
+    def total_bytes(self) -> ByteCount:
+        return ByteCount(
+            self.utility_values_bytes.value
+            + _UUID_BYTES.value
+            + _UINT64_BYTES.value
+            + _UINT32_BYTES.value
+            + _UINT32_BYTES.value
+            + _UINT16_BYTES.value
+            + _UINT16_BYTES.value
+            + _SHA256_BYTES.value
         )
 
 
-def federation_upload_bytes(payload: ClientUploadPayload, client_count: int) -> int:
-    if client_count < 1:
-        raise ValueError(f"client_count must be positive, got {client_count}")
-    return payload.total_bytes() * client_count
+def federation_upload_bytes(
+    payload: ClientUploadPayload,
+    client_count: ClientCount,
+) -> ByteCount:
+    return ByteCount(payload.total_bytes.value * client_count.value)
 
 
-def candidate_index_bits(alpha_grid_size: int) -> int:
-    if alpha_grid_size < 1:
-        raise ValueError(f"alpha_grid_size must be positive, got {alpha_grid_size}")
-    return max(1, math.ceil(math.log2(alpha_grid_size)))
+def candidate_index_bits(candidate_count: CandidateCount) -> BitCount:
+    return BitCount(max(1, math.ceil(math.log2(candidate_count.value))))
 
 
-def candidate_index_bytes(alpha_grid_size: int) -> int:
-    return math.ceil(candidate_index_bits(alpha_grid_size) / 8)
+def candidate_index_bytes(candidate_count: CandidateCount) -> ByteCount:
+    bits = candidate_index_bits(candidate_count)
+    return ByteCount(math.ceil(bits.value / 8))
