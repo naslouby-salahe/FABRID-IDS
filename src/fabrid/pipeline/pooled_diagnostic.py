@@ -45,3 +45,24 @@ def _client_fpr(scores: LoadedSeedScores, client_index: int, threshold: Threshol
         return FalsePositiveRate(0.0)
     values = np.fromiter((record.score.value for record in records), dtype=np.float64)
     return FalsePositiveRate(float(np.mean(values > threshold.value)))
+
+
+def _client_recall(scores: LoadedSeedScores, client_index: int, threshold: Threshold) -> ClientMacroRecall:
+    client = scores.clients[client_index]
+    recalls: list[SubtypeRecall] = []
+    for subtype in _subtypes(scores, client_index):
+        values = np.fromiter(
+            (
+                record.score.value
+                for record in client.evaluation.attack_test.records
+                if record.attack_subtype == subtype
+            ),
+            dtype=np.float64,
+        )
+        recalls.append(
+            SubtypeRecall(
+                subtype=subtype,
+                rate=TruePositiveRate(float(np.mean(values > threshold.value))),
+            )
+        )
+    return ClientMacroRecall(client.client_id, client_macro_recall(tuple(recalls)))
