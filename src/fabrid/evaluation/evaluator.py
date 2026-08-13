@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from fabrid.allocation.contracts import Allocation, FederationWeights
+from fabrid.allocation.solver import SolverEvidence
 from fabrid.artifacts.score import ScorePartitionArtifact
 from fabrid.calibration.final_calibration import (
     FinalCalibrationInputs,
@@ -18,9 +19,7 @@ from fabrid.domain.provenance import ExperimentProvenance
 from fabrid.domain.scores import ScoreVector
 from fabrid.domain.values import (
     FalseAlertCount,
-    FalsePositiveBudget,
     FalsePositiveRate,
-    MacroRecall,
     Probability,
     RowCount,
     TruePositiveRate,
@@ -42,7 +41,6 @@ from fabrid.evaluation.results import (
     CompletedPolicyEvaluation,
     ConfusionCounts,
     DetectionMetrics,
-    SolverOutcome,
 )
 
 
@@ -121,6 +119,15 @@ class AttackSubtypeScores:
 
 
 @dataclass(frozen=True, slots=True)
+class SubtypeEvaluation:
+    subtype: AttackSubtypeId
+    attack_test_count: RowCount
+    true_positive: RowCount
+    false_negative: RowCount
+    true_positive_rate: TruePositiveRate
+
+
+@dataclass(frozen=True, slots=True)
 class PolicyEvaluationResult:
     summary: CompletedPolicyEvaluation
     records: tuple[ClientResultRecord, ...]
@@ -170,7 +177,7 @@ def evaluate_allocation(
     allocation: Allocation,
     artifacts: FederationEvaluationArtifacts,
     weights: FederationWeights,
-    solver: SolverOutcome,
+    solver: SolverEvidence,
     provenance: EvaluationProvenance,
     fallback_rate: Probability,
 ) -> PolicyEvaluationResult:
@@ -207,12 +214,14 @@ def evaluate_allocation(
         calibration = final_calibration.for_client(decision.client_id)
         benign_scores = _scores(client_artifacts.benign_test)
         benign_alerts = alerts_above_threshold(benign_scores, calibration.threshold)
-        false_positive_count = int(np.count_nonzero(benign_alerts.values))
-        true_negative_count = benign_scores.row_count.value - false_positive_count
+        false_positive_count = RowCount(int(np.count_nonzero(benign_alerts.values)))
+        true_negative_count = RowCount(
+            benign_scores.row_count.value - false_positive_count.value
+        )
         client_fpr = FalsePositiveRate(
             0.0
             if benign_scores.row_count.value == 0
-            else false_positive_count / benign_scores.row_count.value
+            else false_positive_count.value / benign_scores.row_count.value
         )
         client_false_positive_rates.append(
             ClientFalsePositiveRate(decision.client_id, client_fpr)
@@ -225,23 +234,26 @@ def evaluate_allocation(
             )
 
         subtype_recalls: list[SubtypeRecall] = []
-        subtype_counts: list[tuple[AttackSubtypeScores, int, int, TruePositiveRate]] = []
+        subtype_evaluations: list[SubtypeEvaluation] = []
         for subtype in subtype_scores:
             alerts = alerts_above_threshold(subtype.scores, calibration.threshold)
-            true_positive_count = int(np.count_nonzero(alerts.values))
-            false_negative_count = subtype.scores.row_count.value - true_positive_count
+            true_positive = RowCount(int(np.count_nonzero(alerts.values)))
+            false_negative = RowCount(
+                subtype.scores.row_count.value - true_positive.value
+            )
             true_positive_rate = TruePositiveRate(
-                true_positive_count / subtype.scores.row_count.value
+                true_positive.value / subtype.scores.row_count.value
             )
             subtype_recalls.append(
                 SubtypeRecall(subtype=subtype.subtype, rate=true_positive_rate)
             )
-            subtype_counts.append(
-                (
-                    subtype,
-                    true_positive_count,
-                    false_negative_count,
-                    true_positive_rate,
+            subtype_evaluations.append(
+                SubtypeEvaluation(
+                    subtype=subtype.subtype,
+                    attack_test_count=subtype.scores.row_count,
+                    true_positive=true_positive,
+                    false_negative=false_negative,
+                    true_positive_rate=true_positive_rate,
                 )
             )
 
@@ -251,7 +263,7 @@ def evaluate_allocation(
         )
         client_weight = weights.for_client(decision.client_id)
 
-        for subtype, true_positive_count, false_negative_count, true_positive_rate in subtype_counts:
+        for subtype in subtype_evaluations:
             records.append(
                 ClientResultRecord(
                     allocation=coordinate,
@@ -266,19 +278,19 @@ def evaluate_allocation(
                         realized=client_weight,
                     ),
                     benign_test_count=benign_scores.row_count,
-                    attack_test_count=subtype.scores.row_count,
+                    attack_test_count=subtype.attack_test_count,
                     attack_subtype=subtype.subtype,
                     confusion=ConfusionCounts(
-                        true_positive=RowCount(true_positive_count),
-                        false_negative=RowCount(false_negative_count),
-                        false_positive=RowCount(false_positive_count),
-                        true_negative=RowCount(true_negative_count),
+                        true_positive=subtype.true_positive,
+                        false_negative=subtype.false_negative,
+                        false_positive=false_positive_count,
+                        true_negative=true_negative_count,
                     ),
                     metrics=DetectionMetrics(
                         false_positive_rate=client_fpr,
-                        true_positive_rate=true_positive_rate,
+                        true_positive_rate=subtype.true_positive_rate,
                         macro_attack_recall=macro_recall,
-                        false_alert_count=FalseAlertCount(false_positive_count),
+                        false_alert_count=FalseAlertCount(false_positive_count.value),
                     ),
                     solver=solver,
                     provenance=provenance.for_client(decision.client_id),
@@ -286,7 +298,6 @@ def evaluate_allocation(
             )
 
     federation_rate = federation_fpr(tuple(client_false_positive_rates), weights)
-    experiment = coordinate.experiment
     return PolicyEvaluationResult(
         summary=CompletedPolicyEvaluation(
             policy=allocation.policy,
@@ -295,7 +306,7 @@ def evaluate_allocation(
             federation_fpr=federation_rate,
             budget_usage=budget_usage_ratio(
                 federation_rate,
-                FalsePositiveBudget(experiment.budget.value),
+                coordinate.experiment.budget,
             ),
             fallback_rate=fallback_rate,
         ),
