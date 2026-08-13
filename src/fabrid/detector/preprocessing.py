@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from fabrid.datasets.common import FeatureMatrix
+from fabrid.domain.identifiers import ClientId
 
 _ZERO_STANDARD_DEVIATION_EPSILON = 1e-12
 
@@ -24,12 +25,34 @@ class FeatureScaler:
 
     def transform(self, features: FeatureMatrix) -> FeatureMatrix:
         if features.feature_count.value != self.mean.shape[0]:
-            raise ValueError(
-                "feature matrix width does not match scaler statistics"
-            )
+            raise ValueError("feature matrix width does not match scaler statistics")
         return FeatureMatrix(
             (features.values - self.mean) / self.standard_deviation
         )
+
+
+@dataclass(frozen=True, slots=True)
+class ClientScaler:
+    client_id: ClientId
+    scaler: FeatureScaler
+
+
+@dataclass(frozen=True, slots=True)
+class FederatedScalers:
+    clients: tuple[ClientScaler, ...]
+
+    def __post_init__(self) -> None:
+        if not self.clients:
+            raise ValueError("federated scalers require at least one client")
+        client_ids = tuple(client.client_id for client in self.clients)
+        if len(set(client_ids)) != len(client_ids):
+            raise ValueError("federated scalers contain duplicate clients")
+
+    def for_client(self, client_id: ClientId) -> FeatureScaler:
+        for client in self.clients:
+            if client.client_id == client_id:
+                return client.scaler
+        raise KeyError(client_id.value)
 
 
 def fit_feature_scaler(train_features: FeatureMatrix) -> FeatureScaler:
