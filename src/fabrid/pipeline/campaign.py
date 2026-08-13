@@ -2,51 +2,31 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fabrid.artifacts.allocation_store import AllocationArtifact, persist_allocation
 from fabrid.artifacts.dataset_store import (
     StoredDatasetManifests,
     persist_dataset_manifests,
 )
-from fabrid.artifacts.evaluation_store import persist_seed_budget_evaluation
 from fabrid.artifacts.json_store import StoredJsonArtifact
 from fabrid.artifacts.protocol_store import persist_protocol_snapshot
-from fabrid.artifacts.result_store import StoredResultArtifact, write_result_records
 from fabrid.datasets.nbaiot.specification import NBAIOT_PRIMARY_POPULATION
-from fabrid.domain.coordinates import AllocationCoordinate, ExperimentCoordinate
 from fabrid.domain.enums import (
-    AllocationPolicy,
     DatasetId,
     ExperimentId,
     ExperimentVariantId,
 )
 from fabrid.domain.identifiers import CampaignId
 from fabrid.evaluation.results import SeedBudgetEvaluation
-from fabrid.pipeline.allocation import (
-    CompletedPolicyRun,
-    SeedBudgetRun,
-    load_seed_scores,
-    run_seed_budget,
-)
+from fabrid.pipeline.allocation import load_seed_scores, run_seed_budget
 from fabrid.pipeline.context import PipelinePaths
+from fabrid.pipeline.materialization import (
+    MaterializedSeedBudget,
+    materialize_seed_budget,
+)
 from fabrid.pipeline.provenance import build_evaluation_provenance, resolve_git_commit
 from fabrid.pipeline.scoring import materialize_detector_scores
 from fabrid.pipeline.training import prepare_nbaiot_federation, train_detector_seed
 from fabrid.protocol.models import FabridProtocol
 from fabrid.protocol.specification import PROTOCOL
-
-
-@dataclass(frozen=True, slots=True)
-class StoredPolicyAllocation:
-    policy: AllocationPolicy
-    artifact: StoredJsonArtifact
-
-
-@dataclass(frozen=True, slots=True)
-class MaterializedSeedBudget:
-    coordinate: ExperimentCoordinate
-    result_table: StoredResultArtifact
-    evaluation_summary: StoredJsonArtifact
-    allocations: tuple[StoredPolicyAllocation, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,47 +36,6 @@ class MatchedBudgetCampaign:
     dataset_manifests: StoredDatasetManifests
     evaluations: tuple[SeedBudgetEvaluation, ...]
     artifacts: tuple[MaterializedSeedBudget, ...]
-
-
-def _materialize_seed_budget(
-    run: SeedBudgetRun,
-    paths: PipelinePaths,
-) -> MaterializedSeedBudget:
-    layout = paths.artifacts
-    allocation_artifacts: list[StoredPolicyAllocation] = []
-    for policy_run in run.policy_runs:
-        if not isinstance(policy_run, CompletedPolicyRun):
-            continue
-        coordinate = AllocationCoordinate(
-            experiment=run.evaluation.experiment,
-            policy=policy_run.allocation.policy,
-        )
-        allocation_artifacts.append(
-            StoredPolicyAllocation(
-                policy=policy_run.allocation.policy,
-                artifact=persist_allocation(
-                    AllocationArtifact(
-                        coordinate=coordinate,
-                        allocation=policy_run.allocation,
-                        solver=policy_run.solver,
-                    ),
-                    layout,
-                ),
-            )
-        )
-
-    return MaterializedSeedBudget(
-        coordinate=run.evaluation.experiment,
-        result_table=write_result_records(
-            run.records,
-            layout.result_path(run.evaluation.experiment),
-        ),
-        evaluation_summary=persist_seed_budget_evaluation(
-            run.evaluation,
-            layout,
-        ),
-        allocations=tuple(allocation_artifacts),
-    )
 
 
 def run_matched_budget_campaign(
@@ -153,7 +92,7 @@ def run_matched_budget_campaign(
                 provenance=provenance,
             )
             evaluations.append(run.evaluation)
-            artifacts.append(_materialize_seed_budget(run, paths))
+            artifacts.append(materialize_seed_budget(run, layout))
 
     return MatchedBudgetCampaign(
         campaign_id=campaign_id,
