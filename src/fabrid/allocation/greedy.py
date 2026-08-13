@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from fabrid.allocation.contracts import (
     Allocation,
     AllocationDecision,
+    AllocationWeights,
     ClientUtilityCurve,
     ClientUtilityCurves,
-    FederationWeights,
 )
 from fabrid.domain.enums import AllocationPolicy
 from fabrid.domain.identifiers import ClientId
@@ -49,7 +49,7 @@ def _best_increment(increments: tuple[_Increment, ...]) -> _Increment:
 def _feasible_increment(
     curve: ClientUtilityCurve,
     index: int,
-    weights: FederationWeights,
+    weights: AllocationWeights,
     remaining_budget: FalsePositiveBudget,
     maximum_target_rate: TargetFalsePositiveRate,
 ) -> _Increment | None:
@@ -82,14 +82,14 @@ def _feasible_increment(
 
 def allocate_greedy(
     utility_curves: ClientUtilityCurves,
-    weights: FederationWeights,
+    weights: AllocationWeights,
     budget: FalsePositiveBudget,
     maximum_target_rate: TargetFalsePositiveRate,
 ) -> Allocation:
     curve_clients = {curve.client_id for curve in utility_curves.clients}
     weight_clients = {client.client_id for client in weights.clients}
     if curve_clients != weight_clients:
-        raise ValueError("utility curves and federation weights must share clients")
+        raise ValueError("utility curves and allocation weights must share clients")
 
     positions = [
         _Position(client_id=curve.client_id, point_index=0)
