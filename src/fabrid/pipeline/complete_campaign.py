@@ -18,3 +18,13 @@ from fabrid.protocol.specification import PROTOCOL
 class FabridCampaign:
     execution: CoreFabridCampaign
     evidence: MandatoryCampaignEvidence
+
+
+def run_fabrid_campaign(
+    campaign_id: CampaignId,
+    paths: PipelinePaths,
+    protocol: FabridProtocol = PROTOCOL,
+) -> FabridCampaign:
+    execution = run_core_fabrid_campaign(campaign_id, paths, protocol)
+    evidence = build_mandatory_campaign_evidence(campaign_id, paths, protocol)
+    return FabridCampaign(execution=execution, evidence=evidence)
