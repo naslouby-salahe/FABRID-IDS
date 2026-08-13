@@ -27,3 +27,12 @@ def _curve(client_id: str, utilities: tuple[float, ...]) -> ClientUtilityCurve:
             for rate, utility in zip(rates, utilities, strict=True)
         ),
     )
+
+
+def test_identical_curves_have_zero_dispersion() -> None:
+    curves = ClientUtilityCurves(
+        (_curve("1", (0.0, 0.5, 1.0)), _curve("2", (0.0, 0.5, 1.0)))
+    )
+    dispersion = utility_dispersion_per_candidate(curves)
+    assert tuple(item.value for item in dispersion) == pytest.approx((0.0, 0.0, 0.0))
+    assert aggregate_utility_dispersion(curves).value == pytest.approx(0.0)
