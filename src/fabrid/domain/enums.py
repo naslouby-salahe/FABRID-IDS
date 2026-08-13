@@ -10,6 +10,11 @@ class DatasetId(StrEnum):
     CICIOMT = "ciciomt"
 
 
+class SourceSplit(StrEnum):
+    TRAIN = "train"
+    TEST = "test"
+
+
 class WeightMode(StrEnum):
     EQUAL_CLIENT = "equal_client"
     DATASET_COUNT_PROXY = "dataset_count_proxy"
