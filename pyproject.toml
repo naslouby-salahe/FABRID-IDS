@@ -1,0 +1,76 @@
+[project]
+name = "fabrid"
+version = "0.1.0"
+description = "FABRID-IDS: Federated Alert-Budget Reallocation for Heterogeneous IoT Intrusion Detection"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "polars>=1.0",
+    "pydantic>=2.8",
+    "torch>=2.3",
+    "safetensors>=0.4",
+    "typer>=0.12",
+    "matplotlib>=3.11.1",
+    "psutil>=5.9",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+fabrid = "fabrid.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fabrid*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "N"]
+
+[tool.pyright]
+include = ["src", "tests"]
+extraPaths = ["src", "."]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+reportMissingTypeStubs = false
+# Third-party stubs (pandas/scipy/torch/safetensors) declare many numeric members
+# as Unknown; member-level Unknown noise is disabled while variable/argument
+# strictness remains on.
+reportUnknownMemberType = false
+
+[[tool.pyright.executionEnvironments]]
+root = "src/fabrid/allocation/optimization.py"
+reportPrivateUsage = false
+
+[[tool.pyright.executionEnvironments]]
+root = "tests"
+reportUnknownMemberType = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "integration: production command surface; excluded by default",
+    "smoke: end-to-end synthetic workflow; slower, excluded by default",
+]
+addopts = "-n auto -m 'not integration and not smoke'"
+
+[dependency-groups]
+dev = [
+    "nox>=2026.8.10",
+    "pytest>=8.0",
+    "pytest-xdist>=3.5",
+    "ruff>=0.6",
+    "pyright>=1.1",
+    "scipy-stubs>=1.13",
+]
