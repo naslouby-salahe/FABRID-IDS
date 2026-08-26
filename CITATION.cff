@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use FABRID-IDS in your research, please cite the software using the metadata below."
+
+title: "FABRID-IDS: Federated Alert-Budget Reallocation for Heterogeneous IoT Intrusion Detection"
+type: software
+
+authors:
+  - family-names: "Naslouby"
+    given-names: "Salaheddine"
+    affiliation: "LAMSAD Laboratory, National School of Applied Sciences (ENSA), Hassan First University, Berrechid, Morocco"
+
+  - family-names: "Lachgar"
+    given-names: "Mohamed"
+    affiliation: "L2IS Laboratory, Higher Normal School (ENS), Cadi Ayyad University, Marrakech, Morocco"
+
+  - family-names: "Hrimech"
+    given-names: "Hamid"
+    affiliation: "LAMSAD Laboratory, National School of Applied Sciences (ENSA), Hassan First University, Berrechid, Morocco"
+
+repository-code: "https://github.com/naslouby-salahe/FABRID-IDS"
+
+license: MIT
+
+keywords:
+  - "federated intrusion detection"
+  - "Internet of Things"
+  - "operating-point allocation"
+  - "false-positive-rate constraint"
+  - "threshold calibration"
+  - "federated learning"
+  - "IoT security"
