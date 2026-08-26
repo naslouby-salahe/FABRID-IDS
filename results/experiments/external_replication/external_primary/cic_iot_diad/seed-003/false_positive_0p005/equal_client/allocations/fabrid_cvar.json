@@ -1,0 +1,116 @@
+{
+  "policy": "fabrid_cvar",
+  "decisions": [
+    {
+      "client_id": "24:05:88:30:6f:89",
+      "target_rate": 0.046987279890091584
+    },
+    {
+      "client_id": "3c:18:a0:41:c3:a0",
+      "target_rate": 0.0005354536719761938
+    },
+    {
+      "client_id": "ac:17:02:05:34:27",
+      "target_rate": 0.0037922543007677272
+    },
+    {
+      "client_id": "aeotec smart home hub",
+      "target_rate": 0.0015886991088348535
+    },
+    {
+      "client_id": "amazon echo dot 1",
+      "target_rate": 0.0009367618628394448
+    },
+    {
+      "client_id": "amazon echo dot 2",
+      "target_rate": 0.0017989581158167555
+    },
+    {
+      "client_id": "amazon echo show",
+      "target_rate": 0.012740797213004081
+    },
+    {
+      "client_id": "amazon echo studio",
+      "target_rate": 0.003563754284891536
+    },
+    {
+      "client_id": "arlo q indoor camera",
+      "target_rate": 0.001094216984578764
+    },
+    {
+      "client_id": "google nest mini speaker",
+      "target_rate": 0.0006865634844764341
+    },
+    {
+      "client_id": "harman kardon _ampak technology_",
+      "target_rate": 0.0007774278625536144
+    },
+    {
+      "client_id": "home eye camera",
+      "target_rate": 0.0007774278625536144
+    },
+    {
+      "client_id": "lg smart tv",
+      "target_rate": 0.0009367618628394448
+    },
+    {
+      "client_id": "nest indoor camera",
+      "target_rate": 0.0007082320094606293
+    },
+    {
+      "client_id": "netatmo camera",
+      "target_rate": 0.0018557347573939303
+    },
+    {
+      "client_id": "philips hue bridge",
+      "target_rate": 0.0007536422741614974
+    },
+    {
+      "client_id": "smartthings hub",
+      "target_rate": 0.007994178716696814
+    },
+    {
+      "client_id": "wyze camera",
+      "target_rate": 0.00684383614225036
+    },
+    {
+      "client_id": "yi indoor 2 camera",
+      "target_rate": 0.0006254551189300899
+    }
+  ],
+  "solver": {
+    "status": "optimal",
+    "stages": [
+      {
+        "stage": "cvar_utility",
+        "objective": -1.0464026631365697,
+        "gap": 0.0,
+        "runtime_ms": 4332.64083800168
+      },
+      {
+        "stage": "cvar_mean_utility",
+        "objective": -0.38935266945578667,
+        "gap": 0.0,
+        "runtime_ms": 6343.429612999898
+      },
+      {
+        "stage": "cvar_minimum_budget",
+        "objective": 0.00499810303673647,
+        "gap": 3.984722694641073e-6,
+        "runtime_ms": 1321.3743829983287
+      },
+      {
+        "stage": "cvar_lowest_variance",
+        "objective": 0.0000282733600564106,
+        "gap": 0.0007169321613206384,
+        "runtime_ms": 3314.116149005713
+      },
+      {
+        "stage": "cvar_tie_break",
+        "objective": 0.04698994201744706,
+        "gap": 0.00001119940166445028,
+        "runtime_ms": 3250.828720003483
+      }
+    ]
+  }
+}

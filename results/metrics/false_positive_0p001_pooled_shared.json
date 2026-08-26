@@ -1,0 +1,17 @@
+{
+  "budget_id": "false_positive_0p001",
+  "policy": "pooled_shared",
+  "macro_recall": 0.8666111967778758,
+  "worst_client_recall": 0.6,
+  "federation_fpr": 0.0023594956629845788,
+  "budget_usage": 2.3594956629845782,
+  "fallback_rate": 0.0,
+  "solver_runtime_ms": null,
+  "pooled_recall": 0.8760118731210513,
+  "macro_f1": 0.8634636559104567,
+  "balanced_accuracy": 0.9003426304614344,
+  "auroc": 0.9994967391378198,
+  "auprc": 0.999884552937138,
+  "false_alert_gini": 0.4271592614069714,
+  "budget_violation": 1.3594956629845785
+}

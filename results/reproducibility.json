@@ -1,0 +1,36 @@
+{
+  "os_platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python_version": "3.13.12",
+  "numpy_version": "2.5.2",
+  "scipy_version": "1.18.0",
+  "polars_version": "1.43.2",
+  "torch_version": "2.13.0+cu130",
+  "cuda_availability": "available",
+  "cuda_version": "13.0",
+  "gpu_name": "NVIDIA GeForce RTX 5060 Ti",
+  "cpu_model": "AMD Ryzen 5 7600 6-Core Processor",
+  "ram_total_bytes": 37833793536,
+  "solver_backend": "scipy.optimize.milp",
+  "git_commit": "baf1dc7a128761515217817a75f3206b1354b3d7",
+  "command_line": ".venv/bin/fabrid finalize",
+  "started_at": "2026-08-26T13:38:18+00:00",
+  "finished_at": "2026-08-26T13:38:43+00:00",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "dataset_checksums": [
+    {
+      "dataset_id": "nbaiot",
+      "digest": "8c75f418f7a0691abfdf21110172a83a632fb9ad263bcf306ecf7fe459dfceb7"
+    }
+  ]
+}

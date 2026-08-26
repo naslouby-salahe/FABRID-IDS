@@ -1,0 +1,70 @@
+{
+  "policy": "fabrid_macro",
+  "decisions": [
+    {
+      "client_id": "Danmini_Doorbell",
+      "target_rate": 0.0037922543007677272
+    },
+    {
+      "client_id": "Ennio_Doorbell",
+      "target_rate": 0.02
+    },
+    {
+      "client_id": "Ecobee_Thermostat",
+      "target_rate": 0.0011643757492860373
+    },
+    {
+      "client_id": "Philips_B120N10_Baby_Monitor",
+      "target_rate": 0.010907427959462626
+    },
+    {
+      "client_id": "Provision_PT_737E_Security_Camera",
+      "target_rate": 0.003454720383954872
+    },
+    {
+      "client_id": "Provision_PT_838_Security_Camera",
+      "target_rate": 0.0037922543007677272
+    },
+    {
+      "client_id": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "target_rate": 0.012350989524223123
+    },
+    {
+      "client_id": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "target_rate": 0.0044296733570729436
+    },
+    {
+      "client_id": "Samsung_SNH_1011_N_Webcam",
+      "target_rate": 0.02
+    }
+  ],
+  "solver": {
+    "status": "optimal",
+    "stages": [
+      {
+        "stage": "macro_primary_utility",
+        "objective": -0.9999999999999999,
+        "gap": 0.0,
+        "runtime_ms": 13.543108999783726
+      },
+      {
+        "stage": "macro_minimum_budget",
+        "objective": 0.004432410619503895,
+        "gap": 0.0,
+        "runtime_ms": 13.416207999853214
+      },
+      {
+        "stage": "macro_lowest_variance",
+        "objective": 2.15441288274161e-9,
+        "gap": 0.0,
+        "runtime_ms": 11.353756000062276
+      },
+      {
+        "stage": "macro_tie_break",
+        "objective": 0.0037981047603200626,
+        "gap": 0.0,
+        "runtime_ms": 12.181010999938735
+      }
+    ]
+  }
+}

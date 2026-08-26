@@ -1,0 +1,185 @@
+{
+  "fabrid_macro": {
+    "availability": "available",
+    "status": "fail",
+    "budgets_passing": 0,
+    "total_budgets": 5,
+    "differences": [
+      {
+        "budget_id": "false_positive_0p001",
+        "macro_recall": 0.3778106676995051
+      },
+      {
+        "budget_id": "false_positive_0p0025",
+        "macro_recall": 0.4222178764962804
+      },
+      {
+        "budget_id": "false_positive_0p005",
+        "macro_recall": 0.4644070098540992
+      },
+      {
+        "budget_id": "false_positive_0p010",
+        "macro_recall": 0.5444111752917464
+      },
+      {
+        "budget_id": "false_positive_0p020",
+        "macro_recall": 0.7444178270284509
+      }
+    ]
+  },
+  "fabrid_cvar": {
+    "availability": "available",
+    "status": "fail",
+    "budgets_passing": 0,
+    "total_budgets": 5,
+    "differences": [
+      {
+        "budget_id": "false_positive_0p001",
+        "worst_client_recall": 0.0,
+        "macro_recall_percentage_points": 0.0
+      },
+      {
+        "budget_id": "false_positive_0p0025",
+        "worst_client_recall": 0.0,
+        "macro_recall_percentage_points": -2.223968854453785
+      },
+      {
+        "budget_id": "false_positive_0p005",
+        "worst_client_recall": 0.0,
+        "macro_recall_percentage_points": -34.66253509359226
+      },
+      {
+        "budget_id": "false_positive_0p010",
+        "worst_client_recall": 0.0,
+        "macro_recall_percentage_points": -27.331247444490085
+      },
+      {
+        "budget_id": "false_positive_0p020",
+        "worst_client_recall": 0.0,
+        "macro_recall_percentage_points": -15.557288157340516
+      }
+    ]
+  },
+  "budget_compliance": [
+    {
+      "policy": "eq_fpr",
+      "budget_id": "false_positive_0p005",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.4273687658401235,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.6206434451552811,
+      "seed_count": 10
+    },
+    {
+      "policy": "eq_fpr",
+      "budget_id": "false_positive_0p010",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.6854320146710848,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.7511173241134554,
+      "seed_count": 10
+    },
+    {
+      "policy": "eq_fpr",
+      "budget_id": "false_positive_0p020",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.8823417033822873,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.9090524514202976,
+      "seed_count": 10
+    },
+    {
+      "policy": "greedy",
+      "budget_id": "false_positive_0p005",
+      "availability": "available",
+      "status": "pass",
+      "median_usage": 0.0006340510791549367,
+      "fraction_within_seed_limit": 1.0,
+      "maximum_usage": 0.006974561870704304,
+      "seed_count": 10
+    },
+    {
+      "policy": "greedy",
+      "budget_id": "false_positive_0p010",
+      "availability": "available",
+      "status": "pass",
+      "median_usage": 0.00031702553957746834,
+      "fraction_within_seed_limit": 1.0,
+      "maximum_usage": 0.003487280935352152,
+      "seed_count": 10
+    },
+    {
+      "policy": "greedy",
+      "budget_id": "false_positive_0p020",
+      "availability": "available",
+      "status": "pass",
+      "median_usage": 0.00015851276978873417,
+      "fraction_within_seed_limit": 1.0,
+      "maximum_usage": 0.001743640467676076,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_macro",
+      "budget_id": "false_positive_0p005",
+      "availability": "available",
+      "status": "pass",
+      "median_usage": 0.7416407157184512,
+      "fraction_within_seed_limit": 1.0,
+      "maximum_usage": 1.085164319396113,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_macro",
+      "budget_id": "false_positive_0p010",
+      "availability": "available",
+      "status": "pass",
+      "median_usage": 0.7714883127740297,
+      "fraction_within_seed_limit": 1.0,
+      "maximum_usage": 0.821747888038694,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_macro",
+      "budget_id": "false_positive_0p020",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.3892155354227471,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.5477022787786119,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_cvar",
+      "budget_id": "false_positive_0p005",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.353402318850312,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.43584098635888,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_cvar",
+      "budget_id": "false_positive_0p010",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.3754186423618666,
+      "fraction_within_seed_limit": 0.2,
+      "maximum_usage": 2.2397752345603177,
+      "seed_count": 10
+    },
+    {
+      "policy": "fabrid_cvar",
+      "budget_id": "false_positive_0p020",
+      "availability": "available",
+      "status": "fail",
+      "median_usage": 1.7431007955559488,
+      "fraction_within_seed_limit": 0.0,
+      "maximum_usage": 1.8289829214100901,
+      "seed_count": 10
+    }
+  ]
+}

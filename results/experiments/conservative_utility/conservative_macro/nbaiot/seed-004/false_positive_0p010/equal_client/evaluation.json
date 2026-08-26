@@ -1,0 +1,36 @@
+{
+  "experiment": {
+    "experiment_id": "conservative_utility",
+    "variant_id": "conservative_macro",
+    "dataset_id": "nbaiot",
+    "detector_seed": 4,
+    "budget_id": "false_positive_0p010",
+    "budget": 0.01,
+    "weight_mode": "equal_client"
+  },
+  "policies": [
+    {
+      "policy": "fabrid_macro",
+      "macro_recall": 0.666629277292352,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.009502511347597938,
+      "budget_usage": 0.9502511347597938,
+      "fallback_rate": 0.0,
+      "fpr_dispersion": {
+        "median": 0.008816480255649396,
+        "interquartile_range": 0.013630997102071482,
+        "minimum": 0.0,
+        "maximum": 0.030690537084398978,
+        "coefficient_of_variation": 1.0427356390609543
+      },
+      "solver_runtime_ms": 175.32081099489005,
+      "pooled_recall": 0.6055633690662972,
+      "macro_f1": 0.6665091504224293,
+      "balanced_accuracy": 0.8285584939186246,
+      "auroc": 0.9994909683857874,
+      "auprc": 0.9998832560731772,
+      "false_alert_gini": 0.5787284610814023,
+      "budget_violation": 0.0
+    }
+  ]
+}

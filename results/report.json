@@ -1,0 +1,2987 @@
+{
+  "generated_at": "2026-08-26T13:38:37+00:00",
+  "summary": [
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "eq_fpr",
+      "macro_recall": 0.3778106676995051,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0016957655064470767,
+      "budget_usage": 1.6957655064470767,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.30566257429105437,
+      "macro_f1": 0.3746488619622272,
+      "balanced_accuracy": 0.6562855420629579,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5907764411971097,
+      "budget_violation": 0.715139660435995
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "greedy",
+      "macro_recall": 0.0533333727223312,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 6.340510791549367e-6,
+      "budget_usage": 0.006340510791549367,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.0668614590583457,
+      "macro_f1": 0.058644672642215,
+      "balanced_accuracy": 0.5261698956911405,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5333333333333333,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "fabrid_macro",
+      "macro_recall": 0.3778106676995051,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0016957655064470767,
+      "budget_usage": 1.6957655064470767,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 98.58356030010782,
+      "pooled_recall": 0.30566257429105437,
+      "macro_f1": 0.3746488619622272,
+      "balanced_accuracy": 0.6562855420629579,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5907764411971097,
+      "budget_violation": 0.715139660435995
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "fabrid_cvar",
+      "macro_recall": 0.3778106676995051,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0016957655064470767,
+      "budget_usage": 1.6957655064470767,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 310.282553100069,
+      "pooled_recall": 0.30566257429105437,
+      "macro_f1": 0.3746488619622272,
+      "balanced_accuracy": 0.6562855420629579,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5907764411971097,
+      "budget_violation": 0.715139660435995
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "fabrid_macro_finite_safe",
+      "macro_recall": 0.2444507568056554,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0003578522742138846,
+      "budget_usage": 0.35785227421388455,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 98.47239499981697,
+      "pooled_recall": 0.21272537538630773,
+      "macro_f1": 0.25025658357134745,
+      "balanced_accuracy": 0.6041215357724476,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.7206669776694652,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "fabrid_cvar_finite_safe",
+      "macro_recall": 0.2444507568056554,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0003578522742138846,
+      "budget_usage": 0.35785227421388455,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 316.11030510005094,
+      "pooled_recall": 0.21272537538630773,
+      "macro_f1": 0.25025658357134745,
+      "balanced_accuracy": 0.6041215357724476,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.7206669776694652,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "fabrid_macro_no_rate_minimization",
+      "macro_recall": 0.3778106676995051,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0016957655064470767,
+      "budget_usage": 1.6957655064470767,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 65.63238910007385,
+      "pooled_recall": 0.30566257429105437,
+      "macro_f1": 0.3746488619622272,
+      "balanced_accuracy": 0.6562855420629579,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5907764411971097,
+      "budget_violation": 0.715139660435995
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "common_rate_macro",
+      "macro_recall": 0.3778106676995051,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0016957655064470767,
+      "budget_usage": 1.6957655064470767,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.30566257429105437,
+      "macro_f1": 0.3746488619622272,
+      "balanced_accuracy": 0.6562855420629579,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5907764411971097,
+      "budget_violation": 0.715139660435995
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "eq_fpr_matched_macro",
+      "macro_recall": 0.31114400103283846,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0009544599614816004,
+      "budget_usage": 0.9544599614816004,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.2297931694013741,
+      "macro_f1": 0.3079836723235506,
+      "balanced_accuracy": 0.6233228615021073,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6521640469102628,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "eq_fpr_matched_cvar",
+      "macro_recall": 0.31114400103283846,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0009544599614816004,
+      "budget_usage": 0.9544599614816004,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.2297931694013741,
+      "macro_f1": 0.3079836723235506,
+      "balanced_accuracy": 0.6233228615021073,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6521640469102628,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "policy": "pooled_shared",
+      "macro_recall": 0.8666111967778758,
+      "worst_client_recall": 0.6,
+      "federation_fpr": 0.0023594956629845788,
+      "budget_usage": 2.3594956629845782,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.8760118731210513,
+      "macro_f1": 0.8634636559104567,
+      "balanced_accuracy": 0.9003426304614344,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.4271592614069714,
+      "budget_violation": 1.3594956629845785
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "eq_fpr",
+      "macro_recall": 0.4444575650408183,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.002413177985908584,
+      "budget_usage": 0.9652711943634336,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.3867008902919696,
+      "macro_f1": 0.4324469484823076,
+      "balanced_accuracy": 0.6900721884773546,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6314087061435754,
+      "budget_violation": 0.003173631599583837
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "greedy",
+      "macro_recall": 0.0533333727223312,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 6.340510791549367e-6,
+      "budget_usage": 0.0025362043166197467,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.0668614590583457,
+      "macro_f1": 0.058644672642215,
+      "balanced_accuracy": 0.5261698956911405,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5333333333333333,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "fabrid_macro",
+      "macro_recall": 0.4222178764962804,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0025781184476235475,
+      "budget_usage": 1.0312473790494188,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 95.65037949992075,
+      "pooled_recall": 0.33721423506605,
+      "macro_f1": 0.4280013066922548,
+      "balanced_accuracy": 0.691891563737489,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6892553719720074,
+      "budget_violation": 0.14259465360321297
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "fabrid_cvar",
+      "macro_recall": 0.4222178764962804,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0025781184476235475,
+      "budget_usage": 1.0312473790494188,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 316.1919036999507,
+      "pooled_recall": 0.33721423506605,
+      "macro_f1": 0.4280013066922548,
+      "balanced_accuracy": 0.691891563737489,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6892553719720074,
+      "budget_violation": 0.14259465360321297
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "fabrid_macro_finite_safe",
+      "macro_recall": 0.3111439860310007,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0009531918593232906,
+      "budget_usage": 0.3812767437293162,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 101.83156279990726,
+      "pooled_recall": 0.22979315019044755,
+      "macro_f1": 0.30798369252882113,
+      "balanced_accuracy": 0.6233234880330267,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6521229403208765,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "fabrid_cvar_finite_safe",
+      "macro_recall": 0.3111439860310007,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0009531918593232906,
+      "budget_usage": 0.3812767437293162,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 316.2137208999866,
+      "pooled_recall": 0.22979315019044755,
+      "macro_f1": 0.30798369252882113,
+      "balanced_accuracy": 0.6233234880330267,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6521229403208765,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "fabrid_macro_no_rate_minimization",
+      "macro_recall": 0.45774151199275587,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0028217915694289967,
+      "budget_usage": 1.1287166277715985,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 77.83124040013263,
+      "pooled_recall": 0.38555007894730264,
+      "macro_f1": 0.4514312321345525,
+      "balanced_accuracy": 0.7124448460669055,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6792711152404228,
+      "budget_violation": 0.20856756702091897
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "common_rate_macro",
+      "macro_recall": 0.4444575650408183,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.002409373679433654,
+      "budget_usage": 0.9637494717734617,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.3867008902919696,
+      "macro_f1": 0.43244703871481677,
+      "balanced_accuracy": 0.6900740906305921,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6296693552802373,
+      "budget_violation": 0.003173631599583837
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "eq_fpr_matched_macro",
+      "macro_recall": 0.555557677753696,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0029850855662077276,
+      "budget_usage": 1.194034226483091,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.5144463862422102,
+      "macro_f1": 0.5435487055200605,
+      "balanced_accuracy": 0.7453350647348501,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5868424501219988,
+      "budget_violation": 0.1940342264830911
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "eq_fpr_matched_cvar",
+      "macro_recall": 0.555557677753696,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0029850855662077276,
+      "budget_usage": 1.194034226483091,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.5144463862422102,
+      "macro_f1": 0.5435487055200605,
+      "balanced_accuracy": 0.7453350647348501,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5868424501219988,
+      "budget_violation": 0.1940342264830911
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "policy": "pooled_shared",
+      "macro_recall": 0.9110590882695326,
+      "worst_client_recall": 0.6,
+      "federation_fpr": 0.0033210601947955367,
+      "budget_usage": 1.3284240779182146,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9363079019727893,
+      "macro_f1": 0.8936553102217948,
+      "balanced_accuracy": 0.9264008720168111,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.4036286252305977,
+      "budget_violation": 0.32842407791821476
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "eq_fpr",
+      "macro_recall": 0.844364150117363,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.007226732705382918,
+      "budget_usage": 1.4453465410765838,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.819442687178301,
+      "macro_f1": 0.8353962277849902,
+      "balanced_accuracy": 0.9047054558603417,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.48763547673799656,
+      "budget_violation": 0.4453465410765836
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "greedy",
+      "macro_recall": 0.0533333727223312,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 6.340510791549367e-6,
+      "budget_usage": 0.0012681021583098734,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.0668614590583457,
+      "macro_f1": 0.058644672642215,
+      "balanced_accuracy": 0.5261698956911405,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5333333333333333,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "fabrid_macro",
+      "macro_recall": 0.4644070098540992,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.003528116507649905,
+      "budget_usage": 0.7056233015299811,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 358.77308090005045,
+      "pooled_recall": 0.394494820830254,
+      "macro_f1": 0.4564575842953813,
+      "balanced_accuracy": 0.7164706612093937,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.7437437171225445,
+      "budget_violation": 0.008516431939611291
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "fabrid_cvar",
+      "macro_recall": 0.49773879918144043,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.006448771694797172,
+      "budget_usage": 1.2897543389594341,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 1409.6451483000692,
+      "pooled_recall": 0.4116154256824346,
+      "macro_f1": 0.5008986221248933,
+      "balanced_accuracy": 0.7435448409148456,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6672704053661326,
+      "budget_violation": 0.2897543389594342
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "fabrid_macro_finite_safe",
+      "macro_recall": 0.34223062332125614,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0018199767263056491,
+      "budget_usage": 0.3639953452611298,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 387.7537480999081,
+      "pooled_recall": 0.2693700602704399,
+      "macro_f1": 0.33002108697916077,
+      "balanced_accuracy": 0.6413370486860298,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.791602465180844,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "fabrid_cvar_finite_safe",
+      "macro_recall": 0.42217577026890984,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.004419791600527487,
+      "budget_usage": 0.8839583201054975,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 1390.150895699935,
+      "pooled_recall": 0.32381657330476543,
+      "macro_f1": 0.42752543098236134,
+      "balanced_accuracy": 0.705378895186263,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6751223682831518,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "fabrid_macro_no_rate_minimization",
+      "macro_recall": 0.5510667651477605,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.005590474597607591,
+      "budget_usage": 1.1180949195215182,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 75.56494740003927,
+      "pooled_recall": 0.474165510969343,
+      "macro_f1": 0.5501451243511368,
+      "balanced_accuracy": 0.7713693860601551,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6734749650471842,
+      "budget_violation": 0.13510318983874092
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "common_rate_macro",
+      "macro_recall": 0.8332560341632496,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.007212556150694072,
+      "budget_usage": 1.4425112301388143,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.8068977792361005,
+      "macro_f1": 0.8242867070432578,
+      "balanced_accuracy": 0.8991584345932203,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.49035215761324524,
+      "budget_violation": 0.44251123013881444
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "eq_fpr_matched_macro",
+      "macro_recall": 0.6132952925957815,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.006327607131374717,
+      "budget_usage": 1.2655214262749435,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.5698592665152974,
+      "macro_f1": 0.6026263759781418,
+      "balanced_accuracy": 0.7869007523386821,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5444738259633936,
+      "budget_violation": 0.2743615759693328
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "eq_fpr_matched_cvar",
+      "macro_recall": 0.7332797955868525,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.00696613548361884,
+      "budget_usage": 1.393227096723768,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.6939898424146905,
+      "macro_f1": 0.7243002881397946,
+      "balanced_accuracy": 0.8492927238671637,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5167309884247079,
+      "budget_violation": 0.3932270967237681
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "policy": "pooled_shared",
+      "macro_recall": 0.9732394558380353,
+      "worst_client_recall": 0.7600001146326119,
+      "federation_fpr": 0.004994870927673966,
+      "budget_usage": 0.9989741855347931,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9809476404275508,
+      "macro_f1": 0.9678550886298544,
+      "balanced_accuracy": 0.9757941141467004,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.42427530078818804,
+      "budget_violation": 0.014181496918133241
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "eq_fpr",
+      "macro_recall": 0.9999489282712128,
+      "worst_client_recall": 0.9998418680733338,
+      "federation_fpr": 0.016828669500561944,
+      "budget_usage": 1.6828669500561944,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999416179941834,
+      "macro_f1": 0.9998045691245177,
+      "balanced_accuracy": 0.9915514070198215,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.27781413016857304,
+      "budget_violation": 0.6828669500561945
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "greedy",
+      "macro_recall": 0.0533333727223312,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 6.340510791549367e-6,
+      "budget_usage": 0.0006340510791549367,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.0668614590583457,
+      "macro_f1": 0.058644672642215,
+      "balanced_accuracy": 0.5261698956911405,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5333333333333333,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "fabrid_macro",
+      "macro_recall": 0.5444111752917464,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.007388440582061205,
+      "budget_usage": 0.7388440582061204,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 133.29381150012978,
+      "pooled_recall": 0.46482974988718384,
+      "macro_f1": 0.5443025459005973,
+      "balanced_accuracy": 0.7685071548683853,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6463531844040699,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "fabrid_cvar",
+      "macro_recall": 0.7266364538263119,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.014796497343202394,
+      "budget_usage": 1.4796497343202393,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 3883.05575629995,
+      "pooled_recall": 0.6667913968091803,
+      "macro_f1": 0.7281020465400704,
+      "balanced_accuracy": 0.8548703284626813,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5606330621904773,
+      "budget_violation": 0.4796497343202394
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "fabrid_macro_finite_safe",
+      "macro_recall": 0.44218471707344753,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.0061609379175453826,
+      "budget_usage": 0.6160937917545383,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 141.45793950001462,
+      "pooled_recall": 0.3475214350715828,
+      "macro_f1": 0.44533479141998766,
+      "balanced_accuracy": 0.715911740475857,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6786848442260338,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "fabrid_cvar_finite_safe",
+      "macro_recall": 0.5888663952954546,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.009483199770259389,
+      "budget_usage": 0.9483199770259387,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 3957.560720300034,
+      "pooled_recall": 0.5101866706522935,
+      "macro_f1": 0.5941574486213799,
+      "balanced_accuracy": 0.786200546026993,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5770169477025687,
+      "budget_violation": 0.04600954630257563
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "fabrid_macro_no_rate_minimization",
+      "macro_recall": 0.777739834138033,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.02291539369152508,
+      "budget_usage": 2.291539369152508,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 106.42079620004097,
+      "pooled_recall": 0.7238333636545791,
+      "macro_f1": 0.7774927714836225,
+      "balanced_accuracy": 0.8774061431659991,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6237555486045945,
+      "budget_violation": 1.2915393691525077
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "common_rate_macro",
+      "macro_recall": 0.9999489282712128,
+      "worst_client_recall": 0.9998418680733338,
+      "federation_fpr": 0.016828669500561944,
+      "budget_usage": 1.6828669500561944,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999416179941834,
+      "macro_f1": 0.9998045691245177,
+      "balanced_accuracy": 0.9915514070198215,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.27781413016857304,
+      "budget_violation": 0.6828669500561945
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "eq_fpr_matched_macro",
+      "macro_recall": 0.8887932753753841,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.009184182546599615,
+      "budget_usage": 0.9184182546599613,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.851017266588683,
+      "macro_f1": 0.8887477587451231,
+      "balanced_accuracy": 0.9397860379457391,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.4062304296005387,
+      "budget_violation": 0.01558165958849056
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "eq_fpr_matched_cvar",
+      "macro_recall": 0.9554806450208785,
+      "worst_client_recall": 0.5998535016338058,
+      "federation_fpr": 0.013008052438406697,
+      "budget_usage": 1.3008052438406699,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9403651536076871,
+      "macro_f1": 0.9553835289443567,
+      "balanced_accuracy": 0.9712219380210982,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.32321335347153946,
+      "budget_violation": 0.30080524384066976
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "policy": "pooled_shared",
+      "macro_recall": 0.9999004500941435,
+      "worst_client_recall": 0.9996419833660386,
+      "federation_fpr": 0.00863846483199137,
+      "budget_usage": 0.8638464831991369,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9998985470968351,
+      "macro_f1": 0.9998410519886651,
+      "balanced_accuracy": 0.995610367660257,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.4264220869774655,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "eq_fpr",
+      "macro_recall": 0.9999885346545376,
+      "worst_client_recall": 0.9998974092397596,
+      "federation_fpr": 0.037527831016462364,
+      "budget_usage": 1.8763915508231181,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999842662511472,
+      "macro_f1": 0.9996680522896149,
+      "balanced_accuracy": 0.9812299163974154,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.43378098532320264,
+      "budget_violation": 0.876391550823118
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "greedy",
+      "macro_recall": 0.0533333727223312,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 6.340510791549367e-6,
+      "budget_usage": 0.00031702553957746834,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.0668614590583457,
+      "macro_f1": 0.058644672642215,
+      "balanced_accuracy": 0.5261698956911405,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5333333333333333,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "fabrid_macro",
+      "macro_recall": 0.7444178270284509,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.028054614450079878,
+      "budget_usage": 1.402730722503994,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 193.7155154999573,
+      "pooled_recall": 0.685513674241471,
+      "macro_f1": 0.7440989136943182,
+      "balanced_accuracy": 0.8581789725883306,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.630584790679949,
+      "budget_violation": 0.4027307225039939
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "fabrid_cvar",
+      "macro_recall": 0.8444156530811325,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.034953409924713914,
+      "budget_usage": 1.7476704962356955,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 1382.866678299797,
+      "pooled_recall": 0.800495430585063,
+      "macro_f1": 0.844098388216393,
+      "balanced_accuracy": 0.9047282265872157,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.562810773370584,
+      "budget_violation": 0.7476704962356956
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "fabrid_macro_finite_safe",
+      "macro_recall": 0.6599767279302822,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.024137119775193446,
+      "budget_usage": 1.2068559887596724,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 168.84528950004096,
+      "pooled_recall": 0.5879259710787185,
+      "macro_f1": 0.6613251546574725,
+      "balanced_accuracy": 0.8168710691481336,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.6416372099686155,
+      "budget_violation": 0.21093487908007255
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "fabrid_cvar_finite_safe",
+      "macro_recall": 0.7710848672104417,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.029000543226050047,
+      "budget_usage": 1.4500271613025022,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 1361.8347811000376,
+      "pooled_recall": 0.7156826669991438,
+      "macro_f1": 0.7724545399628742,
+      "balanced_accuracy": 0.8699930391552131,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.5651151066213342,
+      "budget_violation": 0.45002716130250225
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "fabrid_macro_no_rate_minimization",
+      "macro_recall": 0.8444224646845824,
+      "worst_client_recall": 0.0,
+      "federation_fpr": 0.03784986005727921,
+      "budget_usage": 1.8924930028639604,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": 71.54769979995308,
+      "pooled_recall": 0.8005049207827838,
+      "macro_f1": 0.8440655627519069,
+      "balanced_accuracy": 0.9032843932390267,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.532418867999604,
+      "budget_violation": 0.8924930028639604
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "common_rate_macro",
+      "macro_recall": 0.9999885346545376,
+      "worst_client_recall": 0.9998974092397596,
+      "federation_fpr": 0.03745548156540114,
+      "budget_usage": 1.8727740782700573,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999842662511472,
+      "macro_f1": 0.9996688529291736,
+      "balanced_accuracy": 0.981266091122946,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.43410943664880747,
+      "budget_violation": 0.8727740782700572
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "eq_fpr_matched_macro",
+      "macro_recall": 0.9999559886970211,
+      "worst_client_recall": 0.9998680144397787,
+      "federation_fpr": 0.018216217294358166,
+      "budget_usage": 0.9108108647179083,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999487452479372,
+      "macro_f1": 0.9997973979218673,
+      "balanced_accuracy": 0.990862807018287,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.2682963116547875,
+      "budget_violation": 0.0
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "eq_fpr_matched_cvar",
+      "macro_recall": 0.9999784432851527,
+      "worst_client_recall": 0.9998801752494453,
+      "federation_fpr": 0.023247611890692844,
+      "budget_usage": 1.1623805945346422,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999705496495832,
+      "macro_f1": 0.9997746589682391,
+      "balanced_accuracy": 0.9883637568812798,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.3073621973016789,
+      "budget_violation": 0.16238059453464213
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "policy": "pooled_shared",
+      "macro_recall": 0.9999377761374866,
+      "worst_client_recall": 0.9997260779528272,
+      "federation_fpr": 0.017274659316523784,
+      "budget_usage": 0.8637329658261891,
+      "fallback_rate": 0.0,
+      "solver_runtime_ms": null,
+      "pooled_recall": 0.9999385442459336,
+      "macro_f1": 0.9997718761809866,
+      "balanced_accuracy": 0.9913180075869767,
+      "auroc": 0.9994967391378198,
+      "auprc": 0.999884552937138,
+      "false_alert_gini": 0.3756748328981778,
+      "budget_violation": 0.0
+    }
+  ],
+  "statistics": [
+    {
+      "budget_id": "false_positive_0p001",
+      "treatment": "fabrid_macro",
+      "baseline": "eq_fpr",
+      "metric": "macro_recall",
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "p_value": 1.0,
+      "holm_adjusted_p_value": 1.0,
+      "decision": "retain",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "treatment": "fabrid_macro",
+      "baseline": "eq_fpr",
+      "metric": "macro_recall",
+      "mean_difference": -0.02223968854453785,
+      "median_difference": 0.022200816770294896,
+      "ci_low": -0.05557352382430053,
+      "ci_high": 0.01109347731392584,
+      "p_value": 0.1796875,
+      "holm_adjusted_p_value": 0.359375,
+      "decision": "retain",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "treatment": "fabrid_macro",
+      "baseline": "eq_fpr",
+      "metric": "macro_recall",
+      "mean_difference": -0.37995714026326377,
+      "median_difference": -0.34440086123333025,
+      "ci_low": -0.4132900440868464,
+      "ci_high": -0.3466253633933403,
+      "p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.009765625,
+      "decision": "reject",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "treatment": "fabrid_macro",
+      "baseline": "eq_fpr",
+      "metric": "macro_recall",
+      "mean_difference": -0.4555377529794663,
+      "median_difference": -0.4444262687519512,
+      "ci_low": -0.4999819466031286,
+      "ci_high": -0.41109357334304636,
+      "p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.009765625,
+      "decision": "reject",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "treatment": "fabrid_macro",
+      "baseline": "eq_fpr",
+      "metric": "macro_recall",
+      "mean_difference": -0.25557070762608675,
+      "median_difference": -0.22223848410460922,
+      "ci_low": -0.2889034916802417,
+      "ci_high": -0.22223873225338198,
+      "p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.009765625,
+      "decision": "reject",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p001",
+      "treatment": "fabrid_cvar",
+      "baseline": "eq_fpr",
+      "metric": "worst_client_recall",
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "p_value": 1.0,
+      "holm_adjusted_p_value": 1.0,
+      "decision": "retain",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p0025",
+      "treatment": "fabrid_cvar",
+      "baseline": "eq_fpr",
+      "metric": "worst_client_recall",
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "p_value": 1.0,
+      "holm_adjusted_p_value": 1.0,
+      "decision": "retain",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p005",
+      "treatment": "fabrid_cvar",
+      "baseline": "eq_fpr",
+      "metric": "worst_client_recall",
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "p_value": 1.0,
+      "holm_adjusted_p_value": 1.0,
+      "decision": "retain",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p010",
+      "treatment": "fabrid_cvar",
+      "baseline": "eq_fpr",
+      "metric": "worst_client_recall",
+      "mean_difference": -0.9998418680733339,
+      "median_difference": -0.9998416420693109,
+      "ci_low": -0.9998423200813796,
+      "ci_high": -0.9998416420693109,
+      "p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.009765625,
+      "decision": "reject",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "budget_id": "false_positive_0p020",
+      "treatment": "fabrid_cvar",
+      "baseline": "eq_fpr",
+      "metric": "worst_client_recall",
+      "mean_difference": -0.9998974092397596,
+      "median_difference": -0.9998967002377981,
+      "ci_low": -0.9998985569904317,
+      "ci_high": -0.9998965315221667,
+      "p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.009765625,
+      "decision": "reject",
+      "included_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  ],
+  "gates": {
+    "fabrid_macro": {
+      "availability": "available",
+      "status": "fail",
+      "budgets_passing": 0,
+      "total_budgets": 5,
+      "differences": [
+        {
+          "budget_id": "false_positive_0p001",
+          "macro_recall": 0.3778106676995051
+        },
+        {
+          "budget_id": "false_positive_0p0025",
+          "macro_recall": 0.4222178764962804
+        },
+        {
+          "budget_id": "false_positive_0p005",
+          "macro_recall": 0.4644070098540992
+        },
+        {
+          "budget_id": "false_positive_0p010",
+          "macro_recall": 0.5444111752917464
+        },
+        {
+          "budget_id": "false_positive_0p020",
+          "macro_recall": 0.7444178270284509
+        }
+      ]
+    },
+    "fabrid_cvar": {
+      "availability": "available",
+      "status": "fail",
+      "budgets_passing": 0,
+      "total_budgets": 5,
+      "differences": [
+        {
+          "budget_id": "false_positive_0p001",
+          "worst_client_recall": 0.0,
+          "macro_recall_percentage_points": 0.0
+        },
+        {
+          "budget_id": "false_positive_0p0025",
+          "worst_client_recall": 0.0,
+          "macro_recall_percentage_points": -2.223968854453785
+        },
+        {
+          "budget_id": "false_positive_0p005",
+          "worst_client_recall": 0.0,
+          "macro_recall_percentage_points": -34.66253509359226
+        },
+        {
+          "budget_id": "false_positive_0p010",
+          "worst_client_recall": 0.0,
+          "macro_recall_percentage_points": -27.331247444490085
+        },
+        {
+          "budget_id": "false_positive_0p020",
+          "worst_client_recall": 0.0,
+          "macro_recall_percentage_points": -15.557288157340516
+        }
+      ]
+    },
+    "budget_compliance": [
+      {
+        "policy": "eq_fpr",
+        "budget_id": "false_positive_0p005",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.4273687658401235,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.6206434451552811,
+        "seed_count": 10
+      },
+      {
+        "policy": "eq_fpr",
+        "budget_id": "false_positive_0p010",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.6854320146710848,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.7511173241134554,
+        "seed_count": 10
+      },
+      {
+        "policy": "eq_fpr",
+        "budget_id": "false_positive_0p020",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.8823417033822873,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.9090524514202976,
+        "seed_count": 10
+      },
+      {
+        "policy": "greedy",
+        "budget_id": "false_positive_0p005",
+        "availability": "available",
+        "status": "pass",
+        "median_usage": 0.0006340510791549367,
+        "fraction_within_seed_limit": 1.0,
+        "maximum_usage": 0.006974561870704304,
+        "seed_count": 10
+      },
+      {
+        "policy": "greedy",
+        "budget_id": "false_positive_0p010",
+        "availability": "available",
+        "status": "pass",
+        "median_usage": 0.00031702553957746834,
+        "fraction_within_seed_limit": 1.0,
+        "maximum_usage": 0.003487280935352152,
+        "seed_count": 10
+      },
+      {
+        "policy": "greedy",
+        "budget_id": "false_positive_0p020",
+        "availability": "available",
+        "status": "pass",
+        "median_usage": 0.00015851276978873417,
+        "fraction_within_seed_limit": 1.0,
+        "maximum_usage": 0.001743640467676076,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_macro",
+        "budget_id": "false_positive_0p005",
+        "availability": "available",
+        "status": "pass",
+        "median_usage": 0.7416407157184512,
+        "fraction_within_seed_limit": 1.0,
+        "maximum_usage": 1.085164319396113,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_macro",
+        "budget_id": "false_positive_0p010",
+        "availability": "available",
+        "status": "pass",
+        "median_usage": 0.7714883127740297,
+        "fraction_within_seed_limit": 1.0,
+        "maximum_usage": 0.821747888038694,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_macro",
+        "budget_id": "false_positive_0p020",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.3892155354227471,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.5477022787786119,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_cvar",
+        "budget_id": "false_positive_0p005",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.353402318850312,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.43584098635888,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_cvar",
+        "budget_id": "false_positive_0p010",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.3754186423618666,
+        "fraction_within_seed_limit": 0.2,
+        "maximum_usage": 2.2397752345603177,
+        "seed_count": 10
+      },
+      {
+        "policy": "fabrid_cvar",
+        "budget_id": "false_positive_0p020",
+        "availability": "available",
+        "status": "fail",
+        "median_usage": 1.7431007955559488,
+        "fraction_within_seed_limit": 0.0,
+        "maximum_usage": 1.8289829214100901,
+        "seed_count": 10
+      }
+    ]
+  },
+  "tables": [
+    {
+      "table_id": "budget_policy_summary",
+      "title": "Matched-budget primary results, mean across detector seeds",
+      "columns": [
+        "budget",
+        "policy",
+        "macro recall",
+        "worst-client recall",
+        "budget usage",
+        "federation fpr"
+      ],
+      "rows": [
+        [
+          "0.0010",
+          "eq_fpr",
+          "0.3778",
+          "0.0000",
+          "1.696",
+          "0.0017"
+        ],
+        [
+          "0.0010",
+          "greedy",
+          "0.0533",
+          "0.0000",
+          "0.006",
+          "0.0000"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro",
+          "0.3778",
+          "0.0000",
+          "1.696",
+          "0.0017"
+        ],
+        [
+          "0.0010",
+          "fabrid_cvar",
+          "0.3778",
+          "0.0000",
+          "1.696",
+          "0.0017"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro_finite_safe",
+          "0.2445",
+          "0.0000",
+          "0.358",
+          "0.0004"
+        ],
+        [
+          "0.0010",
+          "fabrid_cvar_finite_safe",
+          "0.2445",
+          "0.0000",
+          "0.358",
+          "0.0004"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro_no_rate_minimization",
+          "0.3778",
+          "0.0000",
+          "1.696",
+          "0.0017"
+        ],
+        [
+          "0.0010",
+          "common_rate_macro",
+          "0.3778",
+          "0.0000",
+          "1.696",
+          "0.0017"
+        ],
+        [
+          "0.0010",
+          "eq_fpr_matched_macro",
+          "0.3111",
+          "0.0000",
+          "0.954",
+          "0.0010"
+        ],
+        [
+          "0.0010",
+          "eq_fpr_matched_cvar",
+          "0.3111",
+          "0.0000",
+          "0.954",
+          "0.0010"
+        ],
+        [
+          "0.0010",
+          "pooled_shared",
+          "0.8666",
+          "0.6000",
+          "2.359",
+          "0.0024"
+        ],
+        [
+          "0.0025",
+          "eq_fpr",
+          "0.4445",
+          "0.0000",
+          "0.965",
+          "0.0024"
+        ],
+        [
+          "0.0025",
+          "greedy",
+          "0.0533",
+          "0.0000",
+          "0.003",
+          "0.0000"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro",
+          "0.4222",
+          "0.0000",
+          "1.031",
+          "0.0026"
+        ],
+        [
+          "0.0025",
+          "fabrid_cvar",
+          "0.4222",
+          "0.0000",
+          "1.031",
+          "0.0026"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro_finite_safe",
+          "0.3111",
+          "0.0000",
+          "0.381",
+          "0.0010"
+        ],
+        [
+          "0.0025",
+          "fabrid_cvar_finite_safe",
+          "0.3111",
+          "0.0000",
+          "0.381",
+          "0.0010"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro_no_rate_minimization",
+          "0.4577",
+          "0.0000",
+          "1.129",
+          "0.0028"
+        ],
+        [
+          "0.0025",
+          "common_rate_macro",
+          "0.4445",
+          "0.0000",
+          "0.964",
+          "0.0024"
+        ],
+        [
+          "0.0025",
+          "eq_fpr_matched_macro",
+          "0.5556",
+          "0.0000",
+          "1.194",
+          "0.0030"
+        ],
+        [
+          "0.0025",
+          "eq_fpr_matched_cvar",
+          "0.5556",
+          "0.0000",
+          "1.194",
+          "0.0030"
+        ],
+        [
+          "0.0025",
+          "pooled_shared",
+          "0.9111",
+          "0.6000",
+          "1.328",
+          "0.0033"
+        ],
+        [
+          "0.0050",
+          "eq_fpr",
+          "0.8444",
+          "0.0000",
+          "1.445",
+          "0.0072"
+        ],
+        [
+          "0.0050",
+          "greedy",
+          "0.0533",
+          "0.0000",
+          "0.001",
+          "0.0000"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro",
+          "0.4644",
+          "0.0000",
+          "0.706",
+          "0.0035"
+        ],
+        [
+          "0.0050",
+          "fabrid_cvar",
+          "0.4977",
+          "0.0000",
+          "1.290",
+          "0.0064"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro_finite_safe",
+          "0.3422",
+          "0.0000",
+          "0.364",
+          "0.0018"
+        ],
+        [
+          "0.0050",
+          "fabrid_cvar_finite_safe",
+          "0.4222",
+          "0.0000",
+          "0.884",
+          "0.0044"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro_no_rate_minimization",
+          "0.5511",
+          "0.0000",
+          "1.118",
+          "0.0056"
+        ],
+        [
+          "0.0050",
+          "common_rate_macro",
+          "0.8333",
+          "0.0000",
+          "1.443",
+          "0.0072"
+        ],
+        [
+          "0.0050",
+          "eq_fpr_matched_macro",
+          "0.6133",
+          "0.0000",
+          "1.266",
+          "0.0063"
+        ],
+        [
+          "0.0050",
+          "eq_fpr_matched_cvar",
+          "0.7333",
+          "0.0000",
+          "1.393",
+          "0.0070"
+        ],
+        [
+          "0.0050",
+          "pooled_shared",
+          "0.9732",
+          "0.7600",
+          "0.999",
+          "0.0050"
+        ],
+        [
+          "0.0100",
+          "eq_fpr",
+          "0.9999",
+          "0.9998",
+          "1.683",
+          "0.0168"
+        ],
+        [
+          "0.0100",
+          "greedy",
+          "0.0533",
+          "0.0000",
+          "0.001",
+          "0.0000"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro",
+          "0.5444",
+          "0.0000",
+          "0.739",
+          "0.0074"
+        ],
+        [
+          "0.0100",
+          "fabrid_cvar",
+          "0.7266",
+          "0.0000",
+          "1.480",
+          "0.0148"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro_finite_safe",
+          "0.4422",
+          "0.0000",
+          "0.616",
+          "0.0062"
+        ],
+        [
+          "0.0100",
+          "fabrid_cvar_finite_safe",
+          "0.5889",
+          "0.0000",
+          "0.948",
+          "0.0095"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro_no_rate_minimization",
+          "0.7777",
+          "0.0000",
+          "2.292",
+          "0.0229"
+        ],
+        [
+          "0.0100",
+          "common_rate_macro",
+          "0.9999",
+          "0.9998",
+          "1.683",
+          "0.0168"
+        ],
+        [
+          "0.0100",
+          "eq_fpr_matched_macro",
+          "0.8888",
+          "0.0000",
+          "0.918",
+          "0.0092"
+        ],
+        [
+          "0.0100",
+          "eq_fpr_matched_cvar",
+          "0.9555",
+          "0.5999",
+          "1.301",
+          "0.0130"
+        ],
+        [
+          "0.0100",
+          "pooled_shared",
+          "0.9999",
+          "0.9996",
+          "0.864",
+          "0.0086"
+        ],
+        [
+          "0.0200",
+          "eq_fpr",
+          "1.0000",
+          "0.9999",
+          "1.876",
+          "0.0375"
+        ],
+        [
+          "0.0200",
+          "greedy",
+          "0.0533",
+          "0.0000",
+          "0.000",
+          "0.0000"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro",
+          "0.7444",
+          "0.0000",
+          "1.403",
+          "0.0281"
+        ],
+        [
+          "0.0200",
+          "fabrid_cvar",
+          "0.8444",
+          "0.0000",
+          "1.748",
+          "0.0350"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro_finite_safe",
+          "0.6600",
+          "0.0000",
+          "1.207",
+          "0.0241"
+        ],
+        [
+          "0.0200",
+          "fabrid_cvar_finite_safe",
+          "0.7711",
+          "0.0000",
+          "1.450",
+          "0.0290"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro_no_rate_minimization",
+          "0.8444",
+          "0.0000",
+          "1.892",
+          "0.0378"
+        ],
+        [
+          "0.0200",
+          "common_rate_macro",
+          "1.0000",
+          "0.9999",
+          "1.873",
+          "0.0375"
+        ],
+        [
+          "0.0200",
+          "eq_fpr_matched_macro",
+          "1.0000",
+          "0.9999",
+          "0.911",
+          "0.0182"
+        ],
+        [
+          "0.0200",
+          "eq_fpr_matched_cvar",
+          "1.0000",
+          "0.9999",
+          "1.162",
+          "0.0232"
+        ],
+        [
+          "0.0200",
+          "pooled_shared",
+          "0.9999",
+          "0.9997",
+          "0.864",
+          "0.0173"
+        ]
+      ]
+    },
+    {
+      "table_id": "secondary_metrics",
+      "title": "Secondary metrics and frozen-detector ranking, mean across detector seeds (AUROC/AUPRC are detector properties, not allocation endpoints)",
+      "columns": [
+        "budget",
+        "policy",
+        "pooled recall",
+        "macro f1",
+        "balanced accuracy",
+        "auroc",
+        "auprc",
+        "false-alert gini",
+        "budget violation"
+      ],
+      "rows": [
+        [
+          "0.0010",
+          "eq_fpr",
+          "0.3057",
+          "0.3746",
+          "0.6563",
+          "0.9995",
+          "0.9999",
+          "0.5908",
+          "0.715"
+        ],
+        [
+          "0.0010",
+          "greedy",
+          "0.0669",
+          "0.0586",
+          "0.5262",
+          "0.9995",
+          "0.9999",
+          "0.5333",
+          "0.000"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro",
+          "0.3057",
+          "0.3746",
+          "0.6563",
+          "0.9995",
+          "0.9999",
+          "0.5908",
+          "0.715"
+        ],
+        [
+          "0.0010",
+          "fabrid_cvar",
+          "0.3057",
+          "0.3746",
+          "0.6563",
+          "0.9995",
+          "0.9999",
+          "0.5908",
+          "0.715"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro_finite_safe",
+          "0.2127",
+          "0.2503",
+          "0.6041",
+          "0.9995",
+          "0.9999",
+          "0.7207",
+          "0.000"
+        ],
+        [
+          "0.0010",
+          "fabrid_cvar_finite_safe",
+          "0.2127",
+          "0.2503",
+          "0.6041",
+          "0.9995",
+          "0.9999",
+          "0.7207",
+          "0.000"
+        ],
+        [
+          "0.0010",
+          "fabrid_macro_no_rate_minimization",
+          "0.3057",
+          "0.3746",
+          "0.6563",
+          "0.9995",
+          "0.9999",
+          "0.5908",
+          "0.715"
+        ],
+        [
+          "0.0010",
+          "common_rate_macro",
+          "0.3057",
+          "0.3746",
+          "0.6563",
+          "0.9995",
+          "0.9999",
+          "0.5908",
+          "0.715"
+        ],
+        [
+          "0.0010",
+          "eq_fpr_matched_macro",
+          "0.2298",
+          "0.3080",
+          "0.6233",
+          "0.9995",
+          "0.9999",
+          "0.6522",
+          "0.000"
+        ],
+        [
+          "0.0010",
+          "eq_fpr_matched_cvar",
+          "0.2298",
+          "0.3080",
+          "0.6233",
+          "0.9995",
+          "0.9999",
+          "0.6522",
+          "0.000"
+        ],
+        [
+          "0.0010",
+          "pooled_shared",
+          "0.8760",
+          "0.8635",
+          "0.9003",
+          "0.9995",
+          "0.9999",
+          "0.4272",
+          "1.359"
+        ],
+        [
+          "0.0025",
+          "eq_fpr",
+          "0.3867",
+          "0.4324",
+          "0.6901",
+          "0.9995",
+          "0.9999",
+          "0.6314",
+          "0.003"
+        ],
+        [
+          "0.0025",
+          "greedy",
+          "0.0669",
+          "0.0586",
+          "0.5262",
+          "0.9995",
+          "0.9999",
+          "0.5333",
+          "0.000"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro",
+          "0.3372",
+          "0.4280",
+          "0.6919",
+          "0.9995",
+          "0.9999",
+          "0.6893",
+          "0.143"
+        ],
+        [
+          "0.0025",
+          "fabrid_cvar",
+          "0.3372",
+          "0.4280",
+          "0.6919",
+          "0.9995",
+          "0.9999",
+          "0.6893",
+          "0.143"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro_finite_safe",
+          "0.2298",
+          "0.3080",
+          "0.6233",
+          "0.9995",
+          "0.9999",
+          "0.6521",
+          "0.000"
+        ],
+        [
+          "0.0025",
+          "fabrid_cvar_finite_safe",
+          "0.2298",
+          "0.3080",
+          "0.6233",
+          "0.9995",
+          "0.9999",
+          "0.6521",
+          "0.000"
+        ],
+        [
+          "0.0025",
+          "fabrid_macro_no_rate_minimization",
+          "0.3856",
+          "0.4514",
+          "0.7124",
+          "0.9995",
+          "0.9999",
+          "0.6793",
+          "0.209"
+        ],
+        [
+          "0.0025",
+          "common_rate_macro",
+          "0.3867",
+          "0.4324",
+          "0.6901",
+          "0.9995",
+          "0.9999",
+          "0.6297",
+          "0.003"
+        ],
+        [
+          "0.0025",
+          "eq_fpr_matched_macro",
+          "0.5144",
+          "0.5435",
+          "0.7453",
+          "0.9995",
+          "0.9999",
+          "0.5868",
+          "0.194"
+        ],
+        [
+          "0.0025",
+          "eq_fpr_matched_cvar",
+          "0.5144",
+          "0.5435",
+          "0.7453",
+          "0.9995",
+          "0.9999",
+          "0.5868",
+          "0.194"
+        ],
+        [
+          "0.0025",
+          "pooled_shared",
+          "0.9363",
+          "0.8937",
+          "0.9264",
+          "0.9995",
+          "0.9999",
+          "0.4036",
+          "0.328"
+        ],
+        [
+          "0.0050",
+          "eq_fpr",
+          "0.8194",
+          "0.8354",
+          "0.9047",
+          "0.9995",
+          "0.9999",
+          "0.4876",
+          "0.445"
+        ],
+        [
+          "0.0050",
+          "greedy",
+          "0.0669",
+          "0.0586",
+          "0.5262",
+          "0.9995",
+          "0.9999",
+          "0.5333",
+          "0.000"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro",
+          "0.3945",
+          "0.4565",
+          "0.7165",
+          "0.9995",
+          "0.9999",
+          "0.7437",
+          "0.009"
+        ],
+        [
+          "0.0050",
+          "fabrid_cvar",
+          "0.4116",
+          "0.5009",
+          "0.7435",
+          "0.9995",
+          "0.9999",
+          "0.6673",
+          "0.290"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro_finite_safe",
+          "0.2694",
+          "0.3300",
+          "0.6413",
+          "0.9995",
+          "0.9999",
+          "0.7916",
+          "0.000"
+        ],
+        [
+          "0.0050",
+          "fabrid_cvar_finite_safe",
+          "0.3238",
+          "0.4275",
+          "0.7054",
+          "0.9995",
+          "0.9999",
+          "0.6751",
+          "0.000"
+        ],
+        [
+          "0.0050",
+          "fabrid_macro_no_rate_minimization",
+          "0.4742",
+          "0.5501",
+          "0.7714",
+          "0.9995",
+          "0.9999",
+          "0.6735",
+          "0.135"
+        ],
+        [
+          "0.0050",
+          "common_rate_macro",
+          "0.8069",
+          "0.8243",
+          "0.8992",
+          "0.9995",
+          "0.9999",
+          "0.4904",
+          "0.443"
+        ],
+        [
+          "0.0050",
+          "eq_fpr_matched_macro",
+          "0.5699",
+          "0.6026",
+          "0.7869",
+          "0.9995",
+          "0.9999",
+          "0.5445",
+          "0.274"
+        ],
+        [
+          "0.0050",
+          "eq_fpr_matched_cvar",
+          "0.6940",
+          "0.7243",
+          "0.8493",
+          "0.9995",
+          "0.9999",
+          "0.5167",
+          "0.393"
+        ],
+        [
+          "0.0050",
+          "pooled_shared",
+          "0.9809",
+          "0.9679",
+          "0.9758",
+          "0.9995",
+          "0.9999",
+          "0.4243",
+          "0.014"
+        ],
+        [
+          "0.0100",
+          "eq_fpr",
+          "0.9999",
+          "0.9998",
+          "0.9916",
+          "0.9995",
+          "0.9999",
+          "0.2778",
+          "0.683"
+        ],
+        [
+          "0.0100",
+          "greedy",
+          "0.0669",
+          "0.0586",
+          "0.5262",
+          "0.9995",
+          "0.9999",
+          "0.5333",
+          "0.000"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro",
+          "0.4648",
+          "0.5443",
+          "0.7685",
+          "0.9995",
+          "0.9999",
+          "0.6464",
+          "0.000"
+        ],
+        [
+          "0.0100",
+          "fabrid_cvar",
+          "0.6668",
+          "0.7281",
+          "0.8549",
+          "0.9995",
+          "0.9999",
+          "0.5606",
+          "0.480"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro_finite_safe",
+          "0.3475",
+          "0.4453",
+          "0.7159",
+          "0.9995",
+          "0.9999",
+          "0.6787",
+          "0.000"
+        ],
+        [
+          "0.0100",
+          "fabrid_cvar_finite_safe",
+          "0.5102",
+          "0.5942",
+          "0.7862",
+          "0.9995",
+          "0.9999",
+          "0.5770",
+          "0.046"
+        ],
+        [
+          "0.0100",
+          "fabrid_macro_no_rate_minimization",
+          "0.7238",
+          "0.7775",
+          "0.8774",
+          "0.9995",
+          "0.9999",
+          "0.6238",
+          "1.292"
+        ],
+        [
+          "0.0100",
+          "common_rate_macro",
+          "0.9999",
+          "0.9998",
+          "0.9916",
+          "0.9995",
+          "0.9999",
+          "0.2778",
+          "0.683"
+        ],
+        [
+          "0.0100",
+          "eq_fpr_matched_macro",
+          "0.8510",
+          "0.8887",
+          "0.9398",
+          "0.9995",
+          "0.9999",
+          "0.4062",
+          "0.016"
+        ],
+        [
+          "0.0100",
+          "eq_fpr_matched_cvar",
+          "0.9404",
+          "0.9554",
+          "0.9712",
+          "0.9995",
+          "0.9999",
+          "0.3232",
+          "0.301"
+        ],
+        [
+          "0.0100",
+          "pooled_shared",
+          "0.9999",
+          "0.9998",
+          "0.9956",
+          "0.9995",
+          "0.9999",
+          "0.4264",
+          "0.000"
+        ],
+        [
+          "0.0200",
+          "eq_fpr",
+          "1.0000",
+          "0.9997",
+          "0.9812",
+          "0.9995",
+          "0.9999",
+          "0.4338",
+          "0.876"
+        ],
+        [
+          "0.0200",
+          "greedy",
+          "0.0669",
+          "0.0586",
+          "0.5262",
+          "0.9995",
+          "0.9999",
+          "0.5333",
+          "0.000"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro",
+          "0.6855",
+          "0.7441",
+          "0.8582",
+          "0.9995",
+          "0.9999",
+          "0.6306",
+          "0.403"
+        ],
+        [
+          "0.0200",
+          "fabrid_cvar",
+          "0.8005",
+          "0.8441",
+          "0.9047",
+          "0.9995",
+          "0.9999",
+          "0.5628",
+          "0.748"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro_finite_safe",
+          "0.5879",
+          "0.6613",
+          "0.8169",
+          "0.9995",
+          "0.9999",
+          "0.6416",
+          "0.211"
+        ],
+        [
+          "0.0200",
+          "fabrid_cvar_finite_safe",
+          "0.7157",
+          "0.7725",
+          "0.8700",
+          "0.9995",
+          "0.9999",
+          "0.5651",
+          "0.450"
+        ],
+        [
+          "0.0200",
+          "fabrid_macro_no_rate_minimization",
+          "0.8005",
+          "0.8441",
+          "0.9033",
+          "0.9995",
+          "0.9999",
+          "0.5324",
+          "0.892"
+        ],
+        [
+          "0.0200",
+          "common_rate_macro",
+          "1.0000",
+          "0.9997",
+          "0.9813",
+          "0.9995",
+          "0.9999",
+          "0.4341",
+          "0.873"
+        ],
+        [
+          "0.0200",
+          "eq_fpr_matched_macro",
+          "0.9999",
+          "0.9998",
+          "0.9909",
+          "0.9995",
+          "0.9999",
+          "0.2683",
+          "0.000"
+        ],
+        [
+          "0.0200",
+          "eq_fpr_matched_cvar",
+          "1.0000",
+          "0.9998",
+          "0.9884",
+          "0.9995",
+          "0.9999",
+          "0.3074",
+          "0.162"
+        ],
+        [
+          "0.0200",
+          "pooled_shared",
+          "0.9999",
+          "0.9998",
+          "0.9913",
+          "0.9995",
+          "0.9999",
+          "0.3757",
+          "0.000"
+        ]
+      ]
+    },
+    {
+      "table_id": "generalization_rotations",
+      "title": "Generalization protocol: subtype-fold and botnet-family rotations (protocol structure)",
+      "columns": [
+        "variant",
+        "validation scope",
+        "test scope"
+      ],
+      "rows": [
+        [
+          "attack_subtype_fold_0",
+          "fold_0",
+          "fold_1, fold_2"
+        ],
+        [
+          "attack_subtype_fold_1",
+          "fold_1",
+          "fold_0, fold_2"
+        ],
+        [
+          "attack_subtype_fold_2",
+          "fold_2",
+          "fold_0, fold_1"
+        ],
+        [
+          "botnet_bashlite_to_mirai",
+          "bashlite",
+          "mirai"
+        ],
+        [
+          "botnet_mirai_to_bashlite",
+          "mirai",
+          "bashlite"
+        ]
+      ]
+    },
+    {
+      "table_id": "dataset_populations",
+      "title": "Dataset populations (nbaiot)",
+      "columns": [
+        "client",
+        "benign rows",
+        "attack rows per subtype"
+      ],
+      "rows": [
+        [
+          "Danmini_Doorbell",
+          "49548",
+          "bashlite_combo:11943; bashlite_junk:5813; bashlite_scan:5969; bashlite_tcp:18428; bashlite_udp:21174; mirai_ack:20439; mirai_scan:21537; mirai_syn:24514; mirai_udp:47533; mirai_udpplain:16396"
+        ],
+        [
+          "Ennio_Doorbell",
+          "39100",
+          "bashlite_combo:10602; bashlite_junk:5959; bashlite_scan:5624; bashlite_tcp:20307; bashlite_udp:20786"
+        ],
+        [
+          "Ecobee_Thermostat",
+          "13113",
+          "bashlite_combo:10602; bashlite_junk:6062; bashlite_scan:5498; bashlite_tcp:19004; bashlite_udp:20958; mirai_ack:22657; mirai_scan:8638; mirai_syn:23361; mirai_udp:30296; mirai_udpplain:17473"
+        ],
+        [
+          "Philips_B120N10_Baby_Monitor",
+          "175240",
+          "bashlite_combo:11630; bashlite_junk:5669; bashlite_scan:5571; bashlite_tcp:18516; bashlite_udp:21156; mirai_ack:18224; mirai_scan:20724; mirai_syn:23625; mirai_udp:43406; mirai_udpplain:16161"
+        ],
+        [
+          "Provision_PT_737E_Security_Camera",
+          "62154",
+          "bashlite_combo:12276; bashlite_junk:6179; bashlite_scan:5859; bashlite_tcp:20902; bashlite_udp:20802; mirai_ack:12110; mirai_scan:19356; mirai_syn:13149; mirai_udp:31249; mirai_udpplain:11336"
+        ],
+        [
+          "Provision_PT_838_Security_Camera",
+          "98514",
+          "bashlite_combo:11506; bashlite_junk:5813; bashlite_scan:5679; bashlite_tcp:17877; bashlite_udp:20931; mirai_ack:11599; mirai_scan:19419; mirai_syn:12370; mirai_udp:31721; mirai_udpplain:10757"
+        ],
+        [
+          "SimpleHome_XCS7_1002_WHT_Security_Camera",
+          "46585",
+          "bashlite_combo:10856; bashlite_junk:5715; bashlite_scan:5565; bashlite_tcp:17763; bashlite_udp:20744; mirai_ack:22296; mirai_scan:9186; mirai_syn:25143; mirai_udp:30375; mirai_udpplain:15648"
+        ],
+        [
+          "SimpleHome_XCS7_1003_WHT_Security_Camera",
+          "19528",
+          "bashlite_combo:11879; bashlite_junk:5482; bashlite_scan:5714; bashlite_tcp:19615; bashlite_udp:20596; mirai_ack:21437; mirai_scan:8734; mirai_syn:24495; mirai_udp:31416; mirai_udpplain:16887"
+        ],
+        [
+          "Samsung_SNH_1011_N_Webcam",
+          "52150",
+          "bashlite_combo:11733; bashlite_junk:5661; bashlite_scan:5539; bashlite_tcp:19556; bashlite_udp:22123"
+        ]
+      ]
+    },
+    {
+      "table_id": "external_replication",
+      "title": "External physical-device replication (cic_iot_diad)",
+      "columns": [
+        "budget",
+        "macro recall",
+        "worst-client recall",
+        "federation fpr"
+      ],
+      "rows": [
+        [
+          "0.0010",
+          "0.3614",
+          "0.0000",
+          "0.0098"
+        ],
+        [
+          "0.0025",
+          "0.3970",
+          "0.0000",
+          "0.0118"
+        ],
+        [
+          "0.0050",
+          "0.4318",
+          "0.0007",
+          "0.0160"
+        ],
+        [
+          "0.0100",
+          "0.4602",
+          "0.0089",
+          "0.0213"
+        ],
+        [
+          "0.0200",
+          "0.5016",
+          "0.0251",
+          "0.0311"
+        ]
+      ]
+    },
+    {
+      "table_id": "system_overhead",
+      "title": "System overhead, mean across detector seeds: solver runtime and fallback rate",
+      "columns": [
+        "budget",
+        "policy",
+        "solver runtime (ms)",
+        "fallback rate"
+      ],
+      "rows": [
+        [
+          "false_positive_0p001",
+          "eq_fpr",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "greedy",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "fabrid_macro",
+          "98.6",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "fabrid_cvar",
+          "310.3",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "fabrid_macro_finite_safe",
+          "98.5",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "fabrid_cvar_finite_safe",
+          "316.1",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "fabrid_macro_no_rate_minimization",
+          "65.6",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "common_rate_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "eq_fpr_matched_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "eq_fpr_matched_cvar",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p001",
+          "pooled_shared",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "eq_fpr",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "greedy",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "fabrid_macro",
+          "95.7",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "fabrid_cvar",
+          "316.2",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "fabrid_macro_finite_safe",
+          "101.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "fabrid_cvar_finite_safe",
+          "316.2",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "fabrid_macro_no_rate_minimization",
+          "77.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "common_rate_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "eq_fpr_matched_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "eq_fpr_matched_cvar",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p0025",
+          "pooled_shared",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "eq_fpr",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "greedy",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "fabrid_macro",
+          "358.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "fabrid_cvar",
+          "1409.6",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "fabrid_macro_finite_safe",
+          "387.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "fabrid_cvar_finite_safe",
+          "1390.2",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "fabrid_macro_no_rate_minimization",
+          "75.6",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "common_rate_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "eq_fpr_matched_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "eq_fpr_matched_cvar",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p005",
+          "pooled_shared",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "eq_fpr",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "greedy",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "fabrid_macro",
+          "133.3",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "fabrid_cvar",
+          "3883.1",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "fabrid_macro_finite_safe",
+          "141.5",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "fabrid_cvar_finite_safe",
+          "3957.6",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "fabrid_macro_no_rate_minimization",
+          "106.4",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "common_rate_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "eq_fpr_matched_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "eq_fpr_matched_cvar",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p010",
+          "pooled_shared",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "eq_fpr",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "greedy",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "fabrid_macro",
+          "193.7",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "fabrid_cvar",
+          "1382.9",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "fabrid_macro_finite_safe",
+          "168.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "fabrid_cvar_finite_safe",
+          "1361.8",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "fabrid_macro_no_rate_minimization",
+          "71.5",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "common_rate_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "eq_fpr_matched_macro",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "eq_fpr_matched_cvar",
+          "—",
+          "0.0000"
+        ],
+        [
+          "false_positive_0p020",
+          "pooled_shared",
+          "—",
+          "0.0000"
+        ]
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "figure_id": "architecture",
+      "title": "FABRID-IDS architecture",
+      "path": "architecture.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "realized_fpr_lines",
+      "title": "Nominal versus realized federation FPR and recall",
+      "path": "realized_fpr_lines.pdf",
+      "kind": "pdf"
+    },
+    {
+      "figure_id": "macro_allocation_heatmap",
+      "title": "Client-specific Macro nominal-rate allocations",
+      "path": "macro_allocation_heatmap.pdf",
+      "kind": "pdf"
+    },
+    {
+      "figure_id": "budget_macro_recall",
+      "title": "Budget vs macro recall by policy",
+      "path": "budget_macro_recall.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "budget_worst_client_recall",
+      "title": "Budget vs worst-client recall by policy",
+      "path": "budget_worst_client_recall.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "client_operating_points",
+      "title": "Per-client operating points at the matched operating budget",
+      "path": "client_operating_points.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "allocation_stability",
+      "title": "Allocation sensitivity: allocated alpha distribution",
+      "path": "allocation_stability.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "client_utility_curves",
+      "title": "Client utility curves u_k(alpha)",
+      "path": "client_utility_curves.png",
+      "kind": "png"
+    },
+    {
+      "figure_id": "gain_vs_heterogeneity",
+      "title": "FABRID gain vs heterogeneity H_U",
+      "path": "gain_vs_heterogeneity.png",
+      "kind": "png"
+    }
+  ]
+}

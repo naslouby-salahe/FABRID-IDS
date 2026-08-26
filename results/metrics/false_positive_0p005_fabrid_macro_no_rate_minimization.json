@@ -1,0 +1,17 @@
+{
+  "budget_id": "false_positive_0p005",
+  "policy": "fabrid_macro_no_rate_minimization",
+  "macro_recall": 0.5510667651477605,
+  "worst_client_recall": 0.0,
+  "federation_fpr": 0.005590474597607591,
+  "budget_usage": 1.1180949195215182,
+  "fallback_rate": 0.0,
+  "solver_runtime_ms": 75.56494740003927,
+  "pooled_recall": 0.474165510969343,
+  "macro_f1": 0.5501451243511368,
+  "balanced_accuracy": 0.7713693860601551,
+  "auroc": 0.9994967391378198,
+  "auprc": 0.999884552937138,
+  "false_alert_gini": 0.6734749650471842,
+  "budget_violation": 0.13510318983874092
+}

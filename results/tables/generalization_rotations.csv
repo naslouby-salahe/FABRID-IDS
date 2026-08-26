@@ -1,0 +1,6 @@
+variant,validation scope,test scope
+attack_subtype_fold_0,fold_0,"fold_1, fold_2"
+attack_subtype_fold_1,fold_1,"fold_0, fold_2"
+attack_subtype_fold_2,fold_2,"fold_0, fold_1"
+botnet_bashlite_to_mirai,bashlite,mirai
+botnet_mirai_to_bashlite,mirai,bashlite

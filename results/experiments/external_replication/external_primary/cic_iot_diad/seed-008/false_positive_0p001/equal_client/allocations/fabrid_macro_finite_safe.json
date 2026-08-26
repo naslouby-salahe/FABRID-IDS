@@ -1,0 +1,110 @@
+{
+  "policy": "fabrid_macro_finite_safe",
+  "decisions": [
+    {
+      "client_id": "24:05:88:30:6f:89",
+      "target_rate": 0.0
+    },
+    {
+      "client_id": "3c:18:a0:41:c3:a0",
+      "target_rate": 0.0005354536719761938
+    },
+    {
+      "client_id": "ac:17:02:05:34:27",
+      "target_rate": 0.00021745592760409819
+    },
+    {
+      "client_id": "aeotec smart home hub",
+      "target_rate": 0.0008019641442581362
+    },
+    {
+      "client_id": "amazon echo dot 1",
+      "target_rate": 0.0009367618628394448
+    },
+    {
+      "client_id": "amazon echo dot 2",
+      "target_rate": 0.002779386554939285
+    },
+    {
+      "client_id": "amazon echo show",
+      "target_rate": 0.0005697857731163399
+    },
+    {
+      "client_id": "amazon echo studio",
+      "target_rate": 0.0005190713408839703
+    },
+    {
+      "client_id": "arlo q indoor camera",
+      "target_rate": 0.001974720351693796
+    },
+    {
+      "client_id": "google nest mini speaker",
+      "target_rate": 0.004035405230562632
+    },
+    {
+      "client_id": "harman kardon _ampak technology_",
+      "target_rate": 0.0007774278625536144
+    },
+    {
+      "client_id": "home eye camera",
+      "target_rate": 0.0007774278625536144
+    },
+    {
+      "client_id": "lg smart tv",
+      "target_rate": 0.0009367618628394448
+    },
+    {
+      "client_id": "nest indoor camera",
+      "target_rate": 0.0001
+    },
+    {
+      "client_id": "netatmo camera",
+      "target_rate": 0.0009367618628394448
+    },
+    {
+      "client_id": "philips hue bridge",
+      "target_rate": 0.0007536422741614974
+    },
+    {
+      "client_id": "smartthings hub",
+      "target_rate": 0.0007536422741614974
+    },
+    {
+      "client_id": "wyze camera",
+      "target_rate": 0.0009663268605244831
+    },
+    {
+      "client_id": "yi indoor 2 camera",
+      "target_rate": 0.0006254551189300899
+    }
+  ],
+  "solver": {
+    "status": "optimal",
+    "stages": [
+      {
+        "stage": "macro_primary_utility",
+        "objective": -0.38776853690103047,
+        "gap": 0.0,
+        "runtime_ms": 49.61313599778805
+      },
+      {
+        "stage": "macro_minimum_budget",
+        "objective": 0.0009980452481267359,
+        "gap": 0.0003500217082204533,
+        "runtime_ms": 131.01215200003935
+      },
+      {
+        "stage": "macro_lowest_variance",
+        "objective": 0.00002325975976483688,
+        "gap": 0.0022531311075042358,
+        "runtime_ms": 117.48350199923152
+      },
+      {
+        "stage": "macro_tie_break",
+        "objective": 2.579412381122611e-6,
+        "gap": 0.16996173409686113,
+        "runtime_ms": 115.04226800025208
+      }
+    ]
+  }
+}

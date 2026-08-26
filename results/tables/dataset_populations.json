@@ -1,0 +1,56 @@
+{
+  "table_id": "dataset_populations",
+  "title": "Dataset populations (nbaiot)",
+  "columns": [
+    "client",
+    "benign rows",
+    "attack rows per subtype"
+  ],
+  "rows": [
+    [
+      "Danmini_Doorbell",
+      "49548",
+      "bashlite_combo:11943; bashlite_junk:5813; bashlite_scan:5969; bashlite_tcp:18428; bashlite_udp:21174; mirai_ack:20439; mirai_scan:21537; mirai_syn:24514; mirai_udp:47533; mirai_udpplain:16396"
+    ],
+    [
+      "Ennio_Doorbell",
+      "39100",
+      "bashlite_combo:10602; bashlite_junk:5959; bashlite_scan:5624; bashlite_tcp:20307; bashlite_udp:20786"
+    ],
+    [
+      "Ecobee_Thermostat",
+      "13113",
+      "bashlite_combo:10602; bashlite_junk:6062; bashlite_scan:5498; bashlite_tcp:19004; bashlite_udp:20958; mirai_ack:22657; mirai_scan:8638; mirai_syn:23361; mirai_udp:30296; mirai_udpplain:17473"
+    ],
+    [
+      "Philips_B120N10_Baby_Monitor",
+      "175240",
+      "bashlite_combo:11630; bashlite_junk:5669; bashlite_scan:5571; bashlite_tcp:18516; bashlite_udp:21156; mirai_ack:18224; mirai_scan:20724; mirai_syn:23625; mirai_udp:43406; mirai_udpplain:16161"
+    ],
+    [
+      "Provision_PT_737E_Security_Camera",
+      "62154",
+      "bashlite_combo:12276; bashlite_junk:6179; bashlite_scan:5859; bashlite_tcp:20902; bashlite_udp:20802; mirai_ack:12110; mirai_scan:19356; mirai_syn:13149; mirai_udp:31249; mirai_udpplain:11336"
+    ],
+    [
+      "Provision_PT_838_Security_Camera",
+      "98514",
+      "bashlite_combo:11506; bashlite_junk:5813; bashlite_scan:5679; bashlite_tcp:17877; bashlite_udp:20931; mirai_ack:11599; mirai_scan:19419; mirai_syn:12370; mirai_udp:31721; mirai_udpplain:10757"
+    ],
+    [
+      "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "46585",
+      "bashlite_combo:10856; bashlite_junk:5715; bashlite_scan:5565; bashlite_tcp:17763; bashlite_udp:20744; mirai_ack:22296; mirai_scan:9186; mirai_syn:25143; mirai_udp:30375; mirai_udpplain:15648"
+    ],
+    [
+      "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "19528",
+      "bashlite_combo:11879; bashlite_junk:5482; bashlite_scan:5714; bashlite_tcp:19615; bashlite_udp:20596; mirai_ack:21437; mirai_scan:8734; mirai_syn:24495; mirai_udp:31416; mirai_udpplain:16887"
+    ],
+    [
+      "Samsung_SNH_1011_N_Webcam",
+      "52150",
+      "bashlite_combo:11733; bashlite_junk:5661; bashlite_scan:5539; bashlite_tcp:19556; bashlite_udp:22123"
+    ]
+  ]
+}
