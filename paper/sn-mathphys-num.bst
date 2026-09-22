@@ -1271,21 +1271,7 @@ FUNCTION {multi.page.check}
 }
 FUNCTION {clearpage}
 { 't :=
-  "" 's :=
-  "" 'l :=
-  
-    { t empty$ not }
-    {
-      t #1 #1 substring$ 's :=
-      s is.num not
-        'skip$
-        {	l  s * 'l := 	}
-      if$
-      t #2 global.max$ substring$ 't :=
-    }
-  while$
-  l
-       
+  t
 }
 FUNCTION {do.pages}
 {'t :=
