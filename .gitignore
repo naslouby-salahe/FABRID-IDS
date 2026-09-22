@@ -12,6 +12,15 @@
 
 # Generated score/result artifacts (large, regenerable from frozen scores/config)
 
+# LaTeX build intermediates for the manuscript (the final PDF is retained)
+/paper/main.aux
+/paper/main.bbl
+/paper/main.blg
+/paper/main.fdb_latexmk
+/paper/main.fls
+/paper/main.out
+/paper/main.synctex.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
