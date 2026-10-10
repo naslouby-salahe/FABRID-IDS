@@ -1,0 +1,354 @@
+%% BioMed_Central_Bib_Style_v1.01
+
+\begin{thebibliography}{18}
+% BibTex style file: bmc-mathphys.bst (version 2.1), 2014-07-24
+\ifx \bisbn   \undefined \def \bisbn  #1{ISBN #1}\fi
+\ifx \binits  \undefined \def \binits#1{#1}\fi
+\ifx \bauthor  \undefined \def \bauthor#1{#1}\fi
+\ifx \batitle  \undefined \def \batitle#1{#1}\fi
+\ifx \bjtitle  \undefined \def \bjtitle#1{#1}\fi
+\ifx \bvolume  \undefined \def \bvolume#1{\textbf{#1}}\fi
+\ifx \byear  \undefined \def \byear#1{#1}\fi
+\ifx \bissue  \undefined \def \bissue#1{#1}\fi
+\ifx \bfpage  \undefined \def \bfpage#1{#1}\fi
+\ifx \blpage  \undefined \def \blpage #1{#1}\fi
+\ifx \burl  \undefined \def \burl#1{\textsf{#1}}\fi
+\ifx \doiurl  \undefined \def \doiurl#1{\url{https://doi.org/#1}}\fi
+\ifx \betal  \undefined \def \betal{\textit{et al.}}\fi
+\ifx \binstitute  \undefined \def \binstitute#1{#1}\fi
+\ifx \binstitutionaled  \undefined \def \binstitutionaled#1{#1}\fi
+\ifx \bctitle  \undefined \def \bctitle#1{#1}\fi
+\ifx \beditor  \undefined \def \beditor#1{#1}\fi
+\ifx \bpublisher  \undefined \def \bpublisher#1{#1}\fi
+\ifx \bbtitle  \undefined \def \bbtitle#1{#1}\fi
+\ifx \bedition  \undefined \def \bedition#1{#1}\fi
+\ifx \bseriesno  \undefined \def \bseriesno#1{#1}\fi
+\ifx \blocation  \undefined \def \blocation#1{#1}\fi
+\ifx \bsertitle  \undefined \def \bsertitle#1{#1}\fi
+\ifx \bsnm \undefined \def \bsnm#1{#1}\fi
+\ifx \bsuffix \undefined \def \bsuffix#1{#1}\fi
+\ifx \bparticle \undefined \def \bparticle#1{#1}\fi
+\ifx \barticle \undefined \def \barticle#1{#1}\fi
+\bibcommenthead
+\ifx \bconfdate \undefined \def \bconfdate #1{#1}\fi
+\ifx \botherref \undefined \def \botherref #1{#1}\fi
+\ifx \url \undefined \def \url#1{\textsf{#1}}\fi
+\ifx \bchapter \undefined \def \bchapter#1{#1}\fi
+\ifx \bbook \undefined \def \bbook#1{#1}\fi
+\ifx \bcomment \undefined \def \bcomment#1{#1}\fi
+\ifx \oauthor \undefined \def \oauthor#1{#1}\fi
+\ifx \citeauthoryear \undefined \def \citeauthoryear#1{#1}\fi
+\ifx \endbibitem  \undefined \def \endbibitem {}\fi
+\ifx \bconflocation  \undefined \def \bconflocation#1{#1}\fi
+\ifx \arxivurl  \undefined \def \arxivurl#1{\textsf{#1}}\fi
+\csname PreBibitemsHook\endcsname
+
+%%% 1
+\bibitem[\protect\citeauthoryear{Nguyen et~al.}{2019}]{nguyen2019diot}
+\begin{bchapter}
+\bauthor{\bsnm{Nguyen}, \binits{T.D.}},
+\bauthor{\bsnm{Marchal}, \binits{S.}},
+\bauthor{\bsnm{Miettinen}, \binits{M.}},
+\bauthor{\bsnm{Fereidooni}, \binits{H.}},
+\bauthor{\bsnm{Asokan}, \binits{N.}},
+\bauthor{\bsnm{Sadeghi}, \binits{A.-R.}}:
+\bctitle{{D\"{I}oT}: A federated self-learning anomaly detection system for
+  {IoT}}.
+In: \bbtitle{IEEE ICDCS},
+pp. \bfpage{756}--\blpage{767}
+(\byear{2019}).
+\bcomment{\href{https://doi.org/10.1109/ICDCS.2019.00080}{10.1109/ICDCS.2019.00080}}
+\end{bchapter}
+\endbibitem
+
+%%% 2
+\bibitem[\protect\citeauthoryear{Wang et~al.}{2021}]{wang2021noniid}
+\begin{bchapter}
+\bauthor{\bsnm{Wang}, \binits{H.}},
+\bauthor{\bsnm{Mu{\~n}oz-Gonz{\'a}lez}, \binits{L.}},
+\bauthor{\bsnm{Eklund}, \binits{D.}},
+\bauthor{\bsnm{Raza}, \binits{S.}}:
+\bctitle{Non-{IID} data re-balancing at {IoT} edge with peer-to-peer federated
+  learning for anomaly detection}.
+In: \bbtitle{ACM WiSec},
+pp. \bfpage{153}--\blpage{163}
+(\byear{2021}).
+\bcomment{\href{https://doi.org/10.1145/3448300.3467827}{10.1145/3448300.3467827}}
+\end{bchapter}
+\endbibitem
+
+%%% 3
+\bibitem[\protect\citeauthoryear{Hamdi}{2023}]{hamdi2023flids}
+\begin{barticle}
+\bauthor{\bsnm{Hamdi}, \binits{N.}}:
+\batitle{Federated learning-based intrusion detection system for internet of
+  things}.
+\bjtitle{International Journal of Information Security}
+\bvolume{22}(\bissue{6}),
+\bfpage{1937}--\blpage{1948}
+(\byear{2023}).
+\bcomment{\href{https://doi.org/10.1007/s10207-023-00727-6}{10.1007/s10207-023-00727-6}}
+\end{barticle}
+\endbibitem
+
+%%% 4
+\bibitem[\protect\citeauthoryear{Laridi et~al.}{2024}]{laridi2024threshold}
+\begin{barticle}
+\bauthor{\bsnm{Laridi}, \binits{S.}},
+\bauthor{\bsnm{Palmer}, \binits{G.}},
+\bauthor{\bsnm{Tam}, \binits{K.-M.M.}}:
+\batitle{Enhanced federated anomaly detection through autoencoders using
+  summary statistics-based thresholding}.
+\bjtitle{Scientific Reports}
+\bvolume{14}(\bissue{1}),
+\bfpage{26704}
+(\byear{2024}).
+\bcomment{\href{https://doi.org/10.1038/s41598-024-76961-2}{10.1038/s41598-024-76961-2}}
+\end{barticle}
+\endbibitem
+
+%%% 5
+\bibitem[\protect\citeauthoryear{Asiri et~al.}{2025}]{Asiri2025Decentralized}
+\begin{barticle}
+\bauthor{\bsnm{Asiri}, \binits{M.}},
+\bauthor{\bsnm{Khemakhem}, \binits{M.A.}},
+\bauthor{\bsnm{Alhebshi}, \binits{R.M.}},
+\bauthor{\bsnm{Alsulami}, \binits{B.S.}},
+\bauthor{\bsnm{Eassa}, \binits{F.E.}}:
+\batitle{Decentralized federated learning for {IoT} malware detection at the
+  multi-access edge: A two-tier, privacy-preserving design}.
+\bjtitle{Future Internet}
+\bvolume{17}(\bissue{10}),
+\bfpage{475}
+(\byear{2025}).
+\bcomment{\href{https://doi.org/10.3390/fi17100475}{10.3390/fi17100475}}
+\end{barticle}
+\endbibitem
+
+%%% 6
+\bibitem[\protect\citeauthoryear{Khan et~al.}{2026}]{Khan2026FedDTCN}
+\begin{barticle}
+\bauthor{\bsnm{Khan}, \binits{M.A.}},
+\bauthor{\bsnm{Khalid}, \binits{O.}},
+\bauthor{\bsnm{Rais}, \binits{R.N.B.}}:
+\batitle{{Fed-DTCN}: A federated disentangled learning framework for
+  unsupervised zero-day anomaly detection in {IoT} with semantic-aware
+  augmentation}.
+\bjtitle{Sensors}
+\bvolume{26}(\bissue{6}),
+\bfpage{1918}
+(\byear{2026}).
+\bcomment{\href{https://doi.org/10.3390/s26061918}{10.3390/s26061918}}
+\end{barticle}
+\endbibitem
+
+%%% 7
+\bibitem[\protect\citeauthoryear{McMahan et~al.}{2017}]{mcmahan2017fedavg}
+\begin{bchapter}
+\bauthor{\bsnm{McMahan}, \binits{H.B.}},
+\bauthor{\bsnm{Moore}, \binits{E.}},
+\bauthor{\bsnm{Ramage}, \binits{D.}},
+\bauthor{\bsnm{Hampson}, \binits{S.}},
+\bauthor{\bsnm{{Ag\"uera y Arcas}}, \binits{B.}}:
+\bctitle{Communication-efficient learning of deep networks from decentralized
+  data}.
+In: \bbtitle{AISTATS},
+vol. \bseriesno{54},
+pp. \bfpage{1273}--\blpage{1282}
+(\byear{2017}).
+\bcomment{PMLR ID:
+  \href{https://proceedings.mlr.press/v54/mcmahan17a.html}{v54/mcmahan17a}}
+\end{bchapter}
+\endbibitem
+
+%%% 8
+\bibitem[\protect\citeauthoryear{Bridges et~al.}{2017}]{bridges2017threshold}
+\begin{bchapter}
+\bauthor{\bsnm{Bridges}, \binits{R.A.}},
+\bauthor{\bsnm{Jamieson}, \binits{J.D.}},
+\bauthor{\bsnm{Reed}, \binits{J.W.}}:
+\bctitle{Setting the threshold for high throughput detectors: A mathematical
+  approach for ensembles of dynamic, heterogeneous, probabilistic anomaly
+  detectors}.
+In: \bbtitle{IEEE BigData},
+pp. \bfpage{1071}--\blpage{1078}
+(\byear{2017}).
+\bcomment{\href{https://doi.org/10.1109/BigData.2017.8258031}{10.1109/BigData.2017.8258031}}
+\end{bchapter}
+\endbibitem
+
+%%% 9
+\bibitem[\protect\citeauthoryear{Ochiai et~al.}{2023}]{ochiai2023global}
+\begin{bchapter}
+\bauthor{\bsnm{Ochiai}, \binits{H.}},
+\bauthor{\bsnm{Nishihata}, \binits{R.}},
+\bauthor{\bsnm{Tomiyama}, \binits{E.}},
+\bauthor{\bsnm{Sun}, \binits{Y.}},
+\bauthor{\bsnm{Esaki}, \binits{H.}}:
+\bctitle{Detection of global anomalies on distributed {IoT} edges with
+  device-to-device communication}.
+In: \bbtitle{MobiHoc '23},
+pp. \bfpage{388}--\blpage{393}
+(\byear{2023}).
+\bcomment{\href{https://doi.org/10.1145/3565287.3616528}{10.1145/3565287.3616528}}
+\end{bchapter}
+\endbibitem
+
+%%% 10
+\bibitem[\protect\citeauthoryear{Kumar et~al.}{2021}]{kumar2021implicit}
+\begin{bchapter}
+\bauthor{\bsnm{Kumar}, \binits{A.}},
+\bauthor{\bsnm{Narasimhan}, \binits{H.}},
+\bauthor{\bsnm{Cotter}, \binits{A.}}:
+\bctitle{Implicit rate-constrained optimization of non-decomposable
+  objectives}.
+In: \bbtitle{ICML},
+vol. \bseriesno{139},
+pp. \bfpage{5861}--\blpage{5871}
+(\byear{2021}).
+\bcomment{PMLR ID:
+  \href{https://proceedings.mlr.press/v139/kumar21b.html}{v139/kumar21b}}
+\end{bchapter}
+\endbibitem
+
+%%% 11
+\bibitem[\protect\citeauthoryear{Tong et~al.}{2018}]{tong2018np}
+\begin{barticle}
+\bauthor{\bsnm{Tong}, \binits{X.}},
+\bauthor{\bsnm{Feng}, \binits{Y.}},
+\bauthor{\bsnm{Li}, \binits{J.J.}}:
+\batitle{{Neyman--Pearson} classification algorithms and {NP} receiver
+  operating characteristics}.
+\bjtitle{Science Advances}
+\bvolume{4}(\bissue{2}),
+\bfpage{eaao1659}
+(\byear{2018}).
+\bcomment{\href{https://doi.org/10.1126/sciadv.aao1659}{10.1126/sciadv.aao1659}}
+\end{barticle}
+\endbibitem
+
+%%% 12
+\bibitem[\protect\citeauthoryear{Lu et~al.}{2023}]{lu2023fcp}
+\begin{bchapter}
+\bauthor{\bsnm{Lu}, \binits{C.}},
+\bauthor{\bsnm{Yu}, \binits{Y.}},
+\bauthor{\bsnm{Karimireddy}, \binits{S.P.}},
+\bauthor{\bsnm{Jordan}, \binits{M.I.}},
+\bauthor{\bsnm{Raskar}, \binits{R.}}:
+\bctitle{Federated conformal predictors for distributed uncertainty
+  quantification}.
+In: \bbtitle{ICML},
+vol. \bseriesno{202},
+pp. \bfpage{22942}--\blpage{22964}
+(\byear{2023}).
+\bcomment{PMLR ID:
+  \href{https://proceedings.mlr.press/v202/lu23i.html}{v202/lu23i}}
+\end{bchapter}
+\endbibitem
+
+%%% 13
+\bibitem[\protect\citeauthoryear{Angelopoulos
+  et~al.}{2024}]{angelopoulos2024conformalrisk}
+\begin{bchapter}
+\bauthor{\bsnm{Angelopoulos}, \binits{A.N.}},
+\bauthor{\bsnm{Bates}, \binits{S.}},
+\bauthor{\bsnm{Fisch}, \binits{A.}},
+\bauthor{\bsnm{Lei}, \binits{L.}},
+\bauthor{\bsnm{Schuster}, \binits{T.}}:
+\bctitle{Conformal risk control}.
+In: \bbtitle{ICLR}
+(\byear{2024}).
+\bcomment{OpenReview ID:
+  \href{https://openreview.net/forum?id=33XGfHLtZg}{33XGfHLtZg}}
+\end{bchapter}
+\endbibitem
+
+%%% 14
+\bibitem[\protect\citeauthoryear{Li et~al.}{2020}]{li2020qffl}
+\begin{bchapter}
+\bauthor{\bsnm{Li}, \binits{T.}},
+\bauthor{\bsnm{Sanjabi}, \binits{M.}},
+\bauthor{\bsnm{Beirami}, \binits{A.}},
+\bauthor{\bsnm{Smith}, \binits{V.}}:
+\bctitle{Fair resource allocation in federated learning}.
+In: \bbtitle{ICLR}
+(\byear{2020}).
+\bcomment{OpenReview ID:
+  \href{https://openreview.net/forum?id=ByexElSYDr}{ByexElSYDr}}
+\end{bchapter}
+\endbibitem
+
+%%% 15
+\bibitem[\protect\citeauthoryear{Mohri et~al.}{2019}]{mohri2019afl}
+\begin{bchapter}
+\bauthor{\bsnm{Mohri}, \binits{M.}},
+\bauthor{\bsnm{Sivek}, \binits{G.}},
+\bauthor{\bsnm{Suresh}, \binits{A.T.}}:
+\bctitle{Agnostic federated learning}.
+In: \bbtitle{ICML},
+vol. \bseriesno{97},
+pp. \bfpage{4615}--\blpage{4625}
+(\byear{2019}).
+\bcomment{PMLR ID:
+  \href{https://proceedings.mlr.press/v97/mohri19a.html}{v97/mohri19a}}
+\end{bchapter}
+\endbibitem
+
+%%% 16
+\bibitem[\protect\citeauthoryear{Rockafellar and
+  Uryasev}{2000}]{rockafellar2000cvar}
+\begin{barticle}
+\bauthor{\bsnm{Rockafellar}, \binits{R.T.}},
+\bauthor{\bsnm{Uryasev}, \binits{S.}}:
+\batitle{Optimization of conditional value-at-risk}.
+\bjtitle{The Journal of Risk}
+\bvolume{2}(\bissue{3}),
+\bfpage{21}--\blpage{41}
+(\byear{2000}).
+\bcomment{\href{https://doi.org/10.21314/jor.2000.038}{10.21314/jor.2000.038}}
+\end{barticle}
+\endbibitem
+
+%%% 17
+\bibitem[\protect\citeauthoryear{Meidan et~al.}{2018}]{meidan2018nbaiot}
+\begin{barticle}
+\bauthor{\bsnm{Meidan}, \binits{Y.}},
+\bauthor{\bsnm{Bohadana}, \binits{M.}},
+\bauthor{\bsnm{Mathov}, \binits{Y.}},
+\bauthor{\bsnm{Mirsky}, \binits{Y.}},
+\bauthor{\bsnm{Shabtai}, \binits{A.}},
+\bauthor{\bsnm{Breitenbacher}, \binits{D.}},
+\bauthor{\bsnm{Elovici}, \binits{Y.}}:
+\batitle{{N-BaIoT}: Network-based detection of {IoT} botnet attacks using deep
+  autoencoders}.
+\bjtitle{IEEE Pervasive Computing}
+\bvolume{17}(\bissue{3}),
+\bfpage{12}--\blpage{22}
+(\byear{2018}).
+\bcomment{\href{https://doi.org/10.1109/MPRV.2018.03367731}{10.1109/MPRV.2018.03367731}}
+\end{barticle}
+\endbibitem
+
+%%% 18
+\bibitem[\protect\citeauthoryear{Rabbani et~al.}{2025}]{rabbani2025iotdiad}
+\begin{barticle}
+\bauthor{\bsnm{Rabbani}, \binits{M.}},
+\bauthor{\bsnm{Gui}, \binits{J.}},
+\bauthor{\bsnm{Nejati}, \binits{F.}},
+\bauthor{\bsnm{Zhou}, \binits{Z.}},
+\bauthor{\bsnm{Kaniyamattam}, \binits{A.}},
+\bauthor{\bsnm{Mirani}, \binits{M.}},
+\bauthor{\bsnm{Piya}, \binits{G.}},
+\bauthor{\bsnm{Opushnyev}, \binits{I.}},
+\bauthor{\bsnm{Lu}, \binits{R.}},
+\bauthor{\bsnm{Ghorbani}, \binits{A.A.}}:
+\batitle{Device identification and anomaly detection in {IoT} environments}.
+\bjtitle{IEEE Internet of Things Journal}
+\bvolume{12}(\bissue{10}),
+\bfpage{13625}--\blpage{13643}
+(\byear{2025}).
+\bcomment{\href{https://doi.org/10.1109/JIOT.2024.3522863}{10.1109/JIOT.2024.3522863}}
+\end{barticle}
+\endbibitem
+
+\end{thebibliography}

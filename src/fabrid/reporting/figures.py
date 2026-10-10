@@ -99,7 +99,7 @@ _MANUSCRIPT_POLICIES: tuple[AllocationPolicy, ...] = (
 _MANUSCRIPT_POLICY_STYLE = {
     AllocationPolicy.EQ_FPR: ("Equal-FPR", "#1f4e79", "o", "-"),
     AllocationPolicy.FABRID_MACRO: ("Macro", "#b05f00", "s", "--"),
-    AllocationPolicy.FABRID_CVAR: ("Tail (CVaR)", "#2f7d4a", "^", "-."),
+    AllocationPolicy.FABRID_CVAR: ("Tail", "#2f7d4a", "^", "-."),
     AllocationPolicy.FABRID_MACRO_FINITE_SAFE: ("Macro, cons.", "#a63d40", "D", ":"),
     AllocationPolicy.FABRID_CVAR_FINITE_SAFE: (
         "Tail, cons.",
