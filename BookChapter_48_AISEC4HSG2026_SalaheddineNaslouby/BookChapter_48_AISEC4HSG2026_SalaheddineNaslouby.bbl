@@ -1,6 +1,6 @@
 %% BioMed_Central_Bib_Style_v1.01
 
-\begin{thebibliography}{18}
+\begin{thebibliography}{15}
 % BibTex style file: bmc-mathphys.bst (version 2.1), 2014-07-24
 \ifx \bisbn   \undefined \def \bisbn  #1{ISBN #1}\fi
 \ifx \binits  \undefined \def \binits#1{#1}\fi
@@ -143,22 +143,17 @@ pp. \bfpage{153}--\blpage{163}
 \endbibitem
 
 %%% 7
-\bibitem[\protect\citeauthoryear{McMahan et~al.}{2017}]{mcmahan2017fedavg}
-\begin{bchapter}
-\bauthor{\bsnm{McMahan}, \binits{H.B.}},
-\bauthor{\bsnm{Moore}, \binits{E.}},
-\bauthor{\bsnm{Ramage}, \binits{D.}},
-\bauthor{\bsnm{Hampson}, \binits{S.}},
-\bauthor{\bsnm{{Ag\"uera y Arcas}}, \binits{B.}}:
-\bctitle{Communication-efficient learning of deep networks from decentralized
-  data}.
-In: \bbtitle{AISTATS},
-vol. \bseriesno{54},
-pp. \bfpage{1273}--\blpage{1282}
-(\byear{2017}).
-\bcomment{PMLR ID:
-  \href{https://proceedings.mlr.press/v54/mcmahan17a.html}{v54/mcmahan17a}}
-\end{bchapter}
+\bibitem[\protect\citeauthoryear{Kairouz et~al.}{2021}]{kairouz2021advances}
+\begin{barticle}
+\bauthor{\bsnm{Kairouz}, \binits{P.}},
+\bauthor{\bsnm{McMahan}, \binits{H.B.}}, \betal:
+\batitle{Advances and open problems in federated learning}.
+\bjtitle{Foundations and Trends in Machine Learning}
+\bvolume{14}(\bissue{1-2}),
+\bfpage{1}--\blpage{210}
+(\byear{2021}).
+\bcomment{\href{https://doi.org/10.1561/2200000083}{10.1561/2200000083}}
+\end{barticle}
 \endbibitem
 
 %%% 8
@@ -195,23 +190,6 @@ pp. \bfpage{388}--\blpage{393}
 \endbibitem
 
 %%% 10
-\bibitem[\protect\citeauthoryear{Kumar et~al.}{2021}]{kumar2021implicit}
-\begin{bchapter}
-\bauthor{\bsnm{Kumar}, \binits{A.}},
-\bauthor{\bsnm{Narasimhan}, \binits{H.}},
-\bauthor{\bsnm{Cotter}, \binits{A.}}:
-\bctitle{Implicit rate-constrained optimization of non-decomposable
-  objectives}.
-In: \bbtitle{ICML},
-vol. \bseriesno{139},
-pp. \bfpage{5861}--\blpage{5871}
-(\byear{2021}).
-\bcomment{PMLR ID:
-  \href{https://proceedings.mlr.press/v139/kumar21b.html}{v139/kumar21b}}
-\end{bchapter}
-\endbibitem
-
-%%% 11
 \bibitem[\protect\citeauthoryear{Tong et~al.}{2018}]{tong2018np}
 \begin{barticle}
 \bauthor{\bsnm{Tong}, \binits{X.}},
@@ -227,74 +205,38 @@ pp. \bfpage{5861}--\blpage{5871}
 \end{barticle}
 \endbibitem
 
-%%% 12
-\bibitem[\protect\citeauthoryear{Lu et~al.}{2023}]{lu2023fcp}
-\begin{bchapter}
-\bauthor{\bsnm{Lu}, \binits{C.}},
-\bauthor{\bsnm{Yu}, \binits{Y.}},
-\bauthor{\bsnm{Karimireddy}, \binits{S.P.}},
-\bauthor{\bsnm{Jordan}, \binits{M.I.}},
-\bauthor{\bsnm{Raskar}, \binits{R.}}:
-\bctitle{Federated conformal predictors for distributed uncertainty
-  quantification}.
-In: \bbtitle{ICML},
-vol. \bseriesno{202},
-pp. \bfpage{22942}--\blpage{22964}
+%%% 11
+\bibitem[\protect\citeauthoryear{Angelopoulos and
+  Bates}{2023}]{angelopoulos2023gentle}
+\begin{barticle}
+\bauthor{\bsnm{Angelopoulos}, \binits{A.N.}},
+\bauthor{\bsnm{Bates}, \binits{S.}}:
+\batitle{Conformal prediction: A gentle introduction}.
+\bjtitle{Foundations and Trends in Machine Learning}
+\bvolume{16}(\bissue{4}),
+\bfpage{494}--\blpage{591}
 (\byear{2023}).
-\bcomment{PMLR ID:
-  \href{https://proceedings.mlr.press/v202/lu23i.html}{v202/lu23i}}
-\end{bchapter}
+\bcomment{\href{https://doi.org/10.1561/2200000101}{10.1561/2200000101}}
+\end{barticle}
+\endbibitem
+
+%%% 12
+\bibitem[\protect\citeauthoryear{Lari et~al.}{2026}]{prism2026fcp}
+\begin{botherref}
+\oauthor{\bsnm{Lari}, \binits{E.}},
+\oauthor{\bsnm{Arablouei}, \binits{R.}},
+\oauthor{\bsnm{Werner}, \binits{S.}}:
+Communication-efficient byzantine-robust federated conformal prediction via
+  partial sharing.
+IEEE Transactions on Signal Processing,
+1--16
+(2026).
+Early access.
+  \href{https://doi.org/10.1109/tsp.2026.3737023}{10.1109/tsp.2026.3737023}
+\end{botherref}
 \endbibitem
 
 %%% 13
-\bibitem[\protect\citeauthoryear{Angelopoulos
-  et~al.}{2024}]{angelopoulos2024conformalrisk}
-\begin{bchapter}
-\bauthor{\bsnm{Angelopoulos}, \binits{A.N.}},
-\bauthor{\bsnm{Bates}, \binits{S.}},
-\bauthor{\bsnm{Fisch}, \binits{A.}},
-\bauthor{\bsnm{Lei}, \binits{L.}},
-\bauthor{\bsnm{Schuster}, \binits{T.}}:
-\bctitle{Conformal risk control}.
-In: \bbtitle{ICLR}
-(\byear{2024}).
-\bcomment{OpenReview ID:
-  \href{https://openreview.net/forum?id=33XGfHLtZg}{33XGfHLtZg}}
-\end{bchapter}
-\endbibitem
-
-%%% 14
-\bibitem[\protect\citeauthoryear{Li et~al.}{2020}]{li2020qffl}
-\begin{bchapter}
-\bauthor{\bsnm{Li}, \binits{T.}},
-\bauthor{\bsnm{Sanjabi}, \binits{M.}},
-\bauthor{\bsnm{Beirami}, \binits{A.}},
-\bauthor{\bsnm{Smith}, \binits{V.}}:
-\bctitle{Fair resource allocation in federated learning}.
-In: \bbtitle{ICLR}
-(\byear{2020}).
-\bcomment{OpenReview ID:
-  \href{https://openreview.net/forum?id=ByexElSYDr}{ByexElSYDr}}
-\end{bchapter}
-\endbibitem
-
-%%% 15
-\bibitem[\protect\citeauthoryear{Mohri et~al.}{2019}]{mohri2019afl}
-\begin{bchapter}
-\bauthor{\bsnm{Mohri}, \binits{M.}},
-\bauthor{\bsnm{Sivek}, \binits{G.}},
-\bauthor{\bsnm{Suresh}, \binits{A.T.}}:
-\bctitle{Agnostic federated learning}.
-In: \bbtitle{ICML},
-vol. \bseriesno{97},
-pp. \bfpage{4615}--\blpage{4625}
-(\byear{2019}).
-\bcomment{PMLR ID:
-  \href{https://proceedings.mlr.press/v97/mohri19a.html}{v97/mohri19a}}
-\end{bchapter}
-\endbibitem
-
-%%% 16
 \bibitem[\protect\citeauthoryear{Rockafellar and
   Uryasev}{2000}]{rockafellar2000cvar}
 \begin{barticle}
@@ -309,7 +251,7 @@ pp. \bfpage{4615}--\blpage{4625}
 \end{barticle}
 \endbibitem
 
-%%% 17
+%%% 14
 \bibitem[\protect\citeauthoryear{Meidan et~al.}{2018}]{meidan2018nbaiot}
 \begin{barticle}
 \bauthor{\bsnm{Meidan}, \binits{Y.}},
@@ -329,7 +271,7 @@ pp. \bfpage{4615}--\blpage{4625}
 \end{barticle}
 \endbibitem
 
-%%% 18
+%%% 15
 \bibitem[\protect\citeauthoryear{Rabbani et~al.}{2025}]{rabbani2025iotdiad}
 \begin{barticle}
 \bauthor{\bsnm{Rabbani}, \binits{M.}},
