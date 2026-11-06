@@ -81,8 +81,8 @@ pp. \bfpage{153}--\blpage{163}
 \bibitem[\protect\citeauthoryear{Hamdi}{2023}]{hamdi2023flids}
 \begin{barticle}
 \bauthor{\bsnm{Hamdi}, \binits{N.}}:
-\batitle{Federated learning-based intrusion detection system for internet of
-  things}.
+\batitle{Federated learning-based intrusion detection system for {Internet of
+  Things}}.
 \bjtitle{International Journal of Information Security}
 \bvolume{22}(\bissue{6}),
 \bfpage{1937}--\blpage{1948}
@@ -222,18 +222,18 @@ pp. \bfpage{388}--\blpage{393}
 
 %%% 12
 \bibitem[\protect\citeauthoryear{Lari et~al.}{2026}]{prism2026fcp}
-\begin{botherref}
-\oauthor{\bsnm{Lari}, \binits{E.}},
-\oauthor{\bsnm{Arablouei}, \binits{R.}},
-\oauthor{\bsnm{Werner}, \binits{S.}}:
-Communication-efficient byzantine-robust federated conformal prediction via
-  partial sharing.
-IEEE Transactions on Signal Processing,
-1--16
-(2026).
-Early access.
-  \href{https://doi.org/10.1109/tsp.2026.3737023}{10.1109/tsp.2026.3737023}
-\end{botherref}
+\begin{barticle}
+\bauthor{\bsnm{Lari}, \binits{E.}},
+\bauthor{\bsnm{Arablouei}, \binits{R.}},
+\bauthor{\bsnm{Werner}, \binits{S.}}:
+\batitle{Communication-efficient byzantine-robust federated conformal
+  prediction via partial sharing}.
+\bjtitle{IEEE Transactions on Signal Processing}
+\bvolume{74},
+\bfpage{4547}--\blpage{4563}
+(\byear{2026}).
+\bcomment{\href{https://doi.org/10.1109/tsp.2026.3737023}{10.1109/tsp.2026.3737023}}
+\end{barticle}
 \endbibitem
 
 %%% 13
