@@ -1,0 +1,543 @@
+﻿FABRID-IDS: Federated Alert-Budget Reallocation
+   for Heterogeneous IoT Intrusion Detection
+
+           Salaheddine Naslouby 1*, Mohamed Lachgar2 and
+                            Hamid Hrimech1
+1
+  Hassan First University, National School of Applied Sciences (ENSA),
+               LAMSAD Laboratory, Berrechid, Morocco.
+2
+  Cadi Ayyad University, Higher Normal School (ENS), L2IS Laboratory,
+                          Marrakech, Morocco.
+
+
+  *Corresponding author(s). E-mail(s): naslouby.salahe@gmail.com;
+Contributing authors: m.lachgar@uca.ac.ma; hamid.hrimech@uhp.ac.ma;
+
+
+                                         Abstract
+    The same anomaly scores can yield strong pooled ranking metrics but unreliable
+    alerts after thresholds are selected for individual IoT devices. FABRID-IDS
+    examines the allocation of a federation-wide nominal false-positive-rate (FPR)
+    budget after training. Client-level targets are chosen jointly, then converted into
+    thresholds using separate benign calibration records. The main evaluation covers
+    nine N-BaIoT devices, ten detector seeds and five budget levels. A secondary
+    experiment uses 19 CIC IoT-DIAD clients with a different feature representation
+    and scorer. At B = 0.001, both unrestricted allocation objectives (Macro and
+    Tail) produce a held-out federation FPR of 0.00170, approximately 1.696 times
+    the budget. Conservative calibration lowers that FPR to 0.00036, but macro recall
+    decreases from 0.3778 to 0.2445. Equal-FPR performs better in macro recall at
+    several nominal budgets, although its measured FPR also exceeds the specified
+    budget at several operating points. Pooled AUROC and AUPRC reach 0.9995 and
+    0.9999; nevertheless, the minimum client recall remains zero for every evaluated
+    FABRID-family policy and budget on N-BaIoT. These results expose a practical
+    limitation: allocating nominal FPR targets is not sufficient to control measured
+    federation false alarms or maintain detection for every device.
+
+    Keywords: federated intrusion detection, Internet of Things, alert-budget reallocation,
+    false-positive-rate constraint, threshold calibration
+
+
+1 Introduction
+In a federated IoT intrusion-detection system, training produces an anomaly score,
+but an alert is issued only after that score crosses a threshold. The choice of threshold
+becomes difficult when participating devices have different benign-score distributions
+or when their attacks have different score profiles. Existing work examines federated
+detector training and both shared and device-specific thresholds [1-6]. It leaves a
+separate operational question: if the federation permits a limited average false-positive
+rate, which devices should receive larger or smaller nominal allowances?
+     FABRID-IDS addresses that question after the scoring model is fixed. Using labeled
+validation attacks and benign frontier scores, the allocator chooses nominal client rates
+alpha_k subject to sum_k(w_k * alpha_k) <= B. Each device subsequently determines its alert threshold
+from a different benign calibration partition. The held-out evaluation therefore tests
+both the allocation decision and what happens when those rates are implemented using
+finite local calibration samples. The shared budget B restricts the nominal assignment;
+it is not a direct constraint on false alarms observed later.
+     Three aspects are evaluated: the allocation of different nominal FPR allowances
+under one federation constraint; the gap between allocated rates and the thresholds
+produced by independent calibration; and the effect of each policy on average and
+worst-client attack recall. The N-BaIoT policies are compared on the same frozen scores
+and detector seeds.
+
+2 Related work and scope
+The distinction between detector training and alert policy is important when posi-
+tioning FABRID-IDS. Federated IoT IDS papers have primarily developed learning
+architectures and aggregation strategies [1-3, 7]. Other work considers anomaly thresh-
+olds and detection at distributed edges [8, 9]. Laridi et al. [4] combine client-side
+summary statistics to calculate a shared anomaly threshold. Asiri et al. [5] derive
+local benign reconstruction-error quantiles and average the resulting thresholds. Fed-
+DTCN [6] instead uses benign hold-out samples to determine client-specific thresholds
+at prescribed local FPRs. These methods provide relevant thresholding baselines or
+context, but do not make the federation-wide division of nominal FPR allowances their
+optimization variable.
+    Error-rate constraints also appear in Neyman-Pearson classification [10], while
+conformal methods use calibration ranks to support finite-sample statements under
+explicit sampling assumptions [11]. Federated conformal work studies a related but
+different problem involving predictor sharing and calibration-score aggregation [12].
+FABRID-IDS takes the calibration constructions as existing tools and places the
+allocation decision before them: the optimizer chooses the nominal target for each
+client, and a separate local sample determines the final threshold. The contribution is
+this federation-constrained allocation protocol and its measured behavior, not a new
+order-statistic theorem or a guarantee of realized FPR.
+    Training-time fairness methods and agnostic federated learning modify the learning
+objective or the influence of client data [7]. FABRID-IDS does neither. Once training
+is complete, adjusting alpha_k moves the decision threshold for device k without changing
+
+
+its benign or attack score rankings. This matters experimentally: threshold policies can
+be evaluated using identical stored scores, while any weaknesses of the scorer remain
+common to them. An allocation scheme cannot recover an attack that the fixed scorer
+consistently ranks below the required threshold without allowing a different operating
+point.
+    Three operating choices are therefore kept distinct. A global absolute threshold
+applies one score cutoff everywhere. Equal-FPR allows local thresholds but specifies the
+same nominal rate at every client. FABRID-IDS also calibrates locally, while allowing
+the assigned rates to differ under the weighted federation constraint.
+
+3 FABRID-IDS
+3.1 Protocol and utility
+Let s_k(.) be the frozen anomaly scorer for client k. Benign records are divided according
+to their released file order: 50% for training, 20% for estimating the allocation frontier,
+10% for final threshold calibration and 20% for testing. For every retained attack
+subtype, the initial 20% is reserved for validation and the rest for testing. Only the
+frontier benign records and attack-validation subset are available when the allocator
+chooses nominal rates. The final-calibration subset is used afterward to turn those
+rates into thresholds, and the test subset is left untouched until evaluation. These
+proportions describe the available benchmark protocol, not a confirmed chronological
+deployment split.
+    For a benign calibration sample of size n, sort its scores as x_(1) <= ... <= x_(n) . The
+target rate alpha is mapped to a threshold using the order-statistic rule in Eq. (1) [11].
+
+                         tau(alpha) = x_(r),  r = ceil((n + 1) * (1 - alpha)).  (1)
+
+Set tau = +infinity for alpha <= 0, n = 0, or r > n; otherwise an observation is flagged only when
+its score is strictly greater than tau . The rule is applied first to the frontier benign sample
+at each candidate rate. The provisional threshold is then used to calculate u_k (alpha), the
+mean validation recall over the eligible attack subtypes of client k. Attack labels are
+therefore required to construct the utility curve. The search grid contains 207 rates
+between 0 and 0.05 and includes all five evaluation budgets. Subtypes need at least 50
+validation records, and a client is eligible only with at least 200 such records across
+two subtypes.
+    Model fitting and feature normalization use the benign training split of each client.
+Once an allocation has been selected, its provisional frontier thresholds are discarded
+and the order-statistic procedure is repeated on final-calibration benign scores. The
+test scores are not used at either selection stage. This separation prevents direct reuse
+of frontier observations for final threshold setting, but it does not force the frontier,
+calibration and test partitions to have identical score distributions.
+    Nominal target rates are more finely spaced than the thresholds obtainable from a
+finite benign sample. Several adjacent values of alpha_k may select the same order statistic,
+yielding the same threshold even though the optimizer records different rates. In that
+case, held-out decisions, recall and FPR also coincide because the scorer and test data
+
+
+are fixed. An allocated-rate change should consequently be interpreted as a distinct
+operating choice only if it produces a distinct calibrated cutoff.
+   Attack recall is first computed separately for eligible subtypes and averaged within
+each device. The federation macro-recall endpoint gives each eligible device equal
+weight, regardless of the number of retained attack rows. The worst-client endpoint is
+the minimum of these device-level macro recalls. Both are reported with the held-out
+benign FPR.
+
+
+3.2 Allocation and calibration
+The allocator selects one nominal rate from the candidate grid for each eligible client.
+Those choices are feasible only when the weighted sum is at most the specified federation
+budget:
+    sum(k=1 to K) w_k * alpha_k <= B.    (2)
+
+The N-BaIoT implementation sets w_k = 1/K , so the budget represents an equal-device
+average rather than a row-weighted pooled rate. Allocation is solved as a one-hot mixed-
+integer program with HiGHS. The Macro objective maximizes the mean estimated
+client recall u_k ; Tail instead maximizes the mean of the lowest q = ceil(0.25K) client
+utilities [13]. With nine devices, q = 3. The Tail objective thus averages the three
+weakest utilities rather than taking only the single minimum, and it is not numerically
+identical to empirical CVaR with a 0.25 tail fraction, which places a fractional weight
+on the third observation [13]. Each frontier sample has finite FPR resolution. For n_f
+benign frontier records, positive candidate rates below 2/(n_f + 1) are removed because
+they cannot create a positive empirical calibration-alert rate with the strict threshold
+rule.
+    The equal-device definition should not be confused with pooling all benign records
+and calculating one false-positive fraction. Moreover, Eq. (2) defines a maximum
+expenditure, not a requirement to spend the full budget. The optimizer may leave part
+of B unused or set a client target to zero when the estimated utility does not justify
+spending additional allowance on that device.
+    Each optimization follows a specified order of priorities. Macro first maximizes
+estimated mean recall, then selects the smallest nominal expenditure among solutions
+accepted as equivalent under the solver tolerances. Tail places the lowest-three-client
+mean first, the overall estimated mean second and nominal expenditure third. Estimated
+utility variance and deterministic tie-breaking resolve the remaining choices. These
+calculations use frontier scores and labeled validation attacks only. Equal-FPR assigns
+B to every client, and all three unrestricted policies use the same final-calibration
+benign samples and Eq. (1). For the conservative Macro and Tail variants, the client
+allocations are retained but the final threshold ranks are determined by Eq. (3).
+    A higher Tail objective does not necessarily imply better protection for the single
+weakest client. For example, an increase in the estimated recall of two members of the
+three-device lower group can improve its mean even if the remaining member continues
+to miss every evaluated attack.
+
+
+    For conservative calibration, the following binomial criterion is used to choose the
+final threshold rank [10]:
+
+                 r_0.95 = min{r: Pr[Binomial(n, 1 - alpha) <= r - 1] >= 0.95}.                  (3)
+
+For each client, the conservative procedure searches integer ranks from 1 to n and uses
+the first rank meeting the binomial condition in Eq. (3). If no rank qualifies, or if n = 0
+or alpha = 0, the threshold is infinite and no alerts are issued. Alerts otherwise require
+s > tau , as in ordinary calibration. Under independently and identically distributed
+(i.i.d.) benign calibration and future scores, the rank construction provides a one-
+sided 95% population-FPR confidence statement for an individual client [10]. That
+statement concerns repeated calibration sampling; it is not a guarantee about the
+empirical FPR of the fixed, source-ordered test partition used here. The conservative
+variant is therefore evaluated as a sensitivity check rather than presented as validated
+federation-level control.
+     Equation (3) generally requires a larger calibration rank than Eq. (1). A larger rank
+moves the threshold upward, making benign alerts less frequent but also allowing more
+attacks to fall below the cutoff. Neither method looks at test labels before choosing the
+threshold, and neither can compensate automatically if benign-score behavior differs
+between calibration and testing.
+     The allocation constraint and the reported test outcome answer different questions.
+A client can exceed its nominal rate on held-out data even when Eq. (2) was respected
+at allocation time. Equally, a low held-out FPR in one partition does not establish that
+the same threshold will remain safe on later traffic. For this reason, four quantities
+are kept separate: selected nominal client rate, final calibration rank, FPR within the
+calibration sample, and FPR on the held-out benign sample. Ordinary Macro, Tail
+and Equal-FPR differ in the assigned rates, not in the records or calibration formula
+used to turn those rates into operating thresholds.
+     The smallest nonzero calibration-sample FPR is 1/n when the n benign scores have
+no relevant ties. Because alerts use a strict greater-than comparison, targets below
+2/(n + 1) either produce an out-of-range rank or select the maximum observed benign
+score; both cases yield zero calibration alerts. Consequently, a grid of finely spaced target
+rates contains choices with identical zero-alert behavior. The final-calibration subset
+for Ecobee has 1,311 benign records, which places this transition at approximately
+0.001524. A nominal rate below that value cannot yield a positive empirical FPR on
+its calibration subset, although the same threshold may still flag benign observations
+in the separate test subset.
+
+3.3 Frozen scorer
+Each N-BaIoT device uses a frozen hybrid anomaly score constructed from two
+components: autoencoder reconstruction error and the temporal jitter feature
+HH_jit_L0.1_mean (f_75). Before combining them, both components are expressed as
+percentile ranks against fixed frontier references; the final score is their maximum.
+The f_75 feature and this scorer configuration were selected using the predeclared
+development-only ablations, not retuned for each threshold policy. The autoencoder
+
+
+has hidden layers [64, 16] and is trained by federated averaging for ten rounds, with
+three local epochs per round. Optimization uses Adam at learning rate 0.001, batch
+size 64 and mean-squared-error loss. Aggregation is weighted by the available training-
+row counts, while each client's normalization parameters come from its own training
+partition. Ten detector seeds provide the paired repetitions. Every evaluated threshold
+policy receives exactly the same scores within a seed; hence changes in threshold can
+change recall and FPR but not score-ranking measures such as AUROC or AUPRC.
+
+
+4 Experimental methodology
+N-BaIoT is the main evaluation dataset. Its nine devices serve as the natural client units,
+and each is tested at five nominal federation budgets: B = 0.001, 0.0025, 0.005, 0.010
+and 0.020 (Table 1). The retained traffic includes benign observations and attacks from
+the BASHLITE and Mirai families [14]. Device-level sample sizes differ substantially:
+the benign count is 13,113 for Ecobee and 175,240 for the Philips baby monitor. Since
+final calibration receives 10% of each device's benign rows, those unequal file sizes
+produce unequal calibration precision. Macro recall is averaged over eligible attack
+subtypes within each device and then across devices; the minimum-client endpoint
+records the lowest device-level value.
+    For any one detector seed, all policies are applied to identical trained models and
+score partitions. Comparing Macro against Equal-FPR, for example, therefore produces
+a within-seed difference rather than a comparison between unrelated detector runs.
+Ten seeds are available, and each contributes one observation for an endpoint at a
+given budget. The mean across seeds characterizes detector initialization and training
+variation on the fixed benchmark; it cannot be interpreted as a mean across newly
+collected clients, different collection periods or independently sampled traffic.
+    Held-out federation FPR uses the same device weights w_k = 1/K as Eq. (2), applied
+to the benign test FPR measured separately for every device. This makes the nominal
+constraint and reported federation endpoint comparable in their weighting, although
+they are not guaranteed to have equal values. The test partition is derived from source-
+ordered files whose features were constructed from overlapping windows. It is not known
+to be an independent sample from the same distribution as calibration. Repeating
+detector training with different random seeds does not remove this dataset limitation.
+    Two comparisons were specified for N-BaIoT: Macro minus Equal-FPR on federation
+macro recall, and Tail minus Equal-FPR on minimum-client recall. At each budget,
+the endpoint is evaluated separately for every trained seed before the baseline value is
+subtracted. The resulting ten differences preserve the pairing between policies. Traffic
+rows and attack subtypes are inputs to the client-level endpoint; they do not become
+additional statistical replicates for the tests.
+    Inference uses a two-sided exact paired sign-flip test, enumerating all 2^10 = 1,024 sign
+assignments for the ten seed-level differences. A 95% pointwise confidence interval is also
+calculated using 50,000 bootstrap draws of those paired differences with replacement.
+The five budget-specific p-values within each endpoint family undergo Holm correction;
+the bootstrap intervals are not adjusted for simultaneous coverage. These quantities
+describe variation across the ten trained scorers on the same retained dataset. They
+
+
+do not estimate uncertainty for new device populations, newly collected benign traffic
+or repeated calibration periods.
+    CIC IoT-DIAD, originating from the device-identification and anomaly-detection
+work of Rabbani et al. [15], is used as a secondary protocol check. Its 19 physical
+devices contribute 57 features, and a separate detector is trained for this dataset using
+reconstruction error rather than the N-BaIoT hybrid scorer. Benign partitions and
+the fraction of attacks reserved for validation follow the primary experiment. No N-
+BaIoT checkpoint or score ranking is transferred. Because the dataset, set of clients,
+representation and scorer all change together, this branch can show whether an FPR
+mismatch also occurs elsewhere, but it cannot determine which changed factor caused
+the difference.
+
+5 Results
+5.1 Nominal and realized operating points
+At B = 0.001, unrestricted Macro and Tail both produce a realized federation FPR
+of 0.00170 (1.696B ). Their conservative variants reduce it to 0.00036 (0.358B ), while
+macro recall falls from 0.3778 to 0.2445. All four allocations satisfy the same nominal
+budget ceiling, but the realized FPR is measured independently on held-out benign
+records after local calibration.
+    The held-out FPR does not track the nominal budget in the same way for every
+policy. At B = 0.0025, Macro and Tail operate at approximately 1.03B, only slightly
+above the allocated ceiling. Equal-FPR also overshoots at several budgets, showing
+that the mismatch is not unique to optimized rate allocation. Figure 1(a) shows the
+deviation from the nominal diagonal, while Fig. 1(b) places each measured macro-recall
+value against its corresponding realized FPR.
+
+Fig. 1 N-BaIoT ten-seed means: realized FPR versus nominal budget (left) and macro recall versus
+realized FPR (right). The diagonal marks equal rates.
+
+    At nominal budget B = 0.005, the measured macro recalls are 0.8444 for Equal-
+FPR, 0.4644 for Macro and 0.4977 for Tail. Their realized federation FPRs are 1.45B,
+0.71B and 1.29B, respectively.
+
+Table 1 N-BaIoT ten-seed means. Each policy cell reports macro recall; realized federation FPR
+divided by nominal budget. All FABRID-family cells have zero minimum-client recall.
+
+B            Equal-FPR                      Macro                     Tail              Macro, cons.                                   Tail, cons.
+0.0010      0.3778; 1.70                0.3778; 1.70           0.3778; 1.70             0.2445; 0.36                             0.2445; 0.36
+0.0025      0.4445; 0.97                0.4222; 1.03           0.4222; 1.03             0.3111; 0.38                             0.3111; 0.38
+0.0050      0.8444; 1.45                0.4644; 0.71           0.4977; 1.29             0.3422; 0.36                             0.4222; 0.88
+0.0100      0.9999; 1.68                0.5444; 0.74           0.7266; 1.48             0.4422; 0.62                             0.5889; 0.95
+0.0200      1.0000; 1.88                0.7444; 1.40           0.8444; 1.75             0.6600; 1.21                             0.7711; 1.45
+
+    Allocation stability was checked by rerunning unrestricted Macro after bootstrap
+resampling the frontier benign scores and validation attack scores within each subtype.
+There are 500 such resamples per seed and budget. The trained scorer, the separate final-
+calibration scores and the test scores remain unchanged. For each seed-client-budget
+
+
+combination, the reported change frequency is the proportion of resamples whose
+assigned rate differs from the modal assignment over the 500 resamples. Averaging
+these frequencies across the ten seeds and nine clients gives 77.8%, 79.8%, 83.9%,
+83.6% and 84.9% for ascending nominal budgets. Each value averages 90 client-seed
+frequencies; it is not a percentage of seeds whose rate changed. The result indicates
+considerable sensitivity of the optimization decision to the available frontier evidence,
+without representing repeated operational deployments or changes relative to the single
+original allocation.
+
+Fig. 2 Mean nominal rates allocated by unrestricted Macro to each N-BaIoT device, averaged across
+ten original detector-seed runs. The heatmap does not include the 500 frontier-bootstrap resamples.
+
+    At B = 0.020, the Samsung webcam and SimpleHome XCS7 1002 security camera
+receive the largest mean allocations, whereas Danmini Doorbell receives a smaller
+allowance.
+
+
+5.2 Tail objective and worst-client behavior
+Tail is optimized for the mean of the three lowest client utilities, yet the observed
+minimum-client recall is zero for every FABRID-family policy and budget in Table 1.
+Danmini Doorbell explains this failure of the minimum endpoint: no attacks are detected
+under any evaluated unrestricted-policy operating point. Its final-calibration and held-
+out benign FPRs are also zero throughout the 100 combinations of unrestricted policy,
+seed and budget. Danmini's benign final-calibration sample contains 4,955 records,
+corresponding to a strict-threshold zero-alert transition at 2/(4,955 + 1) = 0.000404.
+
+
+The assigned rates span both sides of that transition, but no evaluated unrestricted
+threshold recovers positive attack recall for this device.
+    Ecobee behaves differently. At B = 0.020, Macro assigns a mean nominal rate of
+0.001164 to Ecobee. Its held-out benign FPR is 0.006672 and its macro attack recall is
+0.6000, even though its final-calibration benign FPR is zero.
+    Calibration sample size affects threshold resolution but does not alone explain the
+observed difference in test alerts. Since the released partitions are source ordered rather
+than known independent draws, the experiment cannot quantify how much of Ecobee's
+discrepancy is due to finite calibration resolution and how much reflects differences
+between the sampled score distributions.
+
+5.3 Primary contrasts and ranking ceiling
+Macro and Equal-FPR are identical at B = 0.001; their -0.0222 difference at B =
+0.0025 is not statistically distinguishable from zero, and Macro recall is lower at larger
+budgets. Both Tail and Equal-FPR have zero mean minimum-client recall through
+B = 0.005. At B = 0.010 and 0.020, Equal-FPR reaches 0.9998 and 0.9999 minimum-
+client recall while Tail remains at zero (Table 2); Equal-FPR's realized FPR is also
+1.68B and 1.88B at those budgets.
+
+Table 2 Prespecified paired seed-level contrasts (n = 10): 50,000 paired-bootstrap CIs and
+Holm-adjusted exact paired sign-flip p values over the five-budget family.
+
+           Macro - Equal-FPR: macro recall          Tail - Equal-FPR: minimum-client recall
+B        Mean Delta           95% CI          Holm p Mean Delta              95% CI            Holm p
+0.0010    0.0000   [0.0000, 0.0000]       1.0000     0.0000   [0.0000, 0.0000]          1.0000
+0.0025   -0.0222 [-0.0556, 0.0111]        0.3594    0.0000    [0.0000, 0.0000]          1.0000
+0.0050   -0.3800 [-0.4133, -0.3466]       0.0098     0.0000   [0.0000, 0.0000]          1.0000
+0.0100   -0.4555 [-0.5000, -0.4111]       0.0098    -0.9998 [-0.9998, -0.9998]          0.0098
+0.0200   -0.2556 [-0.2889, -0.2222]       0.0098    -0.9999 [-0.9999, -0.9999]          0.0098
+
+    Threshold reallocation cannot change the ordering of the stored anomaly scores,
+so AUROC and AUPRC are identical across policies within a detector seed. These
+metrics are computed after pooling the nine devices' held-out benign scores with
+attack-test scores from their eligible subtypes. The implementation calculates AUROC
+from score ranks and AUPRC by trapezoidal integration of the precision-recall curve.
+Averaged over ten seeds, the pooled scores yield AUROC 0.9995 and AUPRC 0.9999.
+This pooled calculation weights devices and attack subtypes by the number of their
+retained test rows rather than equally. In particular, the evaluation pool contains
+1,041,078 attack rows and 111,188 benign rows, so attacks account for 90.35% of
+the pool. That prevalence raises the baseline level of precision-recall performance.
+Excellent pooled scores therefore do not establish equally good score separation for
+every device or acceptable recall at the selected local thresholds. In the same evaluation,
+minimum-client recall remains zero for all FABRID-family policy-budget combinations.
+    The confidence intervals and adjusted p-values in Table 2 do not adjust the recall
+comparison to a common measured FPR.
+
+
+5.4 Secondary protocol stress test
+The secondary test evaluates unrestricted Macro with ordinary order-statistic calibra-
+tion on CIC IoT-DIAD. Table 3 summarizes ten separately trained scorers applied to
+19 equally weighted physical-device clients, using reconstruction error as the anomaly
+score.
+
+       Table 3 CIC IoT-DIAD: unrestricted Macro with ordinary local calibration;
+       ten-seed means over 19 equally weighted clients using reconstruction-error scores.
+
+       B              Macro recall          Minimum-client recall          Realized FPR
+       0.0010            0.3614                     0.0000                     0.0098
+       0.0025            0.3970                     0.0000                     0.0118
+       0.0050            0.4318                     0.0007                     0.0160
+       0.0100            0.4602                     0.0089                     0.0213
+       0.0200            0.5016                     0.0251                     0.0311
+
+
+    The realized federation FPR exceeds the nominal constraint throughout this sec-
+ondary test. The overshoot ratios at ascending budgets are 9.80, 4.72, 3.20, 2.13 and
+1.56, even as the absolute measured FPR rises from 0.0098 to 0.0311. A decreasing
+ratio is therefore not evidence that false alarms become less frequent. Unlike the pri-
+mary experiment, this branch does not include Equal-FPR under the same scorer and
+clients. It confirms that a nominal-to-measured FPR gap also appears in the secondary
+configuration, but does not show whether Macro offers better recall at a comparable
+false-alarm rate.
+
+6 Discussion
+The evaluated results do not demonstrate that optimized reallocation is consistently
+better than the equal-rate baseline at a given measured FPR.
+    At B = 0.001, conservative calibration reduces the measured federation FPR
+compared with the ordinary rule, but macro attack recall also decreases. Neither
+calibration choice recovers attack detections for Danmini Doorbell under the tested
+Macro and Tail variants. All these allocations remain feasible under the nominal
+constraint, which is why feasibility alone is insufficient as an operational performance
+claim.
+    The attack labels used for the utility estimates impose a deployment requirement:
+FABRID-IDS is an attack-informed allocation procedure applied after training, not
+an unsupervised online mechanism that discovers suitable client rates without attack
+examples.
+    The measured allocation-solver cost is comparatively small: across budgets, Macro
+runs from 95.7 to 358.8 ms and Tail from 310.3 to 3883.1 ms. None of the recorded
+optimizations required solver fallback. These figures time the mathematical allocation
+step only. They exclude the cost of generating anomaly scores, communication, trans-
+mitting calibration information and processing alerts. They should therefore be used
+
+
+to characterize solver execution rather than interpreted as latency measurements for a
+deployed federated IDS.
+    Unresolved deployment questions include behavior under adversarial clients, formal
+privacy guarantees, the total communication and alert-handling cost, and whether
+improvements to the frozen scorer could address the attacks missed by the weakest
+devices.
+    The B = 0.020 comparison illustrates why an unqualified recall ranking would
+be misleading. Equal-FPR reaches macro recall 1.0000 with a measured federation
+FPR of 1.88B; Macro reaches recall 0.7444 with an FPR of 1.40B (Table 1). The two
+policies spend different amounts of the actual false-alert allowance, although they were
+evaluated against the same nominal budget. The result describes those two calibrated
+operating points and does not determine which policy would be preferable if both were
+required to operate at an identical measured FPR.
+    Statistical resolution is limited by the ten paired seeds. With 2^10 = 1,024 sign
+assignments, the smallest two-sided exact sign-flip p-value is 2/1,024 = 0.001953125,
+attained when all ten paired differences are nonzero and have the same sign. With five
+budget-level tests in a family, the smallest Holm-adjusted value appearing in Table 2
+is 0.0098. At B = 0.001, the paired policy outcomes are identical, giving p = 1 and a
+zero-width interval. The intervals for minimum-client recall at B = 0.010 and 0.020
+are also almost degenerate because Tail has zero recall across seeds and Equal-FPR
+varies only after the fourth decimal place. Holm adjustment is performed within each
+endpoint family; it does not jointly correct the two families, and the 95% bootstrap
+intervals remain pointwise.
+    The 95% statement associated with Eq. (3) applies to one client's population FPR
+under the required i.i.d. benign sampling assumptions. It is not a simultaneous 95%
+guarantee for the nine-device federation. Even if the assumptions were valid for each
+device, applying a union bound to nine separate 5% failure probabilities yields only
+1 - 9(0.05) = 0.55 as a lower bound on the probability that all nine nominal client limits
+hold together. The experiments do not establish the required sampling assumptions or
+an alternative federation-wide confidence construction, so no joint FPR guarantee is
+claimed for the released N-BaIoT split.
+    An operational false-alarm ceiling would require thresholds calibrated against
+benign traffic representative of the intended monitoring period, followed by checks
+of achieved FPR after deployment. Testing an adaptive monitoring and recalibration
+mechanism under a credible deployment sequence remains outside the scope of the
+present source-order evaluation.
+    Differences in recall must be interpreted alongside realized FPR, because the
+trade-off depends on the achieved operating point. Tail's lower-group mean adds an
+independent consideration; a policy can improve two weak clients while leaving the
+single worst client undetected.
+
+
+7 Conclusion
+FABRID-IDS evaluates how a federation-level nominal false-positive allowance can be
+distributed across heterogeneous IoT clients after detector training. Local calibration
+
+
+converts the selected allowances into thresholds, and the resulting measured rates
+do not always remain within the original federation budget. On N-BaIoT at B =
+0.001, unrestricted Macro and Tail both reach a measured federation FPR of 0.00170.
+Conservative calibration reduces this value to 0.00036, but at a cost to attack recall.
+Equal-FPR records higher macro recall at several nominal budgets while also operating
+at higher measured FPRs. None of the tested FABRID-family policies restores positive
+minimum-client recall across the nine-device evaluation. CIC IoT-DIAD shows a similar
+nominal-to-measured FPR discrepancy under a different configuration, although its
+experiment lacks a matched Equal-FPR comparator. The results support treating
+nominal allocation, finite-sample calibration and measured operating performance as
+separate decisions. Testing whether this framework can maintain a false-alarm ceiling in
+deployment will require representative calibration streams, monitoring and appropriate
+distributional assumptions. Implementation and reproducibility artifacts are available at
+https://doi.org/10.5281/zenodo.22113172. The authors declare no competing interests.
+
+References
+ [1] Nguyen, T.D., Marchal, S., Miettinen, M., Fereidooni, H., Asokan, N., Sadeghi, A.-R.: DÏoT: A
+     federated self-learning anomaly detection system for IoT. In: IEEE ICDCS, pp. 756-767 (2019).
+     10.1109/ICDCS.2019.00080
+ [2] Wang, H., Muñoz-González, L., Eklund, D., Raza, S.: Non-IID data re-balancing at IoT edge
+     with peer-to-peer federated learning for anomaly detection. In: ACM WiSec, pp. 153-163 (2021).
+     10.1145/3448300.3467827
+ [3] Hamdi, N.: Federated learning-based intrusion detection system for internet of things. International
+     Journal of Information Security 22(6), 1937-1948 (2023). 10.1007/s10207-023-00727-6
+ [4] Laridi, S., Palmer, G., Tam, K.-M.M.: Enhanced federated anomaly detection through autoencoders
+     using summary statistics-based thresholding. Scientific Reports 14(1), 26704 (2024). 10.1038/s41598-024-76961-2
+ [5] Asiri, M., Khemakhem, M.A., Alhebshi, R.M., Alsulami, B.S., Eassa, F.E.: Decentralized federated
+     learning for IoT malware detection at the multi-access edge: A two-tier, privacy-preserving design.
+     Future Internet 17(10), 475 (2025). 10.3390/fi17100475
+ [6] Khan, M.A., Khalid, O., Rais, R.N.B.: Fed-DTCN: A federated disentangled learning framework for
+     unsupervised zero-day anomaly detection in IoT with semantic-aware augmentation. Sensors 26(6),
+     1918 (2026). 10.3390/s26061918
+ [7] Kairouz, P., McMahan, H.B., et al.: Advances and open problems in federated learning. Foundations
+     and Trends in Machine Learning 14(1-2), 1-210 (2021). 10.1561/2200000083
+ [8] Bridges, R.A., Jamieson, J.D., Reed, J.W.: Setting the threshold for high throughput detectors: A
+     mathematical approach for ensembles of dynamic, heterogeneous, probabilistic anomaly detectors. In:
+     IEEE BigData, pp. 1071-1078 (2017). 10.1109/BigData.2017.8258031
+ [9] Ochiai, H., Nishihata, R., Tomiyama, E., Sun, Y., Esaki, H.: Detection of global anomalies on
+     distributed IoT edges with device-to-device communication. In: MobiHoc '23, pp. 388-393 (2023).
+     10.1145/3565287.3616528
+[10] Tong, X., Feng, Y., Li, J.J.: Neyman-Pearson classification algorithms and NP receiver operating
+     characteristics. Science Advances 4(2), eaao1659 (2018). 10.1126/sciadv.aao1659
+[11] Angelopoulos, A.N., Bates, S.: Conformal prediction: A gentle introduction. Foundations and Trends in
+     Machine Learning 16(4), 494-591 (2023). 10.1561/2200000101
+[12] Lari, E., Arablouei, R., Werner, S.: Communication-efficient byzantine-robust federated conformal
+     prediction via partial sharing. IEEE Transactions on Signal Processing, 1-16 (2026). Early access.
+     10.1109/tsp.2026.3737023
+[13] Rockafellar, R.T., Uryasev, S.: Optimization of conditional value-at-risk. The Journal of Risk 2(3),
+     21-41 (2000). 10.21314/jor.2000.038
+[14] Meidan, Y., Bohadana, M., Mathov, Y., Mirsky, Y., Shabtai, A., Breitenbacher, D., Elovici, Y.: N-BaIoT:
+     Network-based detection of IoT botnet attacks using deep autoencoders. IEEE Pervasive Computing
+     17(3), 12-22 (2018). 10.1109/MPRV.2018.03367731
+[15] Rabbani, M., Gui, J., Nejati, F., Zhou, Z., Kaniyamattam, A., Mirani, M., Piya, G., Opushnyev, I., Lu,
+     R., Ghorbani, A.A.: Device identification and anomaly detection in IoT environments. IEEE Internet
+     of Things Journal 12(10), 13625-13643 (2025). 10.1109/JIOT.2024.3522863
