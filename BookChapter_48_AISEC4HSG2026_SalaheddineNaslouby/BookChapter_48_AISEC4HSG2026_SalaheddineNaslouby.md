@@ -1,6 +1,6 @@
 # FABRID-IDS: Federated Alert-Budget Reallocation for Heterogeneous IoT Intrusion Detection
 
-Salaheddine Naslouby (1; ORCID: 0009-0002-7295-7816), Mohamed Lachgar (2), and Hamid Hrimech (1)
+Salaheddine Naslouby (1; ORCID: 0009-0002-7295-7816), Mohamed Lachgar (2; ORCID: 0000-0002-6155-3309), and Hamid Hrimech (1; ORCID: 0000-0002-3980-1214)
 
 1. Hassan First University, National School of Applied Sciences (ENSA), LAMSAD Laboratory, Berrechid, Morocco.
 2. Cadi Ayyad University, Higher Normal School (ENS), L2IS Laboratory, Marrakech, Morocco.
